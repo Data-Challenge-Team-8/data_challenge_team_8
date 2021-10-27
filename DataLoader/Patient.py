@@ -44,6 +44,7 @@ class Patient:
                  HospAdmTime,
                  ICULOS,
                  SepsisLabel):
+        self.Temp = Temp
         self.HR = HR
         self.O2Sat = O2Sat
         self.SBP = SBP
