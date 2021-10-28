@@ -1,6 +1,10 @@
 import pandas as pd
 
 
+class NotUniqueIDError(Exception):
+    pass
+
+
 class Patient:
     """
     Class containing and allowing access to a whole patients data.
@@ -20,12 +24,13 @@ class Patient:
 
     def __init__(self, patient_id: str, patient_data: pd.DataFrame):
         self.data = patient_data
+        self.__patient_ID: str = None
 
         if patient_id not in Patient.patient_id_set:
             self.__patient_ID = patient_id
             Patient.patient_id_set.add(patient_id)
         else:
-            raise ValueError("Patient ID was not unique!")
+            raise NotUniqueIDError(f"Patient ID \"{patient_id}\" was not unique!")
 
         for label in Patient.LABELS:  # Sanity check of expected labels against present labels in data
             if label not in self.data.columns.values:
@@ -33,6 +38,10 @@ class Patient:
 
         self.__age = self.data["Age"].tolist()[0]  # assumed constant
         self.__gender = int(self.data["Gender"].tolist()[0])  # assumed constant
+
+    def __del__(self):  # removing ID from the set, so it can be given out again
+        if self.__patient_ID in Patient.patient_id_set:
+            Patient.patient_id_set.remove(self.__patient_ID)
 
     @property
     def ID(self) -> str:
