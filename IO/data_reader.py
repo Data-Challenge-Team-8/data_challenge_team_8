@@ -15,6 +15,39 @@ class DataReader:
         self.__training_setA: Dict[str, Patient] = None
         self.__training_setB: Dict[str, Patient] = None
 
+    def get_patient(self, patient_id: str) -> Patient:
+        """
+        Retrieve a single patient specified by the patient_id (see file name) from either set.
+        :param patient_id:
+        :return:
+        """
+        if self.__training_setA is not None and patient_id in self.__training_setA.keys():
+            # training set A is already loaded and has patient_id
+            return self.__training_setA[patient_id]
+        elif self.__peek_patient_set(self.file_dir_path_setA, patient_id):  # patient is in set A but not loaded
+            patient = self.__read_patient_data(self.file_dir_path_setA, patient_id + ".psv")
+
+            if self.__training_setA is None:
+                self.__training_setA = dict()
+            self.__training_setA[patient_id] = patient
+
+            return patient
+
+        elif self.__training_setB is not None and patient_id in self.__training_setB.keys():
+            # training set B is already loaded and has patient_id
+            return self.__training_setB[patient_id]
+        elif self.__peek_patient_set(self.file_dir_path_setB, patient_id):  # patient is in set B but not loaded
+            patient = self.__read_patient_data(self.file_dir_path_setA, patient_id + ".psv")
+
+            if self.__training_setA is None:
+                self.__training_setA = dict()
+            self.__training_setA[patient_id] = patient
+
+            return patient
+
+        else:
+            raise ValueError("Unknown Patient ID")
+
     def get_patient_setA(self, patient_id: str) -> Patient:
         """
         Retrieve a single patient specified by the patient_id (see file name) from the set A
@@ -57,7 +90,16 @@ class DataReader:
 
             return patient
 
-
+    def load_all_sets(self):
+        """
+        Load all training sets. Might take a minute.
+        :return:
+        """
+        print("Starting to read training set A ...")
+        self.training_setA
+        print("Starting to read training set B ...")
+        self.training_setB
+        print("All training sets have been loaded!")
 
     @property
     def training_setA(self) -> Dict[str, Patient]:
@@ -82,6 +124,21 @@ class DataReader:
             self.__training_setB = self.__read_entire_training_set(self.file_dir_path_setB)
 
         return self.__training_setB
+
+    def __peek_patient_set(self, data_set_path: str, patient_id: str) -> bool:
+        """
+        Peek into the data set folder and check if the patient ID is present
+
+        Note: Assumes file extension to be .psv
+        :param data_set_path:
+        :param patient_id:
+        :return:
+        """
+        filename = patient_id+".psv"
+        if filename in os.listdir(data_set_path):
+            return True
+        else:
+            return False
 
     def __read_patient_data(self, data_set_path: str, patient_filename: str) -> Patient:
         """
