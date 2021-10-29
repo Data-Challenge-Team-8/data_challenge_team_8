@@ -36,9 +36,6 @@ class Patient:
             if label not in self.data.columns.values:
                 raise ValueError("Given patient data did not match the expected format! Please check the columns.")
 
-        self.__age = self.data["Age"].tolist()[0]  # assumed constant
-        self.__gender = int(self.data["Gender"].tolist()[0])  # assumed constant
-
     def __del__(self):  # removing ID from the set, so it can be given out again
         if self.__patient_ID in Patient.patient_id_set:
             Patient.patient_id_set.remove(self.__patient_ID)
@@ -50,7 +47,6 @@ class Patient:
         :return:
         """
         return self.__patient_ID
-
 
     #################### Vital Signs ######################
 
@@ -524,7 +520,6 @@ class Patient:
         """
         return self.data["Platelets"]
 
-
     @property
     def Fibrinogen(self) -> pd.Series:
         """
@@ -547,30 +542,27 @@ class Patient:
         """
         return self.data[["Age", "Gender", "Unit1", "Unit2", "HospAdmTime", "ICULOS"]]
 
-
     @property
-    def age(self) -> float:
+    def age(self) -> pd.Series:
         """
         Age of the patient (years)
 
         Important: 100 for patients 90 or above
 
-        Note: returns always the first value; Age is assumed constant
         :return:
         """
-        return self.__age
+        return self.data["Age"]
 
     @property
-    def gender(self) -> int:
+    def gender(self) -> pd.Series:
         """
         Gender of the patient.
 
         See Patient.MALE and Patient.FEMALE for interpretation
 
-        Note: returns always the first value; Gender is assumed constant
         :return:
         """
-        return self.__gender
+        return self.data["Gender"]
 
     @property
     def unit1(self) -> pd.Series:
@@ -619,4 +611,3 @@ class Patient:
         :return:
         """
         return self.data["SepsisLabel"]
-
