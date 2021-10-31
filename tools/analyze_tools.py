@@ -1,7 +1,7 @@
-from operator import attrgetter
-
 import pandas as pd
-import pickle
+import datetime
+import os
+import csv
 
 
 class AnalyzeTool:
@@ -9,47 +9,82 @@ class AnalyzeTool:
     This Class contains methods to analyse the patient data.
     It provides tools for single patient analysis and for analysis over all patients.
 
-    Important: the label is the feature key provided by the patient attribute
     """
 
-    LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH", "PaCO2", "SaO2",
-              "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct", "Glucose",
-              "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
-              "PTT", "WBC", "Fibrinogen", "Platelets", "age", "gender", "unit1", "unit2", "hosp_adm_time", "ICULOS",
-              "sepsis_label"]
+    __patient_labels = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH",
+                        "PaCO2", "SaO2",
+                        "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct",
+                        "Glucose", "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI",
+                        "Hct", "Hgb", "PTT", "WBC", "Fibrinogen", "Platelets", "age", "gender", "unit1", "unit2",
+                        "hosp_adm_time", "ICULOS", "sepsis_label"]  # class variable names of patient
 
-    def __init__(self, training_data, save_data=True, create_copy_all=True):
+    def __init__(self, training_data):
         self.__training_data = training_data
-        self.__save_data = save_data
-        self.__create_copy_all = create_copy_all
-        self.__time_series_data = self.time_series_data
+        self.__time_series_data = None
 
-    def print_data_set_analysis(self):
+    def do_whole_training_set_analysis(self, print_to_stdout: bool = False, export_to_csv: bool = False):
         """
-        Prints a report over the whole dataset into stdout.
+        Makes a basic statistical analysis over the whole training set.
+
+        Prints it out to stdout if print_to_stdout is set.
+        Exports the result to PSV
 
         Note: Might take a while.
+        :param print_to_stdout:
+        :param export_to_csv:
         :return:
         """
-        print("Average amount of timeseries in all data: ", self.avg_timeseries_all())
-        print("Minimum amount of timeseries in all data: ", self.min_timeseries_all())
-        print("Maximum amount of timeseries in all data: ", self.max_timeseries_all())
-        print("Amount of timeseries in all data: ", self.count_timeseries_all())
-        for label in self.LABELS:
-            print()
-            print(label)
-            print("Minimum Value in all " + label + " colums: ", self.min_all(label))
-            print("Maximum Value in all " + label + " colums: ", self.max_all(label))
-            print("Average Value in all " + label + " colums: ", self.avg_all(label))
-            print("Missing Values in all " + label + " colums: ", self.missing_values_all(label))
+        print("Calculating whole training set analysis ...")
+        avg_data_points = self.avg_timeseries_all()
+        min_data_points = self.min_timeseries_all()
+        max_data_points = self.max_timeseries_all()
+        data_points_overall_count = self.count_timeseries_all()
+
+        if print_to_stdout:
+            print("Average amount of time series in all data: ", avg_data_points)
+            print("Minimum amount of time series in all data: ", min_data_points)
+            print("Maximum amount of time series in all data: ", max_data_points)
+            print("Amount of time series in all data: ", data_points_overall_count)
+
+        min_all_labels = {key: None for key in self.__patient_labels}
+        max_all_labels = {key: None for key in self.__patient_labels}
+        avg_all_labels = {key: None for key in self.__patient_labels}
+        nans_all_labels = {key: None for key in self.__patient_labels}
+        for label in self.__patient_labels:
+            min_all_labels[label] = self.min_all(label)
+            max_all_labels[label] = self.max_all(label)
+            avg_all_labels[label] = self.avg_all(label)
+            nans_all_labels[label] = self.missing_values_all(label)
+
+            if print_to_stdout:
+                print()
+                print("Minimum Value in all " + label + " columns: ", min_all_labels[label])
+                print("Maximum Value in all " + label + " columns: ", max_all_labels[label])
+                print("Average Value in all " + label + " columns: ", avg_all_labels[label])
+                print("Missing Values in all " + label + " columns: ", nans_all_labels[label])
+
+        print("Calculated whole training set analysis!")
+        if export_to_csv:
+            file_path = "analyze_tool_whole_training_set_analysis-"+str(datetime.datetime.now()).replace(" ", "_")+".psv"
+            print("Exporting results to:", os.path.join(".", file_path))
+            with open(file_path, 'w') as file:
+                w = csv.writer(file, delimiter="|")
+                w.writerow(["label", "avg_data_points_overall", "min_data_points_overall", "max_data_points_overall",
+                            "data_points_count_overall", "min", "max", "avg", "NaNs"])
+                for label in self.__patient_labels:
+                    w.writerow([label, avg_data_points, min_data_points, max_data_points, data_points_overall_count,
+                                min_all_labels[label], max_all_labels[label], avg_all_labels[label],
+                                nans_all_labels[label]])
 
     @property
-    def time_series_data(self) -> pd.DataFrame:
-        out = []
-        for patientID in self.__training_data:
-            single_patient_data = len(getattr(self.__training_data[patientID], 'age'))
-            out.append([patientID, single_patient_data])
-        return out
+    def time_series_data(self):
+        if self.__time_series_data is None:
+            self.__time_series_data = []
+            for patientID in self.__training_data:
+                single_patient_data = len(getattr(self.__training_data[patientID], 'age'))
+                self.__time_series_data.append([patientID, single_patient_data])
+
+        return self.__time_series_data
 
     @staticmethod
     def __average(data) -> float:
@@ -57,7 +92,11 @@ class AnalyzeTool:
         return avg
 
     def min_all(self, label) -> [str, float]:
-        """ finds the min value over a list with each value of every timeseries """
+        """
+        Finds the min value over a list with each value of every timeseries
+        :param label:
+        :return: [PatientID, min_value]
+        """
         min_patient = min([[patient[0], x]
                            for patient in self.__training_data.items()
                            for x in getattr(patient[1], label)
@@ -67,8 +106,7 @@ class AnalyzeTool:
         if min_patient:
             min_val = min_patient
         else:
-            print("-- All data was nan")
-            min_val = "-- All data was nan"
+            min_val = None
         return min_val
 
     def max_all(self, label) -> [str, float]:
@@ -82,8 +120,7 @@ class AnalyzeTool:
         if max_patient:
             max_val = max_patient
         else:
-            print("-- All data was nan")
-            max_val = "-- All data was nan"
+            max_val = None
         return max_val
 
     def avg_all(self, label):
@@ -93,7 +130,7 @@ class AnalyzeTool:
                    for x in getattr(patient[1], label)
                    if pd.notna(x)]
         if len(all_col) == 0:
-            avg_val = "-- all data is nan"
+            avg_val = None
         else:
             avg_val = self.__average(all_col)
         return avg_val
@@ -115,7 +152,7 @@ class AnalyzeTool:
 
     def count_timeseries_all(self):
         """ counts all timeseries in the dataset (of each patient) """
-        return sum([val[1] for val in self.__time_series_data if pd.notna(val[1])])
+        return sum([val[1] for val in self.time_series_data if pd.notna(val[1])])
 
     def count_timeseries_single(self, patientID):
         """ counts all timeseries of one patient """
@@ -123,15 +160,15 @@ class AnalyzeTool:
 
     def avg_timeseries_all(self) -> float:
         """ returns the average amount of timeseries one patient has """
-        return self.__average([val[1] for val in self.__time_series_data])
+        return self.__average([val[1] for val in self.time_series_data])
 
     def min_timeseries_all(self):
         """ returns the min amount of timeseries one patient has """
-        return min([val[1] for val in self.__time_series_data if pd.notna(val[1])])
+        return min([val[1] for val in self.time_series_data if pd.notna(val[1])])
 
     def max_timeseries_all(self):
         """ returns the max amount of timeseries one patient has """
-        return max([val[1] for val in self.__time_series_data if pd.notna(val[1])])
+        return max([val[1] for val in self.time_series_data if pd.notna(val[1])])
 
     def missing_values_all(self, label):
         """ returns the amount of missing values over a list with each value of every timeseries """
@@ -147,7 +184,7 @@ class AnalyzeTool:
         for patientID in self.__training_data:
             nan_count += getattr(self.__training_data[patientID], label).isna().sum()
             c += 1
-        return nan_count/c
+        return nan_count / c
 
     def min_single(self, label, patient_id):
         """ returns the min value in one patient data """
@@ -167,7 +204,3 @@ class AnalyzeTool:
         """ returns the amount of missing value in one patient data """
         nan_count = getattr(self.__training_data[patient_id], label).isna().sum()
         return nan_count
-
-    def save_data(self, data, fname):
-        """ saves data to a pickel """
-        pickle.dump(data, open(fname + ".p", "wb"))
