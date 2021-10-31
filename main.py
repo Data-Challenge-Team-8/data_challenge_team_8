@@ -1,13 +1,13 @@
 from IO.data_reader import DataReader
 
 import datetime
-from objects.analyse_tools import AnalyseTool
+from tools.analyze_tools import AnalyzeTool
 
 # this is the main file
 if __name__ == '__main__':
     readData = DataReader()
     training_setA = readData.training_setA
-    tool = AnalyseTool(training_setA)
+    tool = AnalyzeTool(training_setA)
 
     start = datetime.datetime.now()
     print("Starting to read one patient data:", str(start))

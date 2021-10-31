@@ -4,7 +4,7 @@ import pandas as pd
 import pickle
 
 
-class AnalyseTool:
+class AnalyzeTool:
     """
     This Class contains methods to analyse the patient data.
     It provides tools for single patient analysis and for analysis over all patients.
