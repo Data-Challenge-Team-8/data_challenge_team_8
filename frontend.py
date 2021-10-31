@@ -1,13 +1,12 @@
 import streamlit as st
-import datetime
 
 from IO.data_reader import DataReader
-from objects.analyse_tools import AnalyseTool
+from tools.analyze_tools import AnalyzeTool
 
 if __name__ == '__main__':
     readData = DataReader()
     training_setA = readData.training_setA
-    tool = AnalyseTool(training_setA)
+    tool = AnalyzeTool(training_setA)
 option = st.selectbox(
     'Choos your tool.',
     ('min/max', 'average', 'Amount of missing values', 'subgroup', 'time series information'))
