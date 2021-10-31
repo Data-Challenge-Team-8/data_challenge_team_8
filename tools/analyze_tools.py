@@ -24,19 +24,24 @@ class AnalyzeTool:
         self.__create_copy_all = create_copy_all
         self.__time_series_data = self.time_series_data
 
-        """ If we want to save the Data in future """
-        if self.__save_data:
-            print("Average amount of timeseries in all data: ", self.avg_timeseries_all())
-            print("Minimum amount of timeseries in all data: ", self.min_timeseries_all())
-            print("Maximum amount of timeseries in all data: ", self.max_timeseries_all())
-            print("Amount of timeseries in all data: ", self.count_timeseries_all())
-            for label in self.LABELS:
-                print()
-                print(label)
-                print("Minimum Value in all " + label + " colums: ", self.min_all(label))
-                print("Maximum Value in all " + label + " colums: ", self.max_all(label))
-                print("Average Value in all " + label + " colums: ", self.avg_all(label))
-                print("Missing Values in all " + label + " colums: ", self.missing_values_all(label))
+    def print_data_set_analysis(self):
+        """
+        Prints a report over the whole dataset into stdout.
+
+        Note: Might take a while.
+        :return:
+        """
+        print("Average amount of timeseries in all data: ", self.avg_timeseries_all())
+        print("Minimum amount of timeseries in all data: ", self.min_timeseries_all())
+        print("Maximum amount of timeseries in all data: ", self.max_timeseries_all())
+        print("Amount of timeseries in all data: ", self.count_timeseries_all())
+        for label in self.LABELS:
+            print()
+            print(label)
+            print("Minimum Value in all " + label + " colums: ", self.min_all(label))
+            print("Maximum Value in all " + label + " colums: ", self.max_all(label))
+            print("Average Value in all " + label + " colums: ", self.avg_all(label))
+            print("Missing Values in all " + label + " colums: ", self.missing_values_all(label))
 
     @property
     def time_series_data(self) -> pd.DataFrame:
