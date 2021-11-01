@@ -1,7 +1,11 @@
+from typing import Dict
+import numpy as np
 import pandas as pd
 import datetime
 import os
 import csv
+
+from objects.patient import Patient
 
 
 class AnalyzeTool:
@@ -18,13 +22,15 @@ class AnalyzeTool:
                         "Hct", "Hgb", "PTT", "WBC", "Fibrinogen", "Platelets", "age", "gender", "unit1", "unit2",
                         "hosp_adm_time", "ICULOS", "sepsis_label"]  # class variable names of patient
 
-    def __init__(self, training_data):
+    def __init__(self, training_data: Dict[str, Patient]):
         self.__training_data = training_data
         self.__time_series_data = None
 
     def do_whole_training_set_analysis(self, print_to_stdout: bool = False, export_to_csv: bool = False):
         """
         Makes a basic statistical analysis over the whole training set.
+        Includes: minimum, maximum, average of every label. Global NaN count, global average, minimum and maximum
+         of time series length and global total amount of measurement points.
 
         Prints it out to stdout if print_to_stdout is set.
         Exports the result to PSV
@@ -50,11 +56,13 @@ class AnalyzeTool:
         max_all_labels = {key: None for key in self.__patient_labels}
         avg_all_labels = {key: None for key in self.__patient_labels}
         nans_all_labels = {key: None for key in self.__patient_labels}
+        rel_nans_all_labels = {key: None for key in self.__patient_labels}
         for label in self.__patient_labels:
             min_all_labels[label] = self.min_all(label)
             max_all_labels[label] = self.max_all(label)
             avg_all_labels[label] = self.avg_all(label)
             nans_all_labels[label] = self.missing_values_all(label)
+            rel_nans_all_labels[label] = self.relative_missing_values_all(label)
 
             if print_to_stdout:
                 print()
@@ -65,16 +73,19 @@ class AnalyzeTool:
 
         print("Calculated whole training set analysis!")
         if export_to_csv:
-            file_path = "analyze_tool_whole_training_set_analysis-"+str(datetime.datetime.now()).replace(" ", "_")+".psv"
+            file_path = "analyze_tool_whole_training_set_analysis-" + str(datetime.datetime.now()).replace(" ",
+                                                                                                           "_") + ".psv"
             print("Exporting results to:", os.path.join(".", file_path))
             with open(file_path, 'w') as file:
                 w = csv.writer(file, delimiter="|")
                 w.writerow(["label", "avg_data_points_overall", "min_data_points_overall", "max_data_points_overall",
-                            "data_points_count_overall", "min", "max", "avg", "NaNs"])
+                            "data_points_count_overall", "min", "max", "avg", "NaNs", "rel. NaNs"])
                 for label in self.__patient_labels:
                     w.writerow([label, avg_data_points, min_data_points, max_data_points, data_points_overall_count,
                                 min_all_labels[label], max_all_labels[label], avg_all_labels[label],
-                                nans_all_labels[label]])
+                                nans_all_labels[label], rel_nans_all_labels[label]])
+
+ 
 
     @property
     def time_series_data(self):
@@ -90,6 +101,32 @@ class AnalyzeTool:
     def __average(data) -> float:
         avg = sum(data) / len(data)
         return avg
+
+    def relative_missing_values_all(self, label):
+        """
+        Calculates the fraction of NaNs present per patient
+        :param label:
+        :return:
+        """
+        result = {}
+        for patient_id in self.__training_data.keys():
+            result[patient_id] = self.relative_missing_values_single(label, patient_id)
+
+        return result
+
+    def average_standard_deviation_all(self, label):
+        """
+        Calculates the average standard deviation of a label over every timeseries
+        :param label:
+        :return:
+        """
+        s = 0
+        n = 0
+        for patient_id in self.__training_data.keys():
+            s += self.standard_deviation_single(label, patient_id)
+            n += 1
+
+        return s/n
 
     def min_all(self, label) -> [str, float]:
         """
@@ -204,3 +241,27 @@ class AnalyzeTool:
         """ returns the amount of missing value in one patient data """
         nan_count = getattr(self.__training_data[patient_id], label).isna().sum()
         return nan_count
+
+    def relative_missing_values_single(self, label, patient_id) -> float:
+        """
+        Calculates the fraction of NaNs present for the given patient
+        :param label:
+        :param patient_id
+        :return:
+        """
+        patient = self.__training_data[patient_id]
+        nans = patient.data[label].isnull.sum()
+        count = patient.data[label].sum()
+
+        return nans / count
+
+    def standard_deviation_single(self, label, patient_id) -> float:
+        """
+        Calculates the standard deviation of a single label for one patient
+        :param label:
+        :param patient_id:
+        :return:
+        """
+        a = self.__training_data[patient_id].data[label].dropna().to_numpy()
+        return np.std(a)
+
