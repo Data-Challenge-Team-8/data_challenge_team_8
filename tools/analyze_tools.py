@@ -85,7 +85,49 @@ class AnalyzeTool:
                                 min_all_labels[label][1], max_all_labels[label][1], avg_all_labels[label],
                                 nans_all_labels[label], rel_nans_all_labels[label]])
 
- 
+    def do_basic_set_analysis(self, print_to_stdout: bool = False, export_to_csv: bool = False):
+        """
+        Calculate superficial statistical properties of the data set.
+
+        Includes: Percentage of Patients with Sepsis,
+        :return:
+        """
+        # TODO check if NaN / non-NaN calculation is correct
+        sepsis_patients = []
+        for patient_ID in self.__training_data.keys():
+            if self.__training_data[patient_ID].data["SepsisLabel"].dropna().sum() > 0:  # at least one sepsis
+                sepsis_patients.append(patient_ID)
+        sepsis_chance = len(sepsis_patients) / len(self.__training_data.keys())
+
+        row_count_all = 0
+        entry_count_nans = 0
+        entry_count_non_nans = 0
+        for patient_ID in self.__training_data.keys():
+            row_count_all += len(self.__training_data[patient_ID].data)
+            for label in Patient.LABELS:
+                entry_count_nans += self.__training_data[patient_ID].data[label].isna().sum()
+                entry_count_non_nans += self.__training_data[patient_ID].data[label].dropna().count()
+        entry_nan_chance = entry_count_nans / (entry_count_nans+entry_count_non_nans)
+
+        if print_to_stdout:
+            print("Patients with a Sepsis (Count):", len(sepsis_patients))
+            print("Sepsis Chance per Patient:", sepsis_chance)
+            print("Patients with a Sepsis:", sepsis_patients)
+            print("Number of Rows (Total):", row_count_all)
+            print("Number of NaNs (Total):", entry_count_nans)
+            print("Number of non-NaNs (Total):", entry_count_non_nans)
+            print("Chance of NaN per entry:", entry_nan_chance)
+
+        if export_to_csv:
+            file_path = "basic_analysis-" + str(datetime.datetime.now()).replace(" ", "_") + ".psv"
+            print("Exporting results to:", os.path.join(".", file_path))
+            with open(file_path, 'w') as file:
+                w = csv.writer(file, delimiter="|")
+
+                w.writerow(["patient_count", "sepsis_count", "sepsis_chance", "row_count_all", "entry_count_nans",
+                            "entry_count_non_nans", "entry_nan_chance"])
+                w.writerow([len(self.__training_data), len(sepsis_patients), sepsis_chance, row_count_all,
+                            entry_count_nans, entry_count_non_nans, entry_nan_chance])
 
     @property
     def time_series_data(self):
@@ -250,8 +292,8 @@ class AnalyzeTool:
         :return:
         """
         patient = self.__training_data[patient_id]
-        nans = patient.data[label].isnull.sum()
-        count = patient.data[label].sum()
+        nans = getattr(self.__training_data[patient_id], label).isnull().sum()
+        count = getattr(self.__training_data[patient_id], label).sum()
 
         return nans / count
 
