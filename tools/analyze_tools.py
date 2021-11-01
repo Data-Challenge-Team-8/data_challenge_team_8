@@ -123,7 +123,7 @@ class AnalyzeTool:
             max_val = None
         return max_val
 
-    def avg_all(self, label):
+    def avg_all(self, label) -> float:
         """ finds the average value over a list with each value of every timeseries """
         all_col = [x
                    for patient in self.__training_data.items()
@@ -135,7 +135,7 @@ class AnalyzeTool:
             avg_val = self.__average(all_col)
         return avg_val
 
-    def subset_all(self, label, lowerbound, upperbound):
+    def subset_all(self, label, lowerbound, upperbound) -> []:
         """
         returns a subset of patients, witch contain a value between the lower and upper bound
         in one of there timeseries.
@@ -150,11 +150,11 @@ class AnalyzeTool:
                         break
         return out
 
-    def count_timeseries_all(self):
+    def count_timeseries_all(self) -> int:
         """ counts all timeseries in the dataset (of each patient) """
         return sum([val[1] for val in self.time_series_data if pd.notna(val[1])])
 
-    def count_timeseries_single(self, patientID):
+    def count_timeseries_single(self, patientID) -> int:
         """ counts all timeseries of one patient """
         return len(getattr(self.__training_data[patientID], 'age'))
 
@@ -162,22 +162,22 @@ class AnalyzeTool:
         """ returns the average amount of timeseries one patient has """
         return self.__average([val[1] for val in self.time_series_data])
 
-    def min_timeseries_all(self):
+    def min_timeseries_all(self) -> float:
         """ returns the min amount of timeseries one patient has """
         return min([val[1] for val in self.time_series_data if pd.notna(val[1])])
 
-    def max_timeseries_all(self):
+    def max_timeseries_all(self) -> float:
         """ returns the max amount of timeseries one patient has """
         return max([val[1] for val in self.time_series_data if pd.notna(val[1])])
 
-    def missing_values_all(self, label):
+    def missing_values_all(self, label) -> int:
         """ returns the amount of missing values over a list with each value of every timeseries """
         nan_count = 0
         for patientID in self.__training_data:
             nan_count += getattr(self.__training_data[patientID], label).isna().sum()
         return nan_count
 
-    def missing_values_all_avg(self, label):
+    def missing_values_all_avg(self, label) -> float:
         """ returns the average amount of missing values over a patients values """
         nan_count = 0
         c = 0
@@ -186,21 +186,21 @@ class AnalyzeTool:
             c += 1
         return nan_count / c
 
-    def min_single(self, label, patient_id):
+    def min_single(self, label, patient_id) -> float:
         """ returns the min value in one patient data """
         patient_data = [x for x in getattr(self.__training_data[patient_id], label) if pd.notna(x)]
         return min(patient_data, default="-- all values are nan")
 
-    def max_single(self, label, patient_id):
+    def max_single(self, label, patient_id) -> float:
         """ returns the max value in one patient data """
         patient_data = [x for x in getattr(self.__training_data[patient_id], label) if pd.notna(x)]
         return max(patient_data)
 
-    def avg_single(self, label, patient_id):
+    def avg_single(self, label, patient_id) -> float:
         """ returns the average value in one patient data """
         return self.__average([x for x in getattr(self.__training_data[patient_id], label) if pd.notna(x)])
 
-    def missing_values_single(self, label, patient_id):
+    def missing_values_single(self, label, patient_id) -> int:
         """ returns the amount of missing value in one patient data """
         nan_count = getattr(self.__training_data[patient_id], label).isna().sum()
         return nan_count
