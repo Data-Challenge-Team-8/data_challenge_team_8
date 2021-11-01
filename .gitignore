@@ -1,4 +1,7 @@
 .idea/
 
+# Lock files
+.~lock*
+
 __pycache__/
 venv
