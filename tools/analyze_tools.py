@@ -82,7 +82,7 @@ class AnalyzeTool:
                             "data_points_count_overall", "min", "max", "avg", "NaNs", "rel. NaNs"])
                 for label in self.__patient_labels:
                     w.writerow([label, avg_data_points, min_data_points, max_data_points, data_points_overall_count,
-                                min_all_labels[label], max_all_labels[label], avg_all_labels[label],
+                                min_all_labels[label][1], max_all_labels[label][1], avg_all_labels[label],
                                 nans_all_labels[label], rel_nans_all_labels[label]])
 
  
