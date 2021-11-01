@@ -125,9 +125,26 @@ class DataReader:
 
         return self.__training_setB
 
+    @property
+    def combined_training_set(self) -> Dict[str, Patient]:
+        """
+        A combined version of both available training sets.
+        :return:
+        """
+        combined_set = {}
+        for patient in self.training_setA.values():
+            combined_set[patient.ID] = patient
+
+        for patient in self.training_setB.values():
+            if patient.ID in combined_set.keys():
+                raise ValueError("Combining the training sets impossible. Patients with same ID found!")
+            combined_set[patient.ID] = patient
+
+        return combined_set
+
     def __peek_patient_set(self, data_set_path: str, patient_id: str) -> bool:
         """
-        Peek into the data set folder and check if the patient ID is present
+        Peek into the data set folder and check if the patient ID is present (but don't load it)
 
         Note: Assumes file extension to be .psv
         :param data_set_path:
