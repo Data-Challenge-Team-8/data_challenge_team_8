@@ -15,13 +15,6 @@ class AnalyzeTool:
 
     """
 
-    __patient_labels = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH",
-                        "PaCO2", "SaO2",
-                        "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct",
-                        "Glucose", "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI",
-                        "Hct", "Hgb", "PTT", "WBC", "Fibrinogen", "Platelets", "age", "gender", "unit1", "unit2",
-                        "hosp_adm_time", "ICULOS", "sepsis_label"]  # class variable names of patient
-
     def __init__(self, training_data: Dict[str, Patient]):
         self.__training_data = training_data
         self.__time_series_data = None
@@ -52,12 +45,12 @@ class AnalyzeTool:
             print("Maximum amount of time series in all data: ", max_data_points)
             print("Amount of time series in all data: ", data_points_overall_count)
 
-        min_all_labels = {key: None for key in self.__patient_labels}
-        max_all_labels = {key: None for key in self.__patient_labels}
-        avg_all_labels = {key: None for key in self.__patient_labels}
-        nans_all_labels = {key: None for key in self.__patient_labels}
-        rel_nans_all_labels = {key: None for key in self.__patient_labels}
-        for label in self.__patient_labels:
+        min_all_labels = {key: None for key in Patient.LABELS}
+        max_all_labels = {key: None for key in Patient.LABELS}
+        avg_all_labels = {key: None for key in Patient.LABELS}
+        nans_all_labels = {key: None for key in Patient.LABELS}
+        rel_nans_all_labels = {key: None for key in Patient.LABELS}
+        for label in Patient.LABELS:
             r = self.min_all(label)
             if r is not None:
                 min_all_labels[label] = r[1]
@@ -89,7 +82,7 @@ class AnalyzeTool:
                 w = csv.writer(file, delimiter="|")
                 w.writerow(["label", "avg_data_points_overall", "min_data_points_overall", "max_data_points_overall",
                             "data_points_count_overall", "min", "max", "avg", "NaNs", "rel. NaNs"])
-                for label in self.__patient_labels:
+                for label in Patient.LABELS:
                     w.writerow([label, avg_data_points, min_data_points, max_data_points, data_points_overall_count,
                                 min_all_labels[label], max_all_labels[label], avg_all_labels[label],
                                 nans_all_labels[label], rel_nans_all_labels[label]])
@@ -187,7 +180,7 @@ class AnalyzeTool:
         """
         min_patient = min([[patient[0], x]
                            for patient in self.__training_data.items()
-                           for x in getattr(patient[1], label)
+                           for x in patient[1].data[label]
                            if pd.notna(x)],
                           key=lambda val: val[1],
                           default=False)
@@ -201,7 +194,7 @@ class AnalyzeTool:
         """ finds the max value over a list with each value of every timeseries """
         max_patient = max([[patient[0], x]
                            for patient in self.__training_data.items()
-                           for x in getattr(patient[1], label)
+                           for x in patient[1].data[label]
                            if pd.notna(x)],
                           key=lambda val: val[1],
                           default=False)
@@ -215,7 +208,7 @@ class AnalyzeTool:
         """ finds the average value over a list with each value of every timeseries """
         all_col = [x
                    for patient in self.__training_data.items()
-                   for x in getattr(patient[1], label)
+                   for x in patient[1].data[label]
                    if pd.notna(x)]
         if len(all_col) == 0:
             avg_val = None
@@ -230,7 +223,7 @@ class AnalyzeTool:
         """
         out = dict()
         for patientID in self.__training_data:
-            single_patient_data = getattr(self.__training_data[patientID], label)
+            single_patient_data = self.__training_data[patientID].data[label]
             for feature in single_patient_data:
                 if pd.notna(feature):
                     if lowerbound <= feature <= upperbound:
@@ -261,36 +254,36 @@ class AnalyzeTool:
     def missing_values_all(self, label) -> int:
         """ returns the amount of missing values over a list with each value of every timeseries """
         nan_count = 0
-        for patientID in self.__training_data:
-            nan_count += getattr(self.__training_data[patientID], label).isna().sum()
+        for patient_id in self.__training_data:
+            nan_count += self.__training_data[patient_id].data[label].isna().sum()
         return nan_count
 
     def missing_values_all_avg(self, label) -> float:
         """ returns the average amount of missing values over a patients values """
         nan_count = 0
         c = 0
-        for patientID in self.__training_data:
-            nan_count += getattr(self.__training_data[patientID], label).isna().sum()
+        for patient_id in self.__training_data:
+            nan_count += self.__training_data[patient_id].data[label].isna().sum()
             c += 1
         return nan_count / c
 
     def min_single(self, label, patient_id) -> float:
         """ returns the min value in one patient data """
-        patient_data = [x for x in getattr(self.__training_data[patient_id], label) if pd.notna(x)]
+        patient_data = [x for x in self.__training_data[patient_id].data[label] if pd.notna(x)]
         return min(patient_data, default="-- all values are nan")
 
     def max_single(self, label, patient_id) -> float:
         """ returns the max value in one patient data """
-        patient_data = [x for x in getattr(self.__training_data[patient_id], label) if pd.notna(x)]
+        patient_data = [x for x in self.__training_data[patient_id].data[label] if pd.notna(x)]
         return max(patient_data)
 
     def avg_single(self, label, patient_id) -> float:
         """ returns the average value in one patient data """
-        return self.__average([x for x in getattr(self.__training_data[patient_id], label) if pd.notna(x)])
+        return self.__average([x for x in self.__training_data[patient_id].data[label] if pd.notna(x)])
 
     def missing_values_single(self, label, patient_id) -> int:
         """ returns the amount of missing value in one patient data """
-        nan_count = getattr(self.__training_data[patient_id], label).isna().sum()
+        nan_count = self.__training_data[patient_id].data[label].isna().sum()
         return nan_count
 
     def relative_missing_values_single(self, label, patient_id) -> float:
@@ -301,8 +294,8 @@ class AnalyzeTool:
         :return:
         """
         patient = self.__training_data[patient_id]
-        nans = getattr(self.__training_data[patient_id], label).isnull().sum()
-        count = len(getattr(self.__training_data[patient_id], label))
+        nans = self.__training_data[patient_id].data[label].isnull().sum()
+        count = len(self.__training_data[patient_id].data[label])
 
         return nans / count
 
