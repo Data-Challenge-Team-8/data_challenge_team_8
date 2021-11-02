@@ -58,8 +58,17 @@ class AnalyzeTool:
         nans_all_labels = {key: None for key in self.__patient_labels}
         rel_nans_all_labels = {key: None for key in self.__patient_labels}
         for label in self.__patient_labels:
-            min_all_labels[label] = self.min_all(label)
-            max_all_labels[label] = self.max_all(label)
+            r = self.min_all(label)
+            if r is not None:
+                min_all_labels[label] = r[1]
+            else:
+                min_all_labels[label] = r
+            r = self.max_all(label)
+            if r is not None:
+                max_all_labels[label] = r[1]
+            else:
+                max_all_labels[label] = r
+
             avg_all_labels[label] = self.avg_all(label)
             nans_all_labels[label] = self.missing_values_all(label)
             rel_nans_all_labels[label] = self.relative_missing_values_all(label)
@@ -82,17 +91,17 @@ class AnalyzeTool:
                             "data_points_count_overall", "min", "max", "avg", "NaNs", "rel. NaNs"])
                 for label in self.__patient_labels:
                     w.writerow([label, avg_data_points, min_data_points, max_data_points, data_points_overall_count,
-                                min_all_labels[label][1], max_all_labels[label][1], avg_all_labels[label],
+                                min_all_labels[label], max_all_labels[label], avg_all_labels[label],
                                 nans_all_labels[label], rel_nans_all_labels[label]])
 
     def do_basic_set_analysis(self, print_to_stdout: bool = False, export_to_csv: bool = False):
         """
         Calculate superficial statistical properties of the data set.
 
-        Includes: Percentage of Patients with Sepsis,
+        Includes: Percentage of Patients with Sepsis, Chance of Sepsis per Patient, count and chance of NaN values,
+        count of values overall
         :return:
         """
-        # TODO check if NaN / non-NaN calculation is correct
         sepsis_patients = []
         for patient_ID in self.__training_data.keys():
             if self.__training_data[patient_ID].data["SepsisLabel"].dropna().sum() > 0:  # at least one sepsis
@@ -146,15 +155,15 @@ class AnalyzeTool:
 
     def relative_missing_values_all(self, label):
         """
-        Calculates the fraction of NaNs present per patient
+        Calculates the average fraction of NaNs present per patient
         :param label:
         :return:
         """
-        result = {}
+        results = []
         for patient_id in self.__training_data.keys():
-            result[patient_id] = self.relative_missing_values_single(label, patient_id)
+            results.append(self.relative_missing_values_single(label, patient_id))
 
-        return result
+        return self.__average(results)
 
     def average_standard_deviation_all(self, label):
         """
@@ -293,7 +302,7 @@ class AnalyzeTool:
         """
         patient = self.__training_data[patient_id]
         nans = getattr(self.__training_data[patient_id], label).isnull().sum()
-        count = getattr(self.__training_data[patient_id], label).sum()
+        count = len(getattr(self.__training_data[patient_id], label))
 
         return nans / count
 
