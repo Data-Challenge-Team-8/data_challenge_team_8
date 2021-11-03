@@ -12,7 +12,6 @@ class AnalyzeTool:
     """
     This Class contains methods to analyse the patient data.
     It provides tools for single patient analysis and for analysis over all patients.
-
     """
 
     def __init__(self, training_data: Dict[str, Patient]):
@@ -166,8 +165,8 @@ class AnalyzeTool:
         """
         s = 0
         n = 0
-        for patient_id in self.__training_data.keys():
-            s += self.standard_deviation_single(label, patient_id)
+        for patient_ID in self.__training_data.keys():
+            s += self.standard_deviation_single(label, patient_ID)
             n += 1
 
         return s/n
@@ -254,58 +253,61 @@ class AnalyzeTool:
     def missing_values_all(self, label) -> int:
         """ returns the amount of missing values over a list with each value of every timeseries """
         nan_count = 0
-        for patient_id in self.__training_data:
-            nan_count += self.__training_data[patient_id].data[label].isna().sum()
+        for patient_ID in self.__training_data:
+            nan_count += self.__training_data[patient_ID].data[label].isna().sum()
         return nan_count
 
     def missing_values_all_avg(self, label) -> float:
         """ returns the average amount of missing values over a patients values """
         nan_count = 0
         c = 0
-        for patient_id in self.__training_data:
-            nan_count += self.__training_data[patient_id].data[label].isna().sum()
+        for patient_ID in self.__training_data:
+            nan_count += self.__training_data[patient_ID].data[label].isna().sum()
             c += 1
         return nan_count / c
 
-    def min_single(self, label, patient_id) -> float:
+
+    # TODO: nachfolgend bekomme ich KeyError 0.0 bei den x for x in ...
+    # Ich weiss nicht was falsch ist. Aber so kann man nicht auf den dataframe zugreifen.
+    def min_single(self, label, patient_ID) -> float:
         """ returns the min value in one patient data """
-        patient_data = [x for x in self.__training_data[patient_id].data[label] if pd.notna(x)]
+        patient_data = [x for x in self.__training_data[patient_ID].data[label] if pd.notna(x)]
         return min(patient_data, default="-- all values are nan")
 
-    def max_single(self, label, patient_id) -> float:
+    def max_single(self, label, patient_ID) -> float:
         """ returns the max value in one patient data """
-        patient_data = [x for x in self.__training_data[patient_id].data[label] if pd.notna(x)]
+        patient_data = [x for x in self.__training_data[patient_ID].data[label] if pd.notna(x)]
         return max(patient_data)
 
-    def avg_single(self, label, patient_id) -> float:
+    def avg_single(self, label, patient_ID) -> float:
         """ returns the average value in one patient data """
-        return self.__average([x for x in self.__training_data[patient_id].data[label] if pd.notna(x)])
+        return self.__average([x for x in self.__training_data[patient_ID].data[label] if pd.notna(x)])
 
-    def missing_values_single(self, label, patient_id) -> int:
+    def missing_values_single(self, label, patient_ID) -> int:
         """ returns the amount of missing value in one patient data """
-        nan_count = self.__training_data[patient_id].data[label].isna().sum()
+        nan_count = self.__training_data[patient_ID].data[label].isna().sum()
         return nan_count
 
-    def relative_missing_values_single(self, label, patient_id) -> float:
+    def relative_missing_values_single(self, label, patient_ID) -> float:
         """
         Calculates the fraction of NaNs present for the given patient
         :param label:
-        :param patient_id
+        :param patient_ID
         :return:
         """
-        patient = self.__training_data[patient_id]
-        nans = self.__training_data[patient_id].data[label].isnull().sum()
-        count = len(self.__training_data[patient_id].data[label])
+        patient = self.__training_data[patient_ID]
+        nans = self.__training_data[patient_ID].data[label].isnull().sum()
+        count = len(self.__training_data[patient_ID].data[label])
 
         return nans / count
 
-    def standard_deviation_single(self, label, patient_id) -> float:
+    def standard_deviation_single(self, label, patient_ID) -> float:
         """
         Calculates the standard deviation of a single label for one patient
         :param label:
-        :param patient_id:
+        :param patient_ID:
         :return:
         """
-        a = self.__training_data[patient_id].data[label].dropna().to_numpy()
+        a = self.__training_data[patient_ID].data[label].dropna().to_numpy()
         return np.std(a)
 

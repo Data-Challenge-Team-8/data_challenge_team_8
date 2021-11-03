@@ -22,15 +22,15 @@ class Patient:
 
     patient_id_set = set()  # for checking uniqueness in ID
 
-    def __init__(self, patient_id: str, patient_data: pd.DataFrame):
+    def __init__(self, patient_ID: str, patient_data: pd.DataFrame):
         self.data = patient_data
         self.__patient_ID: str = None
 
-        if patient_id not in Patient.patient_id_set:
-            self.__patient_ID = patient_id
-            Patient.patient_id_set.add(patient_id)
+        if patient_ID not in Patient.patient_id_set:
+            self.__patient_ID = patient_ID
+            Patient.patient_id_set.add(patient_ID)
         else:
-            raise NotUniqueIDError(f"Patient ID \"{patient_id}\" was not unique!")
+            raise NotUniqueIDError(f"Patient ID \"{patient_ID}\" was not unique!")
 
         for label in Patient.LABELS:  # Sanity check of expected labels against present labels in data
             if label not in self.data.columns.values:
