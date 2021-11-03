@@ -1,15 +1,21 @@
 import streamlit as st
-
 from IO.data_reader import DataReader
 from tools.analyze_tools import AnalyzeTool
 
+
 if __name__ == '__main__':
+    print("reading Data:")
     readData = DataReader()
     training_setA = readData.training_setA
+    print("Analysing data.")
     tool = AnalyzeTool(training_setA)
-option = st.selectbox(
-    'Choos your tool.',
-    ('min/max', 'average', 'Amount of missing values', 'subgroup', 'time series information'))
+    print("Finished analysing Data.")
+    # TODO: How do we change sets?
+    # training_setB = readData.training_setB
+    # toolB = AnalyzeTool(training_setB)
+
+option = st.selectbox('Choose your tool.', ('min/max', 'average', 'Amount of missing values',
+                                            'subgroup', 'time series information'))
 if option == 'subgroup':
     values = st.slider(
         'Select a range of values',
@@ -18,6 +24,7 @@ if option == 'subgroup':
 
 if option == 'min/max':
     col1, col2 = st.columns(2)
+    # TODO: auch patient_ID als select option?
     feature = col2.selectbox("Choose your feature", (
         "HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH", "PaCO2", "SaO2",
         "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct", "Glucose",

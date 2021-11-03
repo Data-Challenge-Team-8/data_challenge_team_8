@@ -1,5 +1,6 @@
-from typing import Dict
 import os
+from typing import Dict
+from pathlib import Path
 
 import pandas as pd
 
@@ -9,20 +10,25 @@ from objects.patient import Patient, NotUniqueIDError
 class DataReader:
 
     def __init__(self) -> None:
-        self.file_dir_path_setA = r'./data/training_setA/'
-        self.file_dir_path_setB = r'./data/training_setB/'
+        # data_set_path needed to be changed because data_reader is now inside a folder IO
+        current_path = Path(os.getcwd())
+        directory_path = str(current_path.parent.absolute())
+        self.file_dir_path_setA = directory_path + "/data/training_setA/"
+        self.file_dir_path_setB = directory_path + "/data/training_setB/"
+        # self.file_dir_path_setA = r'./data/training_setA/'
+        # self.file_dir_path_setB = r'./data/training_setB/'
 
         self.__training_setA: Dict[str, Patient] = None
         self.__training_setB: Dict[str, Patient] = None
 
     def get_patient(self, patient_id: str) -> Patient:
         """
-        Retrieve a single patient specified by the patient_id (see file name) from either set.
+        Retrieve a single patient specified by the patient_ID (see file name) from either set.
         :param patient_id:
         :return:
         """
         if self.__training_setA is not None and patient_id in self.__training_setA.keys():
-            # training set A is already loaded and has patient_id
+            # training set A is already loaded and has patient_ID
             return self.__training_setA[patient_id]
         elif self.__peek_patient_set(self.file_dir_path_setA, patient_id):  # patient is in set A but not loaded
             patient = self.__read_patient_data(self.file_dir_path_setA, patient_id + ".psv")
@@ -34,7 +40,7 @@ class DataReader:
             return patient
 
         elif self.__training_setB is not None and patient_id in self.__training_setB.keys():
-            # training set B is already loaded and has patient_id
+            # training set B is already loaded and has patient_ID
             return self.__training_setB[patient_id]
         elif self.__peek_patient_set(self.file_dir_path_setB, patient_id):  # patient is in set B but not loaded
             patient = self.__read_patient_data(self.file_dir_path_setA, patient_id + ".psv")
@@ -50,14 +56,14 @@ class DataReader:
 
     def get_patient_setA(self, patient_id: str) -> Patient:
         """
-        Retrieve a single patient specified by the patient_id (see file name) from the set A
+        Retrieve a single patient specified by the patient_ID (see file name) from the set A
 
         Note: Assumes all file endings to be .psv (Pipe Separated Value)
         :param patient_id:
         :return:
         """
         if self.__training_setA is not None and patient_id in self.__training_setA.keys():
-            # training set A is already loaded and has patient_id
+            # training set A is already loaded and has patient_ID
             return self.__training_setA[patient_id]
 
         else:  # not loaded, loading only the patient
@@ -71,14 +77,14 @@ class DataReader:
 
     def get_patient_setB(self, patient_id: str) -> Patient:
         """
-        Retrieve a single patient specified by the patient_id (see file name) from the set B
+        Retrieve a single patient specified by the patient_ID (see file name) from the set B
 
         Note: Assumes all file endings to be .psv (Pipe Separated Value)
         :param patient_id:
         :return:
         """
         if self.__training_setB is not None and patient_id in self.__training_setB.keys():
-            # training set B is already loaded and has patient_id
+            # training set B is already loaded and has patient_ID
             return self.__training_setB[patient_id]
 
         else:
@@ -170,19 +176,19 @@ class DataReader:
 
         return patient
 
-    def __read_entire_training_set(self, path: str) -> Dict[str, Patient]:
+    def __read_entire_training_set(self, data_set_path: str) -> Dict[str, Patient]:
         """
         Read all files within the given path and convert to a Patient object for each file.
 
         This may take some minutes.
-        :param path: path to the data set (e.g. "./data/training_setA")
-        :return: dictionary with patient_id as key and Patient object as value
+        :param data_set_path: path to the data set (e.g. "./data/training_setA")
+        :return: dictionary with patient_ID as key and Patient object as value
         """
         training_set = dict()
 
-        for filename in os.listdir(path):
+        for filename in os.listdir(data_set_path):
             try:
-                patient = self.__read_patient_data(path, filename)
+                patient = self.__read_patient_data(data_set_path, filename)
             except NotUniqueIDError as e:  # caused ID uniqueness error, meaning we've already loaded this one!
                 continue
 
