@@ -76,7 +76,7 @@ class AnalyzeTool:
         print("Calculated whole training set analysis!")
         if export_to_csv:
             file_path = "analyze_tool_whole_training_set_analysis-" + str(datetime.datetime.now()).replace(" ",
-                                                                                                           "_").replace(":", "_") + ".psv"
+                                                                                                           "_").replace(":", "-") + ".psv"
             print("Exporting results to:", os.path.join(".", file_path))
             with open(file_path, 'w') as file:
                 w = csv.writer(file, delimiter="|")
