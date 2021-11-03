@@ -9,8 +9,8 @@ if __name__ == '__main__':
     tool = AnalyzeTool(training_setA)
     #tool.do_basic_set_analysis(print_to_stdout=True)
     tool.do_whole_training_set_analysis(export_to_csv=True)
-    tool = AnalyzeTool(readData.training_setB)
-    tool.do_whole_training_set_analysis(export_to_csv=True)
+    # tool = AnalyzeTool(readData.training_setB)
+    # tool.do_whole_training_set_analysis(export_to_csv=True)
 
     exit(0)
     print("The subset of all Patients with HR between 90 and 100")
@@ -19,4 +19,4 @@ if __name__ == '__main__':
     print(len(tool.subset_all('gender', 1, 1)))
     print("The subset of all patient with age between 18 and 21")
     print(len(tool.subset_all('age', 18, 21)))
-    results = tool.do_whole_training_set_analysis(export_to_csv=False)
+    # results = tool.do_whole_training_set_analysis(export_to_csv=False)
