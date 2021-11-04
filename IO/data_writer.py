@@ -1,14 +1,21 @@
-from tools.analyze_tools import AnalyzeTool
-import pandas as pd
+
+import pickle
+
 
 class DataWriter:
+    """ This class writes data to a pickle file """
 
-    def __init__(self, training_set) -> None:
-        self.tool = AnalyzeTool()
-        self.__training_set = training_set
+    def __init__(self) -> None:
+        return
 
-    def save_all_min_max_avg_missing_value(self):
-        data = dict()
+    @staticmethod
+    def write_min_max_avg(min_vals, max_vals, avg_vals) -> None:
+        """ write the min, max and avg values for each label to a pickle """
+        data = {"min_vals": min_vals, "max_vals": max_vals, "avg_vals": avg_vals}
+        pickle.dump(data, open("data/min_max_avg.p", "wb"))
 
-
-
+    @staticmethod
+    def write_missing_val(missing_vals) -> None:
+        """ write the amount of missing values for each label to a pickle """
+        data = {"missing_vals": missing_vals}
+        pickle.dump(data, open("data/missing_vals_all.p", "wb"))
