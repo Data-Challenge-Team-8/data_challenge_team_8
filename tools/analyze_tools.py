@@ -5,6 +5,7 @@ import datetime
 import os
 import csv
 
+from IO.data_writer import DataWriter
 from objects.patient import Patient
 
 
@@ -14,9 +15,27 @@ class AnalyzeTool:
     It provides tools for single patient analysis and for analysis over all patients.
     """
 
-    def __init__(self, training_data: Dict[str, Patient]):
+    def __init__(self, training_data: Dict[str, Patient], cal_write_data: bool):
         self.__training_data = training_data
         self.__time_series_data = None
+
+        # if we want to save the calculated data to a pickle.
+        if cal_write_data:
+            # init the data writer class
+            self.data_writer = DataWriter()
+            min_all_labels = {key: None for key in Patient.LABELS}
+            max_all_labels = {key: None for key in Patient.LABELS}
+            avg_all_labels = {key: None for key in Patient.LABELS}
+            missing_all_labels = {key: None for key in Patient.LABELS}
+            for label in Patient.LABELS:
+                min_all_labels[label] = self.min_all(label)
+                max_all_labels[label] = self.max_all(label)
+                avg_all_labels[label] = self.avg_all(label)
+                missing_all_labels[label] = self.missing_values_all(label)
+            # calling the methods to write the data to a pickle
+            self.data_writer.write_min_max_avg(min_all_labels, max_all_labels, avg_all_labels)
+            self.data_writer.write_missing_val(missing_all_labels)
+
 
     def do_whole_training_set_analysis(self, print_to_stdout: bool = False, export_to_csv: bool = False):
         """
