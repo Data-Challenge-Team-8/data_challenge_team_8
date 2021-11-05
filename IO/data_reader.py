@@ -10,13 +10,8 @@ from objects.patient import Patient, NotUniqueIDError
 class DataReader:
 
     def __init__(self) -> None:
-        # data_set_path needed to be changed because data_reader is now inside a folder IO
-        current_path = Path(os.getcwd())
-        directory_path = str(current_path.parent.absolute())
-        self.file_dir_path_setA = directory_path + "/data/training_setA/"
-        self.file_dir_path_setB = directory_path + "/data/training_setB/"
-        # self.file_dir_path_setA = r'./data/training_setA/'
-        # self.file_dir_path_setB = r'./data/training_setB/'
+        self.file_dir_path_setA = r'./data/training_setA/'
+        self.file_dir_path_setB = r'./data/training_setB/'
 
         self.__training_setA: Dict[str, Patient] = None
         self.__training_setB: Dict[str, Patient] = None
