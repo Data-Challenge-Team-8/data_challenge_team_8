@@ -56,15 +56,31 @@ class TrainingSet:
     def data(self) -> Dict[str, Patient]:
         return self.__data
 
-    def get_subgroup(self, label: str, low_value, high_value):
+    def get_subgroup(self, label: str, low_value, high_value, new_set_id: str = None):
         """
         Split this set into a sub set based on low_value and high_value range
         :param label:
         :param low_value:
         :param high_value:
+        :param new_set_id:
         :return:
         """
-        raise NotImplementedError
+        if label not in Patient.LABELS:
+            raise ValueError(f"The requested label {label} is not part of Patient.LABELS")
+
+        subgroup_dict = {}
+        for patient in self.data.values():
+            if low_value <= patient.data[label] <= high_value:
+                subgroup_dict[patient.ID] = patient
+
+        if len(subgroup_dict.keys()) != 0:
+            if new_set_id is None:
+                return TrainingSet(self.__set_id+f"-SubGroup_{label}", subgroup_dict)
+            else:
+                return TrainingSet(new_set_id, subgroup_dict)
+        else:
+            return None
+
 
     @property
     def sepsis_patients(self) -> List[str]:
