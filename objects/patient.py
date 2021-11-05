@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 
 class NotUniqueIDError(Exception):
@@ -23,7 +24,7 @@ class Patient:
     patient_id_set = set()  # for checking uniqueness in ID
 
     def __init__(self, patient_ID: str, patient_data: pd.DataFrame):
-        self.data = patient_data
+        self.__data = patient_data
         self.__patient_ID: str = None
 
         if patient_ID not in Patient.patient_id_set:
@@ -47,6 +48,19 @@ class Patient:
         :return:
         """
         return self.__patient_ID
+
+    @property
+    def data(self):
+        return self.__data
+
+    def get_standard_deviation(self, label: str) -> float:
+        """
+        Get the standard deviation for a given label (see Patient.LABELS)
+        :param label:
+        :return:
+        """
+        a = self.data[label].dropna().to_numpy()
+        return np.std(a)
 
     #################### Vital Signs ######################
 
