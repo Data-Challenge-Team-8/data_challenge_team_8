@@ -1,6 +1,8 @@
 from typing import Dict, Tuple, List
+import os
+import hashlib
+import pickle
 
-import numpy as np
 import pandas as pd
 
 from objects.patient import Patient
@@ -8,9 +10,25 @@ from objects.patient import Patient
 
 class TrainingSet:
 
-    def __init__(self, set_id: str, patients: Dict[str, Patient]):
+    CACHE_PATH = os.path.join(".", "cache")
+
+    def __init__(self, set_id: str, patients: Dict[str, Patient], use_cache: bool = True):
         self.__set_id = set_id
         self.__data = patients
+
+        key_concat = ""
+        keys = list(patients.keys())
+        keys.sort()
+        for key in keys:
+            key_concat += key
+        self.__cache_file_name = hashlib.md5(key_concat.encode("utf-8")).hexdigest() + ".pickle"
+
+        if os.path.isfile(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name)) and use_cache:  # cache exists?
+            print(f"Found cache! TrainingSet {self.__set_id} uses", self.__cache_file_name)
+            self.__load_from_cache()
+            return
+        else:
+            print("Found no cache!", self.__cache_file_name)
 
         # caching variables
         self.__min_for_label: Dict[str, Tuple[str, float]] = {}
@@ -57,6 +75,8 @@ class TrainingSet:
                 if patient.data["SepsisLabel"].dropna().sum() > 0:  # at least one sepsis
                     self.__sepsis_patients.append(patient.ID)
 
+            self.__save_to_cache()
+
         return self.__sepsis_patients
 
     def get_min_for_label(self, label: str) -> Tuple[str, float]:
@@ -80,6 +100,7 @@ class TrainingSet:
                     min_patient = patient.ID
 
             self.__min_for_label[label] = (min_patient, min_value)
+            self.__save_to_cache()
 
         return self.__min_for_label[label]
 
@@ -104,6 +125,7 @@ class TrainingSet:
                     max_patient = patient.ID
 
             self.__max_for_label[label] = (max_patient, max_value)
+            self.__save_to_cache()
 
         return self.__max_for_label[label]
 
@@ -131,13 +153,15 @@ class TrainingSet:
                 average = None
 
             self.__avg_for_label[label] = average
+            self.__save_to_cache()
 
         return self.__avg_for_label[label]
 
-    def get_NaN_amount_for_label(self, label: str) -> int:
+    def get_NaN_amount_for_label(self, label: str, no_cache: bool = False) -> int:
         """
         Get the amount of NaN values for the label across all Patient objects in this set
         :param label:
+        :param no_cache:
         :return:
         """
         if label not in self.__NaN_amount_for_label.keys() or self.__NaN_amount_for_label[label] is None:
@@ -148,56 +172,69 @@ class TrainingSet:
                 count += patient.data[label].isnull().sum()
 
             self.__NaN_amount_for_label[label] = count
+            if not no_cache:
+                self.__save_to_cache()
 
         return self.__NaN_amount_for_label[label]
 
-    def get_NaN_amount(self) -> int:
+    def get_NaN_amount(self, no_cache: bool = False) -> int:
         """
         Get the amount of NaN values across all Patient objects in this set
         :return:
         """
         count = 0
         for label in Patient.LABELS:
-            count += self.get_NaN_amount_for_label(label)
+            count += self.get_NaN_amount_for_label(label, no_cache=True)
 
+        if not no_cache:
+            self.__save_to_cache()
         return count
 
-    def get_avg_rel_NaN_amount_for_label(self, label: str) -> float:
+    def get_avg_rel_NaN_amount_for_label(self, label: str, no_cache: bool = False) -> float:
         """
         Get the average relative amount of NaN values for the label across all Patient objects in this set
         :param label:
         :return:
         """
+        r = self.get_NaN_amount_for_label(label, no_cache=True) / self.get_data_amount_for_label(label, no_cache=True)
+        if not no_cache:
+            self.__save_to_cache()
+        return r
 
-        return self.get_NaN_amount_for_label(label) / self.get_data_amount_for_label(label)
-
-    def get_rel_NaN_amount(self) -> float:
+    def get_rel_NaN_amount(self, no_cache: bool = False) -> float:
         """
         Get the relative amount of NaN values across all Patient objects in this set
         :return:
         """
+        r = self.get_NaN_amount(no_cache=True) / self.get_data_amount(no_cache=True)
+        if not no_cache:
+            self.__save_to_cache()
+        return r
 
-        return self.get_NaN_amount() / self.get_data_amount()
-
-    def get_data_amount_for_label(self, label: str) -> float:
+    def get_data_amount_for_label(self, label: str, no_cache: bool = False) -> float:
         """
         Get the amount of values for the label across all Patient objects in this set
         :param label:
         :return:
         """
-        return self.get_NaN_amount_for_label(label) + self.get_non_NaN_amount_for_label(label)
+        return self.get_NaN_amount_for_label(label, no_cache=True) + \
+               self.get_non_NaN_amount_for_label(label, no_cache=True)
 
-    def get_data_amount(self) -> int:
+    def get_data_amount(self, no_cache: bool = False) -> int:
         """
         Get the amount of values across all Patient objects in this set
         :return:
         """
-        return self.get_NaN_amount() + self.get_non_NaN_amount()
+        r = self.get_NaN_amount(no_cache=True) + self.get_non_NaN_amount(no_cache=True)
+        if not no_cache:
+            self.__save_to_cache()
+        return r
 
-    def get_non_NaN_amount_for_label(self, label: str) -> int:
+    def get_non_NaN_amount_for_label(self, label: str, no_cache: bool = False) -> int:
         """
         Get the amount of non-NaN values for the label across all Patient objects in this set
         :param label:
+        :param no_cache:
         :return:
         """
         if label not in self.__non_NaN_amount_for_label.keys() or self.__non_NaN_amount_for_label[label] is None:
@@ -208,36 +245,46 @@ class TrainingSet:
                 s += len(patient.data[label].dropna())
 
             self.__non_NaN_amount_for_label[label] = s
+            if not no_cache:
+                self.__save_to_cache()
 
         return self.__non_NaN_amount_for_label[label]
 
-    def get_non_NaN_amount(self) -> int:
+    def get_non_NaN_amount(self, no_cache: bool = False) -> int:
         """
         Get the amount of non-NaN values across all Patient objects in this set
         :return:
         """
         count = 0
         for label in Patient.LABELS:
-            count += self.get_non_NaN_amount_for_label(label)
+            count += self.get_non_NaN_amount_for_label(label, no_cache=True)
 
+        if not no_cache:
+            self.__save_to_cache()
         return count
 
-    def get_avg_rel_non_NaN_amount_for_label(self, label: str) -> float:
+    def get_avg_rel_non_NaN_amount_for_label(self, label: str, no_cache: bool = False) -> float:
         """
         Get the average relative amount of non-NaN values for the label across all Patient objects in this set
         :param label:
         :return:
         """
-        return 1 - self.get_avg_rel_NaN_amount_for_label(label)
+        r = 1 - self.get_avg_rel_NaN_amount_for_label(label, no_cache=True)
+        if not no_cache:
+            self.__save_to_cache()
+        return r
 
-    def get_rel_non_NaN_amount(self) -> float:
+    def get_rel_non_NaN_amount(self, no_cache: bool = False) -> float:
         """
         Get the relative amount of non-NaN values across all Patient objects in this set
         :return:
         """
-        return 1 - self.get_rel_NaN_amount()
+        r = 1 - self.get_rel_NaN_amount(no_cache=True)
+        if not no_cache:
+            self.__save_to_cache()
+        return r
 
-    def get_min_data_duration(self) -> Tuple[str, int]:
+    def get_min_data_duration(self, no_cache: bool = False) -> Tuple[str, int]:
         """
         Get the minimal amount or duration of data across all Patient objects in this set
 
@@ -255,10 +302,12 @@ class TrainingSet:
                     min_patient = patient.ID
 
             self.__min_data_duration = (min_patient, min_value)
+            if not no_cache:
+                self.__save_to_cache()
 
         return self.__min_data_duration
 
-    def get_max_data_duration(self) -> Tuple[str, int]:
+    def get_max_data_duration(self, no_cache: bool = False) -> Tuple[str, int]:
         """
         Get the minimal amount or duration of data across all Patient objects in this set
 
@@ -276,10 +325,12 @@ class TrainingSet:
                     max_patient = patient.ID
 
             self.__max_data_duration = (max_patient, max_value)
+            if not no_cache:
+                self.__save_to_cache()
 
         return self.__max_data_duration
 
-    def get_avg_data_duration(self) -> float:
+    def get_avg_data_duration(self, no_cache: bool = False) -> float:
         """
         Get the average amount or duration of data across all Patient objects in this set
 
@@ -296,6 +347,8 @@ class TrainingSet:
                 avg_sum += len(patient.data)
 
             self.__avg_data_duration = avg_sum / avg_count
+            if not no_cache:
+                self.__save_to_cache()
 
         return self.__avg_data_duration
 
@@ -306,9 +359,39 @@ class TrainingSet:
         """
         return len(self.sepsis_patients)
 
-    def get_rel_sepsis_amount(self) -> float:
+    def get_rel_sepsis_amount(self, no_cache: bool = False) -> float:
         """
         Get the relative amount of patients that develop sepsis across all Patient objects in this set
         :return:
         """
-        return self.get_sepsis_amount() / len(self)
+        r = self.get_sepsis_amount() / len(self)
+        if not no_cache:
+            self.__save_to_cache()
+        return r
+
+    def __load_from_cache(self):
+        pickle_data = pickle.load(open(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name), "rb"))
+
+        self.__min_for_label = pickle_data["min_for_label"]
+        self.__max_for_label = pickle_data["max_for_label"]
+        self.__avg_for_label = pickle_data["avg_for_label"]
+        self.__NaN_amount_for_label = pickle_data["NaN_amount_for_label"]
+        self.__non_NaN_amount_for_label = pickle_data["non_NaN_amount_for_label"]
+        self.__min_data_duration = pickle_data["min_data_duration"]
+        self.__max_data_duration = pickle_data["max_data_duration"]
+        self.__avg_data_duration = pickle_data["avg_data_duration"]
+        self.__sepsis_patients = pickle_data["sepsis_patients"]
+
+    def __save_to_cache(self):
+        pickle_data = {
+            "min_for_label": self.__min_for_label,
+            "max_for_label": self.__max_for_label,
+            "avg_for_label": self.__avg_for_label,
+            "NaN_amount_for_label": self.__NaN_amount_for_label,
+            "non_NaN_amount_for_label": self.__non_NaN_amount_for_label,
+            "min_data_duration": self.__min_data_duration,
+            "max_data_duration": self.__max_data_duration,
+            "avg_data_duration": self.__avg_data_duration,
+            "sepsis_patients": self.__sepsis_patients
+        }
+        pickle.dump(pickle_data, open(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name), "wb"))
