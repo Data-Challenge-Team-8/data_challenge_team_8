@@ -38,6 +38,16 @@ class TrainingSet:
     def data(self) -> Dict[str, Patient]:
         return self.__data
 
+    def get_subgroup(self, label: str, low_value, high_value):
+        """
+        Split this set into a sub set based on low_value and high_value range
+        :param label:
+        :param low_value:
+        :param high_value:
+        :return:
+        """
+        raise NotImplementedError
+
     @property
     def sepsis_patients(self) -> List[str]:
         if self.__sepsis_patients is None:
