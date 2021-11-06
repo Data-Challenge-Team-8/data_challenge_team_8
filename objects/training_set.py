@@ -9,26 +9,22 @@ from objects.patient import Patient
 
 
 class TrainingSet:
-
     CACHE_PATH = os.path.join(".", "cache")
 
-    def __init__(self, set_id: str, patients: Dict[str, Patient], use_cache: bool = True):
+    def __init__(self, set_id: str, patients: Dict[str, Patient], keys: List[str], use_cache: bool = True):
         self.__set_id = set_id
         self.__data = patients
-
+        # the keys is a list of the inputs selected f.e. ['Max, Min, Average', 'SetA']
         key_concat = ""
-        keys = list(patients.keys())
         keys.sort()
         for key in keys:
             key_concat += key
         self.__cache_file_name = hashlib.md5(key_concat.encode("utf-8")).hexdigest() + ".pickle"
 
         if os.path.isfile(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name)) and use_cache:  # cache exists?
-            print(f"Found cache! TrainingSet {self.__set_id} uses", self.__cache_file_name)
             self.__load_from_cache()
             return
-        else:
-            print("Found no cache!", self.__cache_file_name)
+
 
         # caching variables
         self.__min_for_label: Dict[str, Tuple[str, float]] = {}
@@ -36,6 +32,7 @@ class TrainingSet:
         self.__avg_for_label: Dict[str, float] = {}
         self.__NaN_amount_for_label: Dict[str, int] = {}
         self.__non_NaN_amount_for_label: Dict[str, int] = {}
+        self.__temperature_sepsis: Dict[str, List[float]] = {}
         self.__min_data_duration: Tuple[str, int] = None
         self.__max_data_duration: Tuple[str, int] = None
         self.__avg_data_duration: float = None
@@ -56,6 +53,14 @@ class TrainingSet:
     def data(self) -> Dict[str, Patient]:
         return self.__data
 
+    def is_cached(self):
+        if os.path.isfile(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name)):
+            print(f"Found cache! TrainingSet {self.__set_id} uses", self.__cache_file_name)
+            return True
+        else:
+            print("Found no cache!", self.__cache_file_name)
+            return False
+
     def get_subgroup(self, label: str, low_value, high_value, new_set_id: str = None):
         """
         Split this set into a sub set based on low_value and high_value range
@@ -75,12 +80,11 @@ class TrainingSet:
 
         if len(subgroup_dict.keys()) != 0:
             if new_set_id is None:
-                return TrainingSet(self.__set_id+f"-SubGroup_{label}", subgroup_dict)
+                return TrainingSet(self.__set_id + f"-SubGroup_{label}", subgroup_dict)
             else:
                 return TrainingSet(new_set_id, subgroup_dict)
         else:
             return None
-
 
     @property
     def sepsis_patients(self) -> List[str]:
@@ -119,6 +123,30 @@ class TrainingSet:
             self.__save_to_cache()
 
         return self.__min_for_label[label]
+
+    def get_temperature_sepsis(self) -> List[List[float]]:
+        """
+        Gets the temperatures for patient with and without sepsis
+        :return:
+        """
+        if not self.__temperature_sepsis:
+            # was not calculated before, calculating now
+            temps1 = []
+            temps2 = []
+            for patient in self.data:
+                temp = self.data[patient].Temp
+                for t in temp:
+                    if pd.notna(t):
+                        if self.data[patient].sepsis_label[0] == 1:
+                            temps1.append(float(t))
+                        else:
+                            temps2.append(float(t))
+
+            self.__temperature_sepsis["sick"] = temps1
+            self.__temperature_sepsis["healthy"] = temps2
+            self.__save_to_cache()
+
+        return self.__temperature_sepsis
 
     def get_max_for_label(self, label: str) -> Tuple[str, float]:
         """
@@ -397,6 +425,7 @@ class TrainingSet:
         self.__max_data_duration = pickle_data["max_data_duration"]
         self.__avg_data_duration = pickle_data["avg_data_duration"]
         self.__sepsis_patients = pickle_data["sepsis_patients"]
+        self.__temperature_sepsis = pickle_data["temperature_sepsis"]
 
     def __save_to_cache(self):
         pickle_data = {
@@ -408,6 +437,7 @@ class TrainingSet:
             "min_data_duration": self.__min_data_duration,
             "max_data_duration": self.__max_data_duration,
             "avg_data_duration": self.__avg_data_duration,
-            "sepsis_patients": self.__sepsis_patients
+            "sepsis_patients": self.__sepsis_patients,
+            "temperature_sepsis": self.__temperature_sepsis
         }
         pickle.dump(pickle_data, open(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name), "wb"))
