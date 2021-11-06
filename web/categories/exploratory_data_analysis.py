@@ -90,8 +90,9 @@ class ExploratoryDataAnalysis:
             ).get_avg_rel_NaN_amount_for_label(selected_label)
 
         fig, ax = plt.subplots()
-        mylabels = ["Amount of NaN Values", "Amount of defined data"]
-        ax.pie([missing_vals_rel, 1 - missing_vals_rel], labels=mylabels)
+        mylabels = [str(round((missing_vals_rel * 100), 2)) + "% NaN Values",
+                    str(round((1 - missing_vals_rel) * 100, 2)) + "% defined values"]
+        ax.pie([missing_vals_rel, 1 - missing_vals_rel], labels=mylabels, explode=[0.2, 0], colors=['r', 'g'])
         st.pyplot(fig)
 
     def create_min_max_avg(self, selected_tool, selected_set, selected_label):
