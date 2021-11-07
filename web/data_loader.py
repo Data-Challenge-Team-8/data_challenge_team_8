@@ -37,7 +37,7 @@ class DataLoader:
                             )
                             analyse_tool.get_plot_label_to_sepsis(label)
                     elif 0 == 'Missing Values':
-                        for label in ExploratoryDataAnalysis().LABELS:
+                        for label in ExploratoryDataAnalysis(display=False).LABELS:
                             analyse_tool = TrainingSet(
                                 "exploratory_data_analysis_missing_values",
                                 set_a,
