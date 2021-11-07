@@ -30,18 +30,23 @@ class DataLoader:
                             analyse_tool.get_avg_for_label(label)
                     elif o == 'Plots':
                         for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
-                            analyse_tool = TrainingSet(
-                                "mathematical_statistics",
-                                set_a,
-                                ['Mathematical statistics', label, s]
-                            )
-                            analyse_tool.get_plot_label_to_sepsis(label)
+                            if not TrainingSet(
+                                    "mathematical_statistics",
+                                    set_a,
+                                    ['Mathematical statistics', label, s]
+                            ).is_cached():
+                                analyse_set = TrainingSet(
+                                    "mathematical_statistics",
+                                    set_a,
+                                    ['Mathematical statistics', label, s]
+                                )
+                                plot_data = analyse_set.get_plot_label_to_sepsis(label)
                     elif 0 == 'Missing Values':
                         for label in ExploratoryDataAnalysis(display=False).LABELS:
                             analyse_tool = TrainingSet(
                                 "exploratory_data_analysis_missing_values",
                                 set_a,
-                                ['Min, Max, Average', label, s]
+                                ['Missing Values', label, s]
                             )
                             analyse_tool.get_avg_rel_NaN_amount_for_label(label)
 
@@ -57,13 +62,17 @@ class DataLoader:
                         analyse_tool.get_min_for_label(label)
                         analyse_tool.get_avg_for_label(label)
                 elif o == 'Plots':
-                    for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
-                        analyse_tool = TrainingSet(
+                    if not TrainingSet(
+                            "mathematical_statistics",
+                            set_b,
+                            ['Mathematical statistics', label, s]
+                    ).is_cached():
+                        analyse_set = TrainingSet(
                             "mathematical_statistics",
                             set_b,
                             ['Mathematical statistics', label, s]
                         )
-                        analyse_tool.get_plot_label_to_sepsis(label)
+                        plot_data = analyse_set.get_plot_label_to_sepsis(label)
                 elif 0 == 'Missing Values':
                     for label in ExploratoryDataAnalysis(display=False).LABELS:
                         analyse_tool = TrainingSet(
@@ -85,12 +94,17 @@ class DataLoader:
                         analyse_tool.get_avg_for_label(label)
                 elif o == 'Plots':
                     for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
-                        analyse_tool = TrainingSet(
-                            "mathematical_statistics",
-                            set_a_b,
-                            ['Mathematical statistics', label, s]
-                        )
-                        analyse_tool.get_plot_label_to_sepsis(label)
+                        if not TrainingSet(
+                                "mathematical_statistics",
+                                set_a_b,
+                                ['Mathematical statistics', label, s]
+                        ).is_cached():
+                            analyse_set = TrainingSet(
+                                "mathematical_statistics",
+                                set_a_b,
+                                ['Mathematical statistics', label, s]
+                            )
+                            plot_data = analyse_set.get_plot_label_to_sepsis(label)
                 elif 0 == 'Missing Values':
                     for label in ExploratoryDataAnalysis(display=False).LABELS:
                         analyse_tool = TrainingSet(

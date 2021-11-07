@@ -12,10 +12,9 @@ class PlotLabelToSepsis:
     def __init__(self, option, display: bool = True):
         self.__option = option
         self.__training_set = None
-        if display:
-            col1, col2 = st.columns((1, 2))
-            selected_label, selected_set, selected_sepsis = self.create_selectors(col1)
-            self.create_plot(col2, selected_label, selected_set, selected_sepsis)
+        col1, col2 = st.columns((1, 2))
+        selected_label, selected_set, selected_sepsis = self.create_selectors(col1)
+        self.create_plot(col2, selected_label, selected_set, selected_sepsis)
 
     def create_selectors(self, col1):
         selected_label = col1.selectbox(
