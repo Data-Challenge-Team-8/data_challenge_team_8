@@ -6,7 +6,6 @@ from web.UI_tools.plot_label_to_sepsis import PlotLabelToSepsis
 
 
 class MathematicalStatistics:
-    LABELS = ["Temp", "HR", "pH", "age", "gender"]
 
     def __init__(self, option):
         self.__option = option

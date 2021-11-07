@@ -1,12 +1,14 @@
+import numpy
 from matplotlib import pyplot as plt
 import streamlit as st
 from IO.data_reader import DataReader
 from objects.training_set import TrainingSet
+from web.UI_tools.min_max_avg import MinMaxAvg
+from web.categories.exploratory_data_analysis import ExploratoryDataAnalysis
 
 
 class PlotLabelToSepsis:
-
-    LABELS = ["Temp", "HR", "pH", "age", "gender"]
+    LABELS = ["Temp", "HR", "pH", "Age", "Gender"]
 
     def __init__(self, option):
         self.__option = option
@@ -60,25 +62,31 @@ class PlotLabelToSepsis:
             else:
                 self.__training_set = dr.combined_training_set
 
-            plot_data = TrainingSet(
+        analyse_set = TrainingSet(
                 "descriptive_statistics",  # id
                 self.__training_set,  # data set
                 [self.__option, selected_label]  # keys of selected options
-            ).get_plot_label_to_sepsis(selected_label)
+            )
+        plot_data = analyse_set.get_plot_label_to_sepsis(selected_label)
+
+        # getting the min max average to scale the plot proportional
+        min_val = analyse_set.get_min_for_label(selected_label)
+        max_val = analyse_set.get_max_for_label(selected_label)
+        bins = numpy.linspace(float(min_val[1]), float(max_val[1]), 100 if selected_label != 'Gender' else 2)
 
         if selected_sepsis == "positive + negative":  # user can select the sepsis state
             fig, ax1 = plt.subplots()
-            ax1.hist(plot_data[0], density=True, bins=50, color="r")
-            ax1.hist(plot_data[1], density=True, bins=50, color="g", alpha=0.4)
+            ax1.hist([plot_data[0], plot_data[1]], density=True, color=['r', 'g'], bins=bins, alpha=0.6)
+
             col2.pyplot(fig)
 
         elif selected_sepsis == "positive":
             fig, ax1 = plt.subplots()
-            ax1.hist(plot_data[0], density=True, bins=50, color="r")
+            ax1.hist(plot_data[0], bins=bins, alpha=0.6, color="r")
             col2.pyplot(fig)
 
         elif selected_sepsis == "negative":
             fig, ax1 = plt.subplots()
-            ax1.hist(plot_data[1], density=True, bins=50, color="g")
+            ax1.hist(plot_data[1], bins=bins, alpha=0.6, color="g")
             col2.pyplot(fig)
 

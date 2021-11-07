@@ -137,7 +137,7 @@ class TrainingSet:
                 label_vals = patient.data[label]
                 for label_val in label_vals:
                     if pd.notna(label_val):
-                        if int(patient.data["SepsisLabel"][0]) == 1:
+                        if int(patient.data["SepsisLabel"][1]) == 1:
                             sepsis_pos.append(float(label_val))
                         else:
                             sepsis_neg.append(float(label_val))
