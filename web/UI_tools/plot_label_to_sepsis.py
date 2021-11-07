@@ -1,10 +1,9 @@
 import numpy
-from matplotlib import pyplot as plt
 import streamlit as st
+from matplotlib import pyplot as plt
+
 from IO.data_reader import DataReader
 from objects.training_set import TrainingSet
-from web.UI_tools.min_max_avg import MinMaxAvg
-from web.categories.exploratory_data_analysis import ExploratoryDataAnalysis
 
 
 class PlotLabelToSepsis:
@@ -13,7 +12,7 @@ class PlotLabelToSepsis:
     def __init__(self, option):
         self.__option = option
         self.__training_set = None
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns((1, 2))
         selected_label, selected_set, selected_sepsis = self.create_selectors(col1)
         self.create_plot(col2, selected_label, selected_set, selected_sepsis)
 
@@ -45,15 +44,11 @@ class PlotLabelToSepsis:
         return selected_label, selected_set, selected_sepsis
 
     def create_plot(self, col2, selected_label, selected_set, selected_sepsis):
-        if TrainingSet("descriptive_statistics", self.__training_set, [self.__option, selected_label]).is_cached():
-
-            plot_data = TrainingSet(
-                "descriptive_statistics",  # id
-                self.__training_set,  # data set
-                [self.__option, selected_label]  # keys of selected options
-            ).get_plot_label_to_sepsis(selected_label)
-
-        else:
+        if not TrainingSet(
+                "descriptive_statistics",
+                self.__training_set,
+                [self.__option, selected_label, selected_set]
+        ).is_cached():
             dr = DataReader()
             if selected_set == "Set A":  # user can select his set
                 self.__training_set = dr.training_setA
@@ -65,7 +60,7 @@ class PlotLabelToSepsis:
         analyse_set = TrainingSet(
                 "descriptive_statistics",  # id
                 self.__training_set,  # data set
-                [self.__option, selected_label]  # keys of selected options
+                [self.__option, selected_label, selected_set]  # keys of selected options
             )
         plot_data = analyse_set.get_plot_label_to_sepsis(selected_label)
 
