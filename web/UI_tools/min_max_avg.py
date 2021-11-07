@@ -4,6 +4,7 @@ from IO.data_reader import DataReader
 from objects.training_set import TrainingSet
 
 
+
 class MinMaxAvg:
 
     def __init__(self, selected_tool: str, selected_label: str, selected_set: str, col3, col2, display: bool = True):
