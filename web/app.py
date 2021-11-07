@@ -1,6 +1,6 @@
 import streamlit as st
 
-from web.categories.general_information import GeneralInformation
+from web.categories.landing_page import LandingPage
 from web.categories.descriptive_statistics import DescriptiveStatistics
 from web.categories.exploratory_data_analysis import ExploratoryDataAnalysis
 from web.categories.mathematical_statistics import MathematicalStatistics
@@ -9,7 +9,9 @@ from web.categories.mathematical_statistics import MathematicalStatistics
 def create_app():
     title = st.title("Dashboard for Sepsis Analysis")
 
-    methode = st.selectbox(
+    st.sidebar.write("Test")
+
+    methode = st.sidebar.selectbox(
         'Choose your way of analysing the data:',
         (
             'General Information',
@@ -20,7 +22,7 @@ def create_app():
     )
 
     if methode == 'General Information':
-        general_info = GeneralInformation(methode)
+        landing_page = LandingPage(methode)
 
     if methode == 'Descriptive Statistics':
         desc_stat = DescriptiveStatistics(methode)
