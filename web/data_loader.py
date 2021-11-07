@@ -29,7 +29,7 @@ class DataLoader:
                             analyse_tool.get_min_for_label(label)
                             analyse_tool.get_avg_for_label(label)
                     elif o == 'Plots':
-                        for label in PlotLabelToSepsis(display=False).LABELS:
+                        for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
                             analyse_tool = TrainingSet(
                                 "mathematical_statistics",
                                 set_a,
@@ -57,7 +57,7 @@ class DataLoader:
                         analyse_tool.get_min_for_label(label)
                         analyse_tool.get_avg_for_label(label)
                 elif o == 'Plots':
-                    for label in PlotLabelToSepsis(display=False).LABELS:
+                    for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "mathematical_statistics",
                             set_a,
@@ -84,7 +84,7 @@ class DataLoader:
                         analyse_tool.get_min_for_label(label)
                         analyse_tool.get_avg_for_label(label)
                 elif o == 'Plots':
-                    for label in PlotLabelToSepsis(display=False).LABELS:
+                    for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "mathematical_statistics",
                             set_a,
