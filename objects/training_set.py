@@ -14,7 +14,8 @@ class TrainingSet:
     def __init__(self, set_id: str, patients: Dict[str, Patient], keys: List[str], use_cache: bool = True):
         self.__set_id = set_id
         self.__data = patients
-        # the keys is a list of the inputs selected f.e. ['Max, Min, Average', 'SetA']
+
+        # keys is a list of the inputs selected f.e. ['Max, Min, Average', 'Label', 'Set']
         key_concat = ""
         keys.sort()
         for key in keys:
@@ -25,14 +26,13 @@ class TrainingSet:
             self.__load_from_cache()
             return
 
-
         # caching variables
         self.__min_for_label: Dict[str, Tuple[str, float]] = {}
         self.__max_for_label: Dict[str, Tuple[str, float]] = {}
         self.__avg_for_label: Dict[str, float] = {}
         self.__NaN_amount_for_label: Dict[str, int] = {}
         self.__non_NaN_amount_for_label: Dict[str, int] = {}
-        self.__temperature_sepsis: Dict[str, List[float]] = {}
+        self.__plot_label_to_sepsis: Dict[str, Tuple[list[float], list[float]]] = {}
         self.__min_data_duration: Tuple[str, int] = None
         self.__max_data_duration: Tuple[str, int] = None
         self.__avg_data_duration: float = None
@@ -124,29 +124,28 @@ class TrainingSet:
 
         return self.__min_for_label[label]
 
-    def get_temperature_sepsis(self) -> List[List[float]]:
+    def get_plot_label_to_sepsis(self, label: str):
         """
         Gets the temperatures for patient with and without sepsis
         :return:
         """
-        if not self.__temperature_sepsis:
+        if label not in self.__plot_label_to_sepsis.keys() or not self.__plot_label_to_sepsis:
             # was not calculated before, calculating now
-            temps1 = []
-            temps2 = []
-            for patient in self.data:
-                temp = self.data[patient].Temp
-                for t in temp:
-                    if pd.notna(t):
-                        if self.data[patient].sepsis_label[0] == 1:
-                            temps1.append(float(t))
+            sepsis_pos = []
+            sepsis_neg = []
+            for patient in self.data.values():
+                label_vals = patient.data[label]
+                for label_val in label_vals:
+                    if pd.notna(label_val):
+                        if int(patient.data["SepsisLabel"][0]) == 1:
+                            sepsis_pos.append(float(label_val))
                         else:
-                            temps2.append(float(t))
+                            sepsis_neg.append(float(label_val))
 
-            self.__temperature_sepsis["sick"] = temps1
-            self.__temperature_sepsis["healthy"] = temps2
+            self.__plot_label_to_sepsis[label] = (sepsis_pos, sepsis_neg)
             self.__save_to_cache()
 
-        return self.__temperature_sepsis
+        return self.__plot_label_to_sepsis[label]
 
     def get_max_for_label(self, label: str) -> Tuple[str, float]:
         """
@@ -425,7 +424,7 @@ class TrainingSet:
         self.__max_data_duration = pickle_data["max_data_duration"]
         self.__avg_data_duration = pickle_data["avg_data_duration"]
         self.__sepsis_patients = pickle_data["sepsis_patients"]
-        self.__temperature_sepsis = pickle_data["temperature_sepsis"]
+        self.__plot_label_to_sepsis = pickle_data["plot_label_to_sepsis"]
 
     def __save_to_cache(self):
         pickle_data = {
@@ -438,6 +437,6 @@ class TrainingSet:
             "max_data_duration": self.__max_data_duration,
             "avg_data_duration": self.__avg_data_duration,
             "sepsis_patients": self.__sepsis_patients,
-            "temperature_sepsis": self.__temperature_sepsis
+            "plot_label_to_sepsis": self.__plot_label_to_sepsis
         }
         pickle.dump(pickle_data, open(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name), "wb"))
