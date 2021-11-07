@@ -50,7 +50,7 @@ class DataLoader:
                     for label in ExploratoryDataAnalysis(display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "exploratory_data_analysis_min_max_avg",
-                            set_a,
+                            set_b,
                             ['Min, Max, Average', label, s]
                         )
                         analyse_tool.get_max_for_label(label)
@@ -60,7 +60,7 @@ class DataLoader:
                     for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "mathematical_statistics",
-                            set_a,
+                            set_b,
                             ['Mathematical statistics', label, s]
                         )
                         analyse_tool.get_plot_label_to_sepsis(label)
@@ -68,7 +68,7 @@ class DataLoader:
                     for label in ExploratoryDataAnalysis(display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "exploratory_data_analysis_missing_values",
-                            set_a,
+                            set_b,
                             ['Min, Max, Average', label, s]
                         )
                         analyse_tool.get_avg_rel_NaN_amount_for_label(label)
@@ -77,7 +77,7 @@ class DataLoader:
                     for label in ExploratoryDataAnalysis(display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "exploratory_data_analysis_min_max_avg",
-                            set_a,
+                            set_a_b,
                             ['Min, Max, Average', label, s]
                         )
                         analyse_tool.get_max_for_label(label)
@@ -87,7 +87,7 @@ class DataLoader:
                     for label in PlotLabelToSepsis('Mathematical statistics', display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "mathematical_statistics",
-                            set_a,
+                            set_a_b,
                             ['Mathematical statistics', label, s]
                         )
                         analyse_tool.get_plot_label_to_sepsis(label)
@@ -95,7 +95,7 @@ class DataLoader:
                     for label in ExploratoryDataAnalysis(display=False).LABELS:
                         analyse_tool = TrainingSet(
                             "exploratory_data_analysis_missing_values",
-                            set_a,
+                            set_a_b,
                             ['Min, Max, Average', label, s]
                         )
                         analyse_tool.get_avg_rel_NaN_amount_for_label(label)
