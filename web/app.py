@@ -18,10 +18,10 @@ def create_app():
         desc_stat = DescriptiveStatistics(option)
 
     if option == 'Exploratory data analysis':
-        expl_ana = ExploratoryDataAnalysis()
+        expl_ana = ExploratoryDataAnalysis(option)
 
     if option == 'Mathematical statistics':
-        math_stat = MathematicalStatistics()
+        math_stat = MathematicalStatistics(option)
 
 
 create_app()
