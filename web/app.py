@@ -7,7 +7,6 @@ from web.data_loader import DataLoader
 
 
 def create_app():
-    del_input = st.empty()
     sets = st.multiselect(
         'Choose what set to load before the app starts. This can save loading Time',
         ['Set A', 'Set B', 'Set A + B'],
@@ -20,7 +19,6 @@ def create_app():
     )
 
     if st.button('Load Data'):
-
         if sets:
             if options:
                 DataLoader().load_before(sets, options)
