@@ -10,7 +10,7 @@ class DataLoader:
         pass
 
     @staticmethod
-    def load_before(sets, options):
+    def load_before(sets):
         dr = DataReader()
         set_a = dr.training_setA
         set_b = dr.training_setB
