@@ -37,9 +37,10 @@ def display_feature_graphic():
     st.image(feature_graphic, caption='Descriptions for each feature from the underlying PhysioNet paper')
 
 
-class GeneralInformation:
+class LandingPage:
     def __init__(self, option: str):
-        st.title("Helpful to load the data upfront:")
+        st.header("Helpful to load the data upfront:")
         load_data_upfront()
+        st.header("General Information")
         write_info_text()
         display_feature_graphic()
