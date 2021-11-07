@@ -6,7 +6,7 @@ import streamlit as st
 
 class MissingValues:
 
-    def __init__(self, selected_tool: str, selected_label: str, selected_set: str, col3, col2, display: bool = True):
+    def __init__(self, selected_tool: str, selected_label: str, selected_set: str, col3=None, col2=None, display: bool = True):
         self.__training_set = {}
         self.__selected_tool = selected_tool
         self.__selected_label = selected_label
