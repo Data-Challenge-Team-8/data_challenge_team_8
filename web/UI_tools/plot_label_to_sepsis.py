@@ -9,12 +9,13 @@ from objects.training_set import TrainingSet
 class PlotLabelToSepsis:
     LABELS = ["Temp", "HR", "pH", "Age", "Gender"]
 
-    def __init__(self, option):
+    def __init__(self, option, display: bool = True):
         self.__option = option
         self.__training_set = None
-        col1, col2 = st.columns((1, 2))
-        selected_label, selected_set, selected_sepsis = self.create_selectors(col1)
-        self.create_plot(col2, selected_label, selected_set, selected_sepsis)
+        if display:
+            col1, col2 = st.columns((1, 2))
+            selected_label, selected_set, selected_sepsis = self.create_selectors(col1)
+            self.create_plot(col2, selected_label, selected_set, selected_sepsis)
 
     def create_selectors(self, col1):
         selected_label = col1.selectbox(
@@ -45,7 +46,7 @@ class PlotLabelToSepsis:
 
     def create_plot(self, col2, selected_label, selected_set, selected_sepsis):
         if not TrainingSet(
-                "descriptive_statistics",
+                "mathematical_statistics",
                 self.__training_set,
                 [self.__option, selected_label, selected_set]
         ).is_cached():
@@ -58,7 +59,7 @@ class PlotLabelToSepsis:
                 self.__training_set = dr.combined_training_set
 
         analyse_set = TrainingSet(
-                "descriptive_statistics",  # id
+                "mathematical_statistics",  # id
                 self.__training_set,  # data set
                 [self.__option, selected_label, selected_set]  # keys of selected options
             )

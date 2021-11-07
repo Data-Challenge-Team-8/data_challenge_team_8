@@ -1,7 +1,8 @@
+from matplotlib import pyplot as plt
+
 from IO.data_reader import DataReader
 from objects.training_set import TrainingSet
-from matplotlib import pyplot as plt
-import streamlit as st
+
 
 class MinMaxAvg:
 
