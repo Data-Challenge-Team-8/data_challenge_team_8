@@ -7,9 +7,8 @@ from web.categories.mathematical_statistics import MathematicalStatistics
 
 
 def create_app():
-    title = st.title("Dashboard for Sepsis Analysis")
-
-    st.sidebar.write("Test")
+    # title = st.title("Dashboard for Sepsis Analysis")
+    st.sidebar.write("Dasboard for Sepsis Analysis")
 
     methode = st.sidebar.selectbox(
         'Choose your way of analysing the data:',
@@ -23,13 +22,10 @@ def create_app():
 
     if methode == 'General Information':
         landing_page = LandingPage(methode)
-
     if methode == 'Descriptive Statistics':
         desc_stat = DescriptiveStatistics(methode)
-
     if methode == 'Exploratory Data Analysis':
         expl_ana = ExploratoryDataAnalysis(methode)
-
     if methode == 'Mathematical Statistics':
         math_stat = MathematicalStatistics(methode)
 
