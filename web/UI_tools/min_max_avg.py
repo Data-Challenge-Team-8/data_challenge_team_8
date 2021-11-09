@@ -4,10 +4,8 @@ from IO.data_reader import DataReader
 from objects.training_set import TrainingSet
 
 
-
 class MinMaxAvg:
-
-    def __init__(self, selected_tool: str, selected_label: str, selected_set: str, col3, col2, display: bool = True):
+    def __init__(self, selected_tool: str, selected_label: str, selected_set: str, col3, col2):
         self.__training_set = {}
         self.__selected_tool = selected_tool
         self.__selected_label = selected_label
@@ -15,12 +13,11 @@ class MinMaxAvg:
         self.__col3 = col3
         self.__col2 = col2
 
-        if display:
-            max_label, min_label, avg_label = self.get_min_max_avg()
-            self.create_results(selected_label, max_label, min_label, avg_label)
+        max_label, min_label, avg_label = self.get_min_max_avg()
+        self.create_results(selected_label, max_label, min_label, avg_label)
 
     def get_min_max_avg(self):
-        if not TrainingSet(
+        if not TrainingSet(                                     # Error message starts here
                 "exploratory_data_analysis_min_max_avg",
                 self.__training_set,
                 [self.__selected_tool, self.__selected_label, self.__selected_set]
@@ -43,6 +40,7 @@ class MinMaxAvg:
         min_label = analyse_tool.get_min_for_label(self.__selected_label)
 
         avg_label = analyse_tool.get_avg_for_label(self.__selected_label)
+
         return max_label, min_label, avg_label
 
     def create_results(self, selected_label, max_label, min_label, avg_label):

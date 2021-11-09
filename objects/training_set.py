@@ -9,6 +9,10 @@ from objects.patient import Patient
 
 
 class TrainingSet:
+    """
+    Whats the usage for this class Tobi?
+
+    """
     CACHE_PATH = os.path.join(".", "cache")
 
     def __init__(self, set_id: str, patients: Dict[str, Patient], keys: List[str], use_cache: bool = True):
@@ -22,9 +26,9 @@ class TrainingSet:
             key_concat += key
         self.__cache_file_name = hashlib.md5(key_concat.encode("utf-8")).hexdigest() + ".pickle"
 
-        if os.path.isfile(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name)) and use_cache:  # cache exists?
-            self.__load_from_cache()
-            return
+        # if os.path.isfile(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name)) and use_cache:  # cache exists?
+        #     self.__load_from_cache()
+        #     return
 
         # caching variables
         self.__min_for_label: Dict[str, Tuple[str, float]] = {}
@@ -32,7 +36,7 @@ class TrainingSet:
         self.__avg_for_label: Dict[str, float] = {}
         self.__NaN_amount_for_label: Dict[str, int] = {}
         self.__non_NaN_amount_for_label: Dict[str, int] = {}
-        self.__plot_label_to_sepsis: Dict[str, Tuple[list[float], list[float]]] = {}
+        self.__plot_label_to_sepsis: Dict[str, Tuple[List[float], List[float]]] = {}
         self.__min_data_duration: Tuple[str, int] = None
         self.__max_data_duration: Tuple[str, int] = None
         self.__avg_data_duration: float = None
@@ -56,7 +60,7 @@ class TrainingSet:
     def is_cached(self):
         if os.path.isfile(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name)):
             print(f"Found cache! TrainingSet {self.__set_id} uses", self.__cache_file_name)
-            return True
+            return True                                                     # Change to False to force reload
         else:
             print("Found no cache!", self.__cache_file_name)
             return False
@@ -126,10 +130,10 @@ class TrainingSet:
 
     def get_plot_label_to_sepsis(self, label: str):
         """
-        Gets the temperatures for patient with and without sepsis
+        Gets the selected labels for patient with and without sepsis
         :return:
         """
-        if label not in self.__plot_label_to_sepsis.keys() or not self.__plot_label_to_sepsis:
+        if label not in self.__plot_label_to_sepsis.keys() or not self.__plot_label_to_sepsis:              # Error message: AttributeError: 'NoneType' object has no attribute 'values'
             # was not calculated before, calculating now
             sepsis_pos = []
             sepsis_neg = []
@@ -142,7 +146,7 @@ class TrainingSet:
                         else:
                             sepsis_neg.append(float(label_val))
 
-            self.__plot_label_to_sepsis[label] = (sepsis_pos, sepsis_neg)
+            self.__plot_label_to_sepsis[label] = (sepsis_pos, sepsis_neg)           # pos = plot_data[0] and neg = plot_data[1]
             self.__save_to_cache()
 
         return self.__plot_label_to_sepsis[label]
@@ -412,7 +416,7 @@ class TrainingSet:
             self.__save_to_cache()
         return r
 
-    def __load_from_cache(self):
+    def __load_from_cache(self):            # KeyError: 'plot_label_to_sepsis'
         pickle_data = pickle.load(open(os.path.join(TrainingSet.CACHE_PATH, self.__cache_file_name), "rb"))
 
         self.__min_for_label = pickle_data["min_for_label"]
