@@ -5,6 +5,10 @@ import pandas as pd
 from objects.patient import Patient, NotUniqueIDError
 
 
+class UnknownDataset(Exception):
+    pass
+
+
 class DataReader:
     def __init__(self) -> None:
         self.file_dir_path_setA = r'./data/training_setA/'
@@ -187,11 +191,14 @@ class DataReader:
 
     def load_new_training_set(self, file_dir_path):
         training_set_dict = dict()
-        for filename in os.listdir(file_dir_path):
-            try:
-                patient = self.__read_patient_data(file_dir_path, filename)
-            except NotUniqueIDError as e:  # caused ID uniqueness error, meaning we've already loaded this one!
-                continue
-            training_set_dict[os.path.splitext(filename)[0]] = patient
+        try:
+            for filename in os.listdir(file_dir_path):
+                try:
+                    patient = self.__read_patient_data(file_dir_path, filename)
+                except NotUniqueIDError as e:  # caused ID uniqueness error, meaning we've already loaded this one!
+                    continue
+                training_set_dict[os.path.splitext(filename)[0]] = patient
+        except FileNotFoundError as e:
+            print("Error:", e, "Please enter a valid dataset folder.")
 
         return training_set_dict
