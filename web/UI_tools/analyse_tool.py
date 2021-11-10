@@ -1,21 +1,21 @@
-import json
 from typing import Dict, Tuple, List
 import os
 import hashlib
 import pickle
 import pandas as pd
+import jsonpickle
+import json
 
 from objects.patient import Patient
 from objects.training_set import TrainingSet
 
-USE_CACHE = True
+USE_CACHE = False
 
 
-def construct_cache_file_name(selected_label, selected_tool, selected_set):
-    # keys is a list of the inputs selected f.e. ['Max, Min, Average', 'Label', 'Set']
-    key_concat = ""                     # not good to use keys.sort() -> changes every time
+def construct_cache_file_name(selected_label, selected_set):                # removed "tool" from here - always complete analysis for all features
+    # keys is a list of the inputs selected f.e. ['Label', 'Set']
+    key_concat = ""  # not good to use keys.sort() -> changes every time
     key_concat += selected_label
-    key_concat += selected_tool
     key_concat += selected_set
     return hashlib.md5(key_concat.encode("utf-8")).hexdigest() + ".pickle"
 
@@ -28,7 +28,7 @@ class CompleteAnalysis:
         self.selected_set = selected_set
         self.selected_tool = selected_tool
         self.selected_label = selected_label
-        self.analysis_cache_name = construct_cache_file_name(selected_label, selected_tool, selected_set)
+        self.analysis_cache_name = construct_cache_file_name(selected_label, selected_set)
         self.training_set = training_set
 
         # variables are declared here and calculated in analysis
@@ -36,12 +36,14 @@ class CompleteAnalysis:
         self.max_for_label: Dict[str, Tuple[str, float]] = {}
         self.avg_for_label: Dict[str, float] = {}
         self.NaN_amount_for_label: Dict[str, int] = {}
+        self.rel_NaN_for_label: float = None
         self.non_NaN_amount_for_label: Dict[str, int] = {}
-        self.plot_label_to_sepsis: Dict[str, Tuple[List[float], List[float]]] = {}
+        self.plot_label_to_sepsis: Dict[str, Tuple[List[float], List[float]]] = {}          # TODO: This is on time frame level not patient level for the histogram!
         self.min_data_duration: Tuple[str, int] = None
         self.max_data_duration: Tuple[str, int] = None
         self.avg_data_duration: float = None
-        self.sepsis_patients: List[str] = None
+        self.sepsis_patients: List = None
+        self.rel_sepsis_amount: float = None
 
         self.calculate_complete_analysis()
 
@@ -51,29 +53,31 @@ class CompleteAnalysis:
 
     @classmethod
     def get_analysis(cls, selected_label, selected_tool, selected_set):
-        file_name = construct_cache_file_name(selected_label, selected_tool, selected_set)
+        file_name = construct_cache_file_name(selected_label, selected_set)
         if CompleteAnalysis.check_analysis_is_cached(file_name) and USE_CACHE:
-            print("Loading Analysis from cache:", file_name)
+            print("\nLoading Analysis for", selected_label, selected_set, "from cache:", file_name)
             return CompleteAnalysis.load_analysis_from_cache(file_name), file_name
         else:
-            print("Starting new Analysis with cache name:", file_name)
-            print("Loading complete Training Set for this Analysis.")
-            loaded_training_set = TrainingSet.get_training_set(selected_label, selected_tool, selected_set)                 # if analysis not cached TS needs to be loaded
-            CompleteAnalysis(selected_label, selected_tool, selected_set, loaded_training_set)     # Construct this new Analysis, directly calculate all and save to cache
-            return CompleteAnalysis.load_analysis_from_cache(file_name), file_name      # get this analysis from cache
+            print("\nStarting new Analysis for", selected_label, selected_set, "with cache name:", file_name)
+            loaded_training_set = TrainingSet.get_training_set(selected_label=selected_label,
+                                                               selected_tool=selected_tool,
+                                                               selected_set=selected_set)  # if analysis not cached TS needs to be loaded
+            CompleteAnalysis(selected_label=selected_label, selected_tool=selected_tool,
+                             selected_set=selected_set,
+                             training_set=loaded_training_set)  # Construct this new Analysis, directly calculate all and save to cache
+            return CompleteAnalysis.load_analysis_from_cache(file_name), file_name  # get this analysis_dict from cache
 
     @classmethod
     def load_analysis_from_cache(cls, file_name: str):
         pickle_data = pickle.load(open(os.path.join(CompleteAnalysis.CACHE_PATH, file_name), "rb"))
         return pickle_data  # returns a dict
 
-    # TODO: Es ist vermutlich besser diese ganzen Attribute gleich der Analysis zu geben und nicht beim TS
     def calculate_complete_analysis(self):
         self.get_min_for_label(self.selected_label)
         self.get_max_for_label(self.selected_label)
         self.get_avg_for_label(self.selected_label)
 
-        self.get_NaN_amount_for_label(self.selected_label)
+        self.get_rel_NaN_amount_for_label(self.selected_label)
         # non missing vals - already calculated in avg_label
         # self.get_non_NaN_amount_for_label(self.selected_label)
 
@@ -85,7 +89,8 @@ class CompleteAnalysis:
 
         self.get_rel_sepsis_amount()
 
-        self.save_analysis_to_cache()  # only save once = saves time
+        self.save_analysis_to_cache()  # only save complete Analysis once = saves time
+        # self.save_analysis_to_JSON()  # Tool for JSON export
 
     def get_min_for_label(self, label: str) -> Tuple[str, float]:
         """
@@ -97,8 +102,8 @@ class CompleteAnalysis:
             # was not calculated before, calculating now
             min_patient: str = None
             min_value: float = None
-            for patient in self.training_set.data.values():                 # TODO: AttributeError: 'NoneType' object has no attribute 'data'
-                v = patient.data[label].min()                               # TODO: Raise KeyError(key) for 02Sat - maybe misspelled??
+            for patient in self.training_set.data.values():
+                v = patient.data[label].min()
                 if pd.isna(v):
                     continue
                 if min_value is None or min_value > v:
@@ -178,15 +183,16 @@ class CompleteAnalysis:
 
         return count
 
-    def get_avg_rel_NaN_amount_for_label(self, label: str) -> float:
+    def get_rel_NaN_amount_for_label(self, label: str) -> float:
         """
         Get the average relative amount of NaN values for the label across all Patient objects in this set
         :param label:
         :return:
         """
-        r = self.get_NaN_amount_for_label(label) / self.get_data_amount_for_label(label)
 
-        return r
+        self.rel_NaN_for_label = self.get_NaN_amount_for_label(label) / self.get_data_amount_for_label(label)
+
+        return self.rel_NaN_for_label
 
     def get_rel_NaN_amount(self) -> float:  # TODO: This will be helpful for Task 2.2 b)
         """
@@ -325,8 +331,7 @@ class CompleteAnalysis:
         if self.sepsis_patients is None:
             self.sepsis_patients = []
             for patient in self.training_set.data.values():
-                if patient.data[
-                    "SepsisLabel"].dropna().sum() > 0:  # at least one sepsis - adding patients not time steps
+                if patient.data["SepsisLabel"].dropna().sum() > 0:  # count patients not time steps
                     self.sepsis_patients.append(patient.ID)
 
         return self.sepsis_patients
@@ -336,9 +341,9 @@ class CompleteAnalysis:
         Get the relative amount of patients that develop sepsis across all Patient objects in this set
         :return:
         """
-        r = len(self.get_sepsis_patients()) / len(self.training_set.data.keys())
+        self.rel_sepsis_amount = len(self.get_sepsis_patients())/len(self.training_set.data.keys())
 
-        return r
+        return self.rel_sepsis_amount
 
     def get_plot_label_to_sepsis(self, label: str):  # TODO: remove from here to plot....py
         """
@@ -346,11 +351,10 @@ class CompleteAnalysis:
         :return:
         """
         if label not in self.plot_label_to_sepsis.keys() or not self.plot_label_to_sepsis:
-            # was not calculated before, calculating now
             sepsis_pos = []
             sepsis_neg = []
-            for patient in self.training_set.data.values():  # Error message: AttributeError: 'NoneType' object has no attribute 'values'
-                label_vals = patient.data[label]
+            for patient in self.training_set.data.values():
+                label_vals = patient.data[label]                    # counts amount of time frames not patient level!
                 for label_val in label_vals:
                     if pd.notna(label_val):
                         if int(patient.data["SepsisLabel"][1]) == 1:
@@ -363,34 +367,37 @@ class CompleteAnalysis:
 
         return self.plot_label_to_sepsis
 
-    def save_analysis_to_cache(self):  # this saves a dict not the obj
+    def save_analysis_to_cache(self):
         pickle_data = {
             "min_for_label": self.min_for_label,
             "max_for_label": self.max_for_label,
             "avg_for_label": self.avg_for_label,
-            "NaN_amount_for_label": self.NaN_amount_for_label,
+            "rel_NaN_for_label": self.rel_NaN_for_label,
             "non_NaN_amount_for_label": self.non_NaN_amount_for_label,
             "min_data_duration": self.min_data_duration,
             "max_data_duration": self.max_data_duration,
             "avg_data_duration": self.avg_data_duration,
-            "sepsis_patients": self.sepsis_patients,
+            "rel_sepsis_amount": self.rel_sepsis_amount,
             "plot_label_to_sepsis": self.plot_label_to_sepsis
         }
         pickle.dump(pickle_data, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
         print("Analysis was cached into file", self.analysis_cache_name)
 
     def save_analysis_to_JSON(self):
+        json_file_name = self.analysis_cache_name + "_2_JSON.json"
         json_data = {
             "min_for_label": self.min_for_label,
             "max_for_label": self.max_for_label,
             "avg_for_label": self.avg_for_label,
-            "NaN_amount_for_label": self.NaN_amount_for_label,
+            "rel_NaN_for_label": self.rel_NaN_for_label,
             "non_NaN_amount_for_label": self.non_NaN_amount_for_label,
             "min_data_duration": self.min_data_duration,
             "max_data_duration": self.max_data_duration,
             "avg_data_duration": self.avg_data_duration,
-            "sepsis_patients": self.sepsis_patients,
+            "rel_sepsis_amount": self.rel_sepsis_amount,
             "plot_label_to_sepsis": self.plot_label_to_sepsis
         }
-        json.dump(json_data, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
-        print("Analysis was cached into file", self.analysis_cache_name)
+        frozen = jsonpickle.encode(json_data)
+        json.dump(frozen,
+                  open(os.path.join(CompleteAnalysis.CACHE_PATH, json_file_name), "w"))  # needed to change wb to w
+        print("Analysis was cached into JSON", json_file_name)

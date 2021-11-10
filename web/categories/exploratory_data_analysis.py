@@ -7,23 +7,12 @@ from web.UI_tools.analyse_tool import CompleteAnalysis
 def create_description():
     info_p1 = "The focus of Explorative Data Analysis is the structuration of data of which " \
               "there is little knowledge. These tools enable you to filter each dataset for " \
-              "the previously displayed features."
+              "the previously displayed features." \
+              "If the dataset has not been loaded previously, the analysis can take up to 3 minutes."
     st.markdown(info_p1)
-
-    # "min_for_label": self.training_set.__min_for_label,
-    # "max_for_label": self.training_set.__max_for_label,
-    # "avg_for_label": self.training_set.__avg_for_label,
-    # "NaN_amount_for_label": self.training_set.__NaN_amount_for_label,
-    # "non_NaN_amount_for_label": self.training_set.__non_NaN_amount_for_label,
-    # "min_data_duration": self.training_set.__min_data_duration,
-    # "max_data_duration": self.training_set.__max_data_duration,
-    # "avg_data_duration": self.training_set.__avg_data_duration,
-    # "sepsis_patients": self.training_set.__sepsis_patients,
-    # "plot_label_to_sepsis": self.training_set.__plot_label_to_sepsis
 
 
 def plot_selected_analysis(analysis_dict, selected_label, selected_tool, selected_set, col1, col2, col3):
-    print("Plotting Selected Analysis:")
     if selected_tool == 'Min, Max, Average':
         max_dict = analysis_dict['max_for_label']
         min_dict = analysis_dict['min_for_label']
@@ -39,14 +28,15 @@ def plot_selected_analysis(analysis_dict, selected_label, selected_tool, selecte
         col3.metric("Min of " + selected_set, min_value)
         col3.metric("Average of " + selected_set, round(avg_value, 2))
     elif selected_tool == 'Missing Values':
-        missing_vals_rel = analysis_dict['NaN_amount_for_label']
+        missing_vals_rel = analysis_dict['rel_NaN_for_label']                   # TODO: Berechnungen von rel_NAN stimmen nicht
+        print(missing_vals_rel)
         fig, ax = plt.subplots()
         ax.pie([missing_vals_rel, 1 - missing_vals_rel], explode=[0.2, 0], colors=['r', 'g'])
         col2.pyplot(fig)
         col3.metric("Missing (red)", str(round((missing_vals_rel * 100))) + "%")
         col3.metric("Not Missing (green)", str(round(((1 - missing_vals_rel) * 100))) + "%")
     else:
-        st.empty()
+        st.write("Feature not implemented yet.")
 
 
 class ExploratoryDataAnalysis:
@@ -64,11 +54,9 @@ class ExploratoryDataAnalysis:
         col1, col2, col3 = st.columns((1, 2, 1))
         selected_label, selected_tool, selected_set = self.create_selector_tools(col1)
         # loads analysis from cache or creates new one
-        analysis_dict, file_name = CompleteAnalysis.get_analysis(selected_label, selected_tool, selected_set)           # not good to use keys[] because list changes
-
-        print("Type:", type(analysis_dict))
-        print("Len: ", len(analysis_dict))
-
+        analysis_dict, file_name = CompleteAnalysis.get_analysis(selected_label=selected_label,
+                                                                 selected_tool=selected_tool,
+                                                                 selected_set=selected_set)           # not good to use keys[] because list changes
         plot_selected_analysis(analysis_dict, selected_label, selected_tool, selected_set, col1, col2, col3)
 
     def create_selector_tools(self, col1):
@@ -77,4 +65,4 @@ class ExploratoryDataAnalysis:
             'Min, Max, Average', 'Missing Values', 'Subgroups'))  # potentially also subgroups groups
         selected_label = col1.selectbox('Choose a label:', self.LABELS)
 
-        return selected_set, selected_tool, selected_label
+        return selected_label, selected_tool, selected_set
