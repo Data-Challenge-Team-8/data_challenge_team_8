@@ -67,6 +67,10 @@ class LandingPage:
         # multiselect_label_list.sort()
         st.markdown("<h2 style='text-align: left; color: black;'>Recommended to load the data upfront:</h2>",
                     unsafe_allow_html=True)
+        st.write("It can be useful to load the analysis data into a cache before first using this dashboard."
+                 " Loading of a complete dataset alone can take up to 45 minutes (>1 minute per label)."
+                 " Approximately 5MB are needed to safe the analysis of one label"
+                 " (240MB for the complete dataset).")
         selected_set_list = st.multiselect(
             'Choose which set to load before moving to analysis. This can save loading time',
             ['Set A', 'Set B', 'Set A + B'], [])
