@@ -56,11 +56,11 @@ class CompleteAnalysis:
         file_name = construct_cache_file_name(selected_label, selected_set)
         if CompleteAnalysis.check_analysis_is_cached(file_name) and USE_CACHE:
             print("\nLoading Analysis for", selected_label, selected_set, "from cache:", file_name,
-                  " . At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+                  " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
             return CompleteAnalysis.load_analysis_from_cache(file_name), file_name
         else:
             print("\nStarting new Analysis for", selected_label, selected_set, "with cache name:", file_name,
-                  " . At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+                  " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
             loaded_training_set = TrainingSet.get_training_set(selected_label=selected_label,
                                                                selected_tool=selected_tool,
                                                                selected_set=selected_set)  # if analysis not cached TS needs to be loaded
@@ -374,7 +374,7 @@ class CompleteAnalysis:
         print(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name)
         pickle.dump(self, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
         print("Analysis Object was cached into file", self.analysis_cache_name,
-              " . At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+              " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
 
     def save_analysis_to_cache(self):
         pickle_data = {
@@ -391,7 +391,7 @@ class CompleteAnalysis:
         }
         pickle.dump(pickle_data, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
         print("Analysis was cached into file", self.analysis_cache_name,
-              " . At Time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+              " At Time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
 
     def save_analysis_to_JSON(self):
         json_file_name = self.analysis_cache_name + "_2_JSON.json"
@@ -411,4 +411,4 @@ class CompleteAnalysis:
         json.dump(frozen,
                   open(os.path.join(CompleteAnalysis.CACHE_PATH, json_file_name), "w"))  # needed to change wb to w
         print("Analysis was cached into JSON", json_file_name,
-              " . At Time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+              " At Time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
