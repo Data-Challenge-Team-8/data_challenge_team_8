@@ -7,11 +7,10 @@ from objects.patient import Patient
 from IO.data_reader import DataReader
 
 
-def construct_cache_file_name(selected_label, selected_tool, selected_set):
-    # keys is a list of the inputs selected f.e. ['Max, Min, Average', 'Label', 'Set']
-    key_concat = ""                     # not good to use keys.sort() -> changes every time
+def construct_cache_file_name(selected_label, selected_set):                # removed "tool" from here - always complete analysis for all features
+    # keys is a list of the inputs selected f.e. ['Label', 'Set']
+    key_concat = ""  # not good to use keys.sort() -> changes every time
     key_concat += selected_label
-    key_concat += selected_tool
     key_concat += selected_set
     return hashlib.md5(key_concat.encode("utf-8")).hexdigest() + ".pickle"
 
@@ -22,8 +21,8 @@ class TrainingSet:
     def __init__(self, patients: Dict[str, Patient], selected_label, selected_tool, selected_set):
         self.set_name = selected_set
         self.data = patients
-        self.set_cache_name = construct_cache_file_name(selected_label, selected_tool, selected_set)
-        print("New Training Set was created with set_name:", self.set_name)
+        self.set_cache_name = construct_cache_file_name(selected_label, selected_set)
+        print("New Training Set was loaded with set_name:", self.set_name)
 
     def get_subgroup(self, label: str, low_value, high_value, new_set_id: str = None):  # TODO: Not yet reworked
         """
@@ -63,7 +62,8 @@ class TrainingSet:
             print("Please enter a valid dataset.", selected_set, "is unknown.")
             return
         new_dict = DataReader().load_new_training_set(file_dir_path)
-        new_set = TrainingSet(new_dict, selected_label, selected_tool, selected_set)
+        new_set = TrainingSet(patients=new_dict, selected_label=selected_label,
+                              selected_tool=selected_tool, selected_set=selected_set)
         return new_set
 
     # Not useful:
