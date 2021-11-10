@@ -1,25 +1,22 @@
 import streamlit as st
 from matplotlib import pyplot as plt
 
-from web.UI_tools.analyse_tool import CompleteAnalysis
+from web.UI_tools.complete_analysis import CompleteAnalysis
 
 
 def create_description():
-    info_p1 = "The focus of Explorative Data Analysis is the structuration of data of which " \
-              "there is little knowledge. These tools enable you to filter each dataset for " \
-              "the previously displayed features." \
-              "If the dataset has not been loaded previously, the analysis can take up to 3 minutes."
+    info_p1 = "The goal of Explorative Data Analysis is to gain an overview of data for which " \
+              "there is little previous knowledge. These tool enables you to filter through the labels " \
+              "in each dataset." \
+              " If the dataset has not been loaded previously, the background analysis might take up to 3 minutes."
     st.markdown(info_p1)
 
 
-def plot_selected_analysis(analysis_dict, selected_label, selected_tool, selected_set, col1, col2, col3):
+def plot_selected_analysis(analysis_obj, selected_label, selected_tool, selected_set, col2, col3):
     if selected_tool == 'Min, Max, Average':
-        max_dict = analysis_dict['max_for_label']
-        min_dict = analysis_dict['min_for_label']
-        avg_dict = analysis_dict['avg_for_label']
-        max_value = max_dict[selected_label][1]
-        min_value = min_dict[selected_label][1]
-        avg_value = avg_dict[selected_label]
+        min_value = analysis_obj.min_for_label[selected_label][1]
+        max_value = analysis_obj.max_for_label[selected_label][1]
+        avg_value = analysis_obj.avg_for_label[selected_label]
         fig, ax1 = plt.subplots()
         ax1.bar(['max', 'min', 'average'], height=[float(max_value), float(min_value), avg_value], color="g")
         ax1.set_title('Min, Max and average of ' + selected_set)
@@ -28,7 +25,7 @@ def plot_selected_analysis(analysis_dict, selected_label, selected_tool, selecte
         col3.metric("Min of " + selected_set, min_value)
         col3.metric("Average of " + selected_set, round(avg_value, 2))
     elif selected_tool == 'Missing Values':
-        missing_vals_rel = analysis_dict['rel_NaN_for_label']                   # TODO: Berechnungen von rel_NAN stimmen nicht
+        missing_vals_rel = analysis_obj.rel_NaN_for_label                   # TODO: Berechnungen von rel_NAN stimmen nicht
         print(missing_vals_rel)
         fig, ax = plt.subplots()
         ax.pie([missing_vals_rel, 1 - missing_vals_rel], explode=[0.2, 0], colors=['r', 'g'])
@@ -46,7 +43,7 @@ class ExploratoryDataAnalysis:
               "PTT", "WBC", "Fibrinogen", "Platelets", "Age", "Gender", "Unit1", "Unit2", "HospAdmTime", "ICULOS",
               "SepsisLabel"]
 
-    def __init__(self, option: str):
+    def __init__(self):
         st.markdown("<h2 style='text-align: left; color: black;'>Exploratory Data Analysis</h2>",
                     unsafe_allow_html=True)
         create_description()
@@ -54,10 +51,10 @@ class ExploratoryDataAnalysis:
         col1, col2, col3 = st.columns((1, 2, 1))
         selected_label, selected_tool, selected_set = self.create_selector_tools(col1)
         # loads analysis from cache or creates new one
-        analysis_dict, file_name = CompleteAnalysis.get_analysis(selected_label=selected_label,
+        analysis_obj, file_name = CompleteAnalysis.get_analysis(selected_label=selected_label,
                                                                  selected_tool=selected_tool,
                                                                  selected_set=selected_set)           # not good to use keys[] because list changes
-        plot_selected_analysis(analysis_dict, selected_label, selected_tool, selected_set, col1, col2, col3)
+        plot_selected_analysis(analysis_obj, selected_label, selected_tool, selected_set, col2, col3)
 
     def create_selector_tools(self, col1):
         selected_set = col1.radio("Choose your data", ("Set A", "Set B", "Set A + B"))
