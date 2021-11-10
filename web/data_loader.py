@@ -20,7 +20,7 @@ class DataLoader:
                 for o in options:
                     if o == 'Min, Max, Average':
                         for label in ExploratoryDataAnalysis.LABELS:
-                            analyse_tool = TrainingSet(
+                            analyse_tool = TrainingSet(                                 # removed set_id from trainingset constructor!
                                 "exploratory_data_analysis_min_max_avg",
                                 set_a,
                                 ['Min, Max, Average', label, s]
