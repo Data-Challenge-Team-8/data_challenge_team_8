@@ -19,11 +19,11 @@ def create_app():
     )
 
     if methode == 'General Information':
-        landing_page = LandingPage(methode)
+        landing_page = LandingPage()
     if methode == 'Exploratory Data Analysis':
-        expl_ana = ExploratoryDataAnalysis(methode)
+        expl_ana = ExploratoryDataAnalysis()
     if methode == 'Sepsis Research':
-        math_stat = SepsisResearch(methode)
+        math_stat = SepsisResearch()
 
 
 create_app()
