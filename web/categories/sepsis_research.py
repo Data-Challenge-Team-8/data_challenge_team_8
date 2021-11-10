@@ -3,7 +3,7 @@ import streamlit as st
 from web.UI_tools.plot_label_to_sepsis import PlotLabelToSepsis
 
 
-class MathematicalStatistics:
+class SepsisResearch:
 
     def __init__(self, option: str):
         self.__option = option
