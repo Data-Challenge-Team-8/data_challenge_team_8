@@ -1,7 +1,8 @@
 import streamlit as st
+import datetime
 from PIL import Image
 
-from web.UI_tools.complete_analysis import CompleteAnalysis
+from web.UI_tools.analyse_tool import CompleteAnalysis
 
 
 def display_feature_graphic():
@@ -33,12 +34,19 @@ def write_info_text():  # maybe: if you have any questions or contact: our email
 
 
 def start_loading(selected_set_list, selected_label_list):
+    total_start_time = datetime.datetime.now()
+    print("Loading started at time:", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
     for unique_set in selected_set_list:
         if 'Load all labels' in selected_label_list:
             selected_label_list = selected_label_list.remove('Load all labels')
         for label in selected_label_list:
-            new_analysis = CompleteAnalysis.get_analysis(selected_label=label,
-                                                         selected_set=unique_set, selected_tool='none')
+            start_time = datetime.datetime.now()
+            CompleteAnalysis.get_analysis(selected_label=label, selected_set=unique_set, selected_tool='none')
+            difference_time = datetime.datetime.now() - start_time
+            print("Loading of", unique_set, label, "took: ", str(difference_time).replace(" ", "_").replace(":", "-"))
+    print("\nLoading finished at time:", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+    total_difference_time = datetime.datetime.now() - total_start_time
+    print("Complete loading took: ", str(total_difference_time).replace(" ", "_").replace(":", "-"))
 
 
 class LandingPage:

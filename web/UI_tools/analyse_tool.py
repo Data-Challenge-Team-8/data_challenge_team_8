@@ -185,40 +185,22 @@ class CompleteAnalysis:
 
         return count
 
-    def get_rel_NaN_amount_for_label(self, label: str, training_set) -> float:
+    def get_rel_NaN_amount_for_label(self, label: str, training_set) -> float:          # TODO: This will be helpful for Task 2.2 b)
         """
         Get the average relative amount of NaN values for the label across all Patient objects in this set
         :param label:
         :return:
         """
-
-        self.rel_NaN_for_label = self.get_NaN_amount_for_label(label, training_set) / self.get_data_amount_for_label(label, training_set)
+        self.rel_NaN_for_label = (self.get_NaN_amount_for_label(label, training_set) / self.non_NaN_amount_for_label[label])
 
         return self.rel_NaN_for_label
 
-    def get_rel_NaN_amount(self, training_set) -> float:  # TODO: This will be helpful for Task 2.2 b)
+    def get_rel_NaN_amount(self, training_set) -> float:
         """
         Get the relative amount of NaN values across all Patient objects in this set
         :return:
         """
-        r = self.get_total_NaN_amount(training_set) / self.get_data_amount()
-
-        return r
-
-    def get_data_amount_for_label(self, label: str, training_set) -> float:
-        """
-        Get the amount of values for the label across all Patient objects in this set
-        :param label:
-        :return:
-        """
-        return self.get_NaN_amount_for_label(label, training_set) / self.get_non_NaN_amount_for_label(label, training_set)
-
-    def get_data_amount(self, training_set) -> int:
-        """
-        Get the amount of values across all Patient objects in this set
-        :return:
-        """
-        r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount()
+        r = self.get_total_NaN_amount(training_set) / self.get_data_amount(training_set)
 
         return r
 
@@ -249,7 +231,7 @@ class CompleteAnalysis:
 
         return count
 
-    def get_avg_rel_non_NaN_amount_for_label(self, label: str, training_set) -> float:
+    def get_rel_non_NaN_amount_for_label(self, label: str, training_set) -> float:
         """
         Get the average relative amount of non-NaN values for the label across all Patient objects in this set
         :param label:
@@ -267,6 +249,25 @@ class CompleteAnalysis:
         r = 1 - self.get_rel_NaN_amount(training_set)
 
         return r
+
+    def get_data_amount_for_label(self, label: str, training_set) -> float:
+        """
+        Get the amount of values for the label across all Patient objects in this set
+        :param label:
+        :return:
+        """
+        return self.get_NaN_amount_for_label(label, training_set) / self.get_non_NaN_amount_for_label(label, training_set)
+
+    def get_data_amount(self, training_set) -> int:
+        """
+        Get the amount of values across all Patient objects in this set
+        :return:
+        """
+        r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount()
+
+        return r
+
+
 
     def get_min_data_duration(self, training_set) -> Tuple[str, int]:
         """
@@ -370,9 +371,10 @@ class CompleteAnalysis:
         return self.plot_label_to_sepsis
 
     def save_analysis_obj_to_cache(self):
+        print(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name)
         pickle.dump(self, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
         print("Analysis Object was cached into file", self.analysis_cache_name,
-              " . At Time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+              " . At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
 
     def save_analysis_to_cache(self):
         pickle_data = {

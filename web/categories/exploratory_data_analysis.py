@@ -1,7 +1,7 @@
 import streamlit as st
 from matplotlib import pyplot as plt
 
-from web.UI_tools.complete_analysis import CompleteAnalysis
+from web.UI_tools.analyse_tool import CompleteAnalysis
 
 
 def create_description():
@@ -25,8 +25,7 @@ def plot_selected_analysis(analysis_obj, selected_label, selected_tool, selected
         col3.metric("Min of " + selected_set, min_value)
         col3.metric("Average of " + selected_set, round(avg_value, 2))
     elif selected_tool == 'Missing Values':
-        missing_vals_rel = analysis_obj.rel_NaN_for_label                   # TODO: Berechnungen von rel_NAN stimmen nicht
-        print(missing_vals_rel)
+        missing_vals_rel = analysis_obj.rel_NaN_for_label
         fig, ax = plt.subplots()
         ax.pie([missing_vals_rel, 1 - missing_vals_rel], explode=[0.2, 0], colors=['r', 'g'])
         col2.pyplot(fig)
