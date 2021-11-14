@@ -3,7 +3,7 @@ import streamlit as st
 import statistics
 from matplotlib import pyplot as plt
 
-from web.UI_tools.analyse_tool import CompleteAnalysis
+from tools.analyse_tool import CompleteAnalysis
 
 
 def create_description():

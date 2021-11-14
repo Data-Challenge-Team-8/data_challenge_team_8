@@ -23,7 +23,7 @@ def construct_cache_file_name(selected_label, selected_set):                # re
 
 class CompleteAnalysis:
     global USE_CACHE
-    CACHE_PATH = os.path.join(".", "cache")
+    CACHE_PATH = os.path.join("../web/UI_tools", "cache")
 
     def __init__(self, selected_label, selected_tool, selected_set, training_set: TrainingSet):
         self.selected_set = selected_set
@@ -266,8 +266,6 @@ class CompleteAnalysis:
         r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount()
 
         return r
-
-
 
     def get_min_data_duration(self, training_set) -> Tuple[str, int]:
         """

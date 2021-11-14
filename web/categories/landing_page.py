@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 from PIL import Image
 
-from web.UI_tools.analyse_tool import CompleteAnalysis
+from tools.analyse_tool import CompleteAnalysis
 
 
 def display_feature_graphic():
