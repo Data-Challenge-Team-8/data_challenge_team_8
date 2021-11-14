@@ -9,7 +9,7 @@ from IO.data_writer import DataWriter
 from objects.patient import Patient
 
 
-# TODO: Naming too similar with complete_analysis - but this is needed for analysing more focussed with time_series_data
+# TODO: Naming too similar with complete_analysis - but this is needed for analysing more focussed on time_series_data
 class AnalyseTool:
     """
     This Class contains methods to analyse the patient data.
