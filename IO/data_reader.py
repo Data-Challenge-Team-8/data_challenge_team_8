@@ -10,13 +10,27 @@ class UnknownDataset(Exception):
 
 
 class DataReader:
+
+    __instance = None
+
     def __init__(self) -> None:
+        if DataReader.__instance is not None:
+            raise Exception("This class is a Singleton! Use get_instance()")
+        else:
+            DataReader.__instance = self
+
         self.file_dir_path_setA = r'./data/training_setA/'
         self.file_dir_path_setB = r'./data/training_setB/'
 
         self.__training_setA: Dict[str, Patient] = None
         self.__training_setB: Dict[str, Patient] = None
         self.__training_set_combined: Dict[str, Patient] = None
+
+    @staticmethod
+    def get_instance():
+        if DataReader.__instance is None:
+            DataReader()
+        return DataReader.__instance
 
     def get_patient(self, patient_id: str) -> Patient:
         """
