@@ -2,53 +2,89 @@ import hashlib
 from typing import Dict, Tuple, List
 import os
 import pickle
+import datetime
 
 from objects.patient import Patient
 from IO.data_reader import DataReader
 
 
-# Training set gets cached - keine Collision weil als name nur set_name. Und bei analyse_cache ist es immer mit label
-def construct_cache_file_name(selected_set):
-    # keys is a list of the inputs selected f.e. ['Set']
-    key_concat = ""
-    key_concat += selected_set
-    return hashlib.md5(key_concat.encode("utf-8")).hexdigest() + ".pickle"
-
-
 class TrainingSet:
     CACHE_PATH = os.path.join(".", "cache")
+    CACHE_FILE_PREFIX = "trainingset_data-"
 
-    # patients_dict = id: str and Patient: obj (with attribute.id = str, attribute.data = timeseries)
-    def __init__(self, patients_dict: Dict[str, Patient], selected_label, selected_tool, selected_set):
-        self.set_name = selected_set
-        self.data = patients_dict
-        self.set_cache_name = construct_cache_file_name(selected_set)
-        # print("New Training Set was loaded with set_name:", self.set_name, " . At Time: ",
-        # str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+    PRESETS = {
+        "Set A": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setA"))],
+        "Set B": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setB"))],
+        "Set A + B": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setA"))]
+                     + [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setB"))]
+    }
 
-    @classmethod  # TODO: loads complete Training Set with DataReader (we can remove that later but it works for now)
-    def get_training_set(cls, selected_label, selected_tool, selected_set):
-        if construct_cache_file_name(selected_set):
-            # load from cache
-            pass
-            return None
+    __instances = {}
+
+    def __init__(self, patients: List[str], name: str):
+        TrainingSet.__instances[name] = self
+
+        self.name = name
+        self.data = {key: None for key in patients}
+        self.cache_name = self.__construct_cache_file_name()
+
+        self.__load_data_from_cache()
+        self.__save_data_to_cache()
+
+    def __len__(self):
+        return len(self.data.keys())
+
+    def __construct_cache_file_name(self):
+        key_concat = ""
+        for patient_id in self.data.keys():
+            key_concat += patient_id
+
+        return hashlib.md5(key_concat.encode('utf-8')).hexdigest() + ".pickle"
+
+    def __load_data_from_cache(self, force_no_cache: bool = False):
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
+        if not force_no_cache and os.path.exists(file_path) and os.path.isfile(file_path):
+            print(f"Loading TrainingSet {self.name} data from pickle cache")
+            start_time = datetime.datetime.now()
+            d = pickle.load(open(file_path, "rb"))
+            self.data = d
+            end_time = datetime.datetime.now()
+            print("Took", end_time-start_time, "to load from pickle!")
         else:
-            file_dir_path = ''
-            if selected_set == 'Set A':
-                file_dir_path = r'./data/training_setA/'
-            elif selected_set == 'Set B':
-                file_dir_path = r'./data/training_setB/'
-            elif selected_set == 'SetA + B':
-                file_dir_path = r'./data/'  # TODO: How to select multiple folders for all sets?
-            else:
-                print("Please enter a valid dataset.", selected_set, "is unknown.")
-                return
-            new_dict = DataReader().load_new_training_set(file_dir_path)
-            new_set = TrainingSet(patients_dict=new_dict, selected_label=selected_label,
-                                  selected_tool=selected_tool, selected_set=selected_set)
-            return new_set
+            print(f"Loading TrainingSet {self.name} data from DataReader")
+            start_time = datetime.datetime.now()
+            for key in self.data.keys():
+                if self.data[key] is None:  # Patient not loaded yet
+                    self.data[key] = DataReader.get_instance().get_patient(key)
+            end_time = datetime.datetime.now()
+            print("Took", end_time-start_time, "to load from DataReader!")
 
-    # TODO: Not yet reworked
+    def __save_data_to_cache(self):
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
+        if not os.path.exists(file_path):
+            print("Writing TrainingSet", self.name, "data to pickle cache!")
+            pickle.dump(self.data, open(file_path, "wb"))
+
+    @classmethod
+    def get_training_set(cls, name: str, patients: List[str] = None):
+        """
+        Fetches an instance of the training set specified by set_name.
+
+        If the set_name is not already used or a preset an Exception is thrown.
+        :param patients: list of patient ids to be included into the TrainingSet should it not exist
+        :param name:
+        :return:
+        """
+        if name in TrainingSet.__instances.keys():
+            return TrainingSet.__instances[name]
+        elif name in TrainingSet.PRESETS.keys():
+            return TrainingSet(TrainingSet.PRESETS[name], name)
+        else:
+            if patients is None:
+                raise ValueError("Unknown Training Set name")
+            else:
+                return TrainingSet(patients=patients, name=name)
+
     def get_subgroup(self, label: str, low_value, high_value, new_set_id: str = None):
         """
         Split this set into a sub set based on low_value and high_value range
@@ -61,26 +97,16 @@ class TrainingSet:
         if label not in Patient.LABELS:
             raise ValueError(f"The requested label {label} is not part of Patient.LABELS")
         subgroup_dict = {}
+
         for patient in self.data.values():
-            if low_value <= patient.data[label] <= high_value:
+            if low_value <= patient.data[label].min() and patient.data[label].max() <= high_value:
                 subgroup_dict[patient.ID] = patient
 
-        subgroup_keys = ["subgroup", label, "create_subgroups"]
         if len(subgroup_dict.keys()) != 0:
             if new_set_id is None:
-                return TrainingSet(self.set_name + f"-SubGroup_{label}", subgroup_dict, subgroup_keys)
+                return TrainingSet.get_training_set(name=self.name + f"-SubGroup_{label}_low{low_value}_high{high_value}",
+                                                    patients=list(subgroup_dict.keys()))
             else:
-                return TrainingSet(new_set_id, subgroup_dict, subgroup_keys)
+                return TrainingSet.get_training_set(name=new_set_id, patients=list(subgroup_dict.keys()))
         else:
             return None
-
-    # TODO: Save as Dict with patient_id and Patient.object or safe as Training Set object?
-    def __save_obj_to_cache(self):  # very large file (280mb) and loading results in 'set' not obj
-        pickle.dump(self, open(os.path.join(TrainingSet.CACHE_PATH, self.set_cache_name), "wb"))
-        print("Training Set", self.set_name, "was cached into", self.set_cache_name)
-
-    @classmethod
-    def load_obj_from_cache(cls, file_name: str):  # KeyError: 'plot_label_to_sepsis'
-        pickle_data = pickle.load(open(os.path.join(TrainingSet.CACHE_PATH, file_name), "rb"))
-        print("type:", type(pickle_data))
-        return pickle_data

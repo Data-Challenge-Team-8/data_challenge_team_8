@@ -61,9 +61,8 @@ class CompleteAnalysis:
         else:
             print("\nStarting new Analysis for", selected_label, selected_set, "with cache name:", file_name,
                   " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
-            loaded_training_set = TrainingSet.get_training_set(selected_label=selected_label,
-                                                               selected_tool=selected_tool,
-                                                               selected_set=selected_set)  # if analysis not cached TS needs to be loaded
+            loaded_training_set = TrainingSet.get_training_set(name=selected_set)  # if analysis not cached TS needs
+            # to be loaded
             CompleteAnalysis(selected_label=selected_label, selected_tool=selected_tool,
                              selected_set=selected_set,
                              training_set=loaded_training_set)  # Construct this new Analysis, directly calculate all and save to cache
