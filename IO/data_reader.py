@@ -54,11 +54,11 @@ class DataReader:
             # training set B is already loaded and has patient_ID
             return self.__training_setB[patient_id]
         elif self.__peek_patient_set(self.file_dir_path_setB, patient_id):  # patient is in set B but not loaded
-            patient = self.__read_patient_data(self.file_dir_path_setA, patient_id + ".psv")
+            patient = self.__read_patient_data(self.file_dir_path_setB, patient_id + ".psv")
 
-            if self.__training_setA is None:
-                self.__training_setA = dict()
-            self.__training_setA[patient_id] = patient
+            if self.__training_setB is None:
+                self.__training_setB = dict()
+            self.__training_setB[patient_id] = patient
 
             return patient
 
