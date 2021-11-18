@@ -27,9 +27,40 @@ class TrainingSet:
         self.name = name
         self.data = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
+        self.active_labels = []
+        self.labels_average = {}
+        self.labels_std_dev = {}
+        self.labels_NaN = {}
 
         self.__load_data_from_cache()
         self.__save_data_to_cache()
+
+
+    def get_active_labels(self):  # get labels from first entry(patient) in data_dict
+        self.active_labels = list(self.data.values())[0].data.columns.values.tolist()
+        return self.active_labels
+
+    def calc_stats_for_labels(self):
+        self.get_active_labels()
+        labels_average_dict = dict.fromkeys(self.active_labels)
+        labels_std_dev_dict = dict.fromkeys(self.active_labels)
+        labels_NaN_dict = dict.fromkeys(self.active_labels)
+        for label in self.active_labels[0:3]:                               # TODO: Only first 4 selected labels
+            print("Analysing Label: ", label)
+            averages_list = []
+            std_dev_list = []
+            nan_list = []
+            for patient in self.data.values():                              # TODO: Testing of Patient Methods needed.
+                averages_list.append(patient.get_average(label))
+                std_dev_list.append(patient.get_standard_deviation(label))
+                nan_list.append(patient.get_NaN(label))
+            labels_average_dict[label] = sum(averages_list) / len(averages_list)
+            labels_std_dev_dict[label] = sum(std_dev_list) / len(std_dev_list)
+            labels_NaN_dict[label] = sum(nan_list)
+        self.labels_average.update(labels_average_dict)                     # TODO: Is update a good solution?
+        self.labels_std_dev.update(labels_std_dev_dict)
+        self.labels_NaN.update(labels_NaN_dict)                             # TODO: Absolute value not useful - relative better
+        return self.labels_average, self.labels_std_dev, self.labels_NaN
 
     def __len__(self):
         return len(self.data.keys())
@@ -49,7 +80,7 @@ class TrainingSet:
             d = pickle.load(open(file_path, "rb"))
             self.data = d
             end_time = datetime.datetime.now()
-            print("Took", end_time-start_time, "to load from pickle!")
+            print("Took", end_time - start_time, "to load from pickle!")
         else:
             print(f"Loading TrainingSet {self.name} data from DataReader")
             start_time = datetime.datetime.now()
@@ -57,7 +88,7 @@ class TrainingSet:
                 if self.data[key] is None:  # Patient not loaded yet
                     self.data[key] = DataReader.get_instance().get_patient(key)
             end_time = datetime.datetime.now()
-            print("Took", end_time-start_time, "to load from DataReader!")
+            print("Took", end_time - start_time, "to load from DataReader!")
 
     def __save_data_to_cache(self):
         file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
@@ -104,8 +135,9 @@ class TrainingSet:
 
         if len(subgroup_dict.keys()) != 0:
             if new_set_id is None:
-                return TrainingSet.get_training_set(name=self.name + f"-SubGroup_{label}_low{low_value}_high{high_value}",
-                                                    patients=list(subgroup_dict.keys()))
+                return TrainingSet.get_training_set(
+                    name=self.name + f"-SubGroup_{label}_low{low_value}_high{high_value}",
+                    patients=list(subgroup_dict.keys()))
             else:
                 return TrainingSet.get_training_set(name=new_set_id, patients=list(subgroup_dict.keys()))
         else:

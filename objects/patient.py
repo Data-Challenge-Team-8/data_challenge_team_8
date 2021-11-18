@@ -27,6 +27,11 @@ class Patient:
         self.__data = patient_data
         self.__patient_ID: str = None
 
+        self.labels_average = {}                            # TODO: Fill these list for each patient > needed for Pacmap
+        self.labels_std_dev = {}
+        self.labels_NaN = {}
+
+
         if patient_ID not in Patient.patient_id_set:
             self.__patient_ID = patient_ID
             Patient.patient_id_set.add(patient_ID)
@@ -53,6 +58,16 @@ class Patient:
     def data(self):
         return self.__data
 
+    def get_average(self, label: str) -> float:
+        """
+        Get the amount of na for a given label (see Patient.LABELS)
+        :param label:
+        :return:
+        """
+        a = self.data[label].dropna().to_numpy()            # TODO: Here is a mistake but I dont get it.
+        a = a.astype(np.float)
+        return np.average(a)
+
     def get_standard_deviation(self, label: str) -> float:
         """
         Get the standard deviation for a given label (see Patient.LABELS)
@@ -60,10 +75,23 @@ class Patient:
         :return:
         """
         a = self.data[label].dropna().to_numpy()
-        return np.std(a)
+        a = a.astype(np.float)
+        return float(np.std(a))
+
+    def get_NaN(self, label: str) -> float:
+        """
+        Get the average for a given label (see Patient.LABELS)
+        :param label:
+        :return:
+        """
+        counter = 0
+        for timestep in self.data[label]:
+            if np.isnan(timestep):
+                counter += 1
+        return counter
+
 
     #################### Vital Signs ######################
-
     @property
     def vital_signs(self) -> pd.DataFrame:
         """
