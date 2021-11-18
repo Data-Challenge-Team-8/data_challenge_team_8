@@ -1,6 +1,7 @@
 import pacmap
 from matplotlib import pyplot as plt
 
+
 # TODO: Import training set, transform to dataframe, dimensionality reduction -> return new dataframe, plot the new df
 class PacmapAnalysis:
 
@@ -11,7 +12,7 @@ class PacmapAnalysis:
         self.calculate_pacmap()
 
     @classmethod
-    def get_analysis(cls, training_set):
+    def get_pacmap_analysis(cls, training_set):
         # if cached: return cached analysis-values ?
         # else:
         new_analysis = PacmapAnalysis(training_set)
