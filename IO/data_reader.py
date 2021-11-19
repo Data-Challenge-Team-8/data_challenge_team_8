@@ -182,7 +182,7 @@ class DataReader:
         df_patient_data = pd.read_csv(os.path.join(data_set_path, patient_filename), sep='|')
         patient = Patient(os.path.splitext(patient_filename)[0], df_patient_data)
 
-        return patient
+        return patient              # here patient is returned WITH new_attributes (like original_labels
 
     def __read_entire_training_set(self, data_set_path: str) -> Dict[str, Patient]:
         """

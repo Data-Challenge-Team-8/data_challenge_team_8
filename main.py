@@ -18,15 +18,15 @@ if __name__ == '__main__':
 
     # test label stats
     test_set_A = TrainingSet.get_training_set('Set A')
-    print(test_set_A.get_active_labels())
     labels_average, labels_std_dev, labels_rel_NaN = test_set_A.calc_stats_for_labels()
 
-    print("Dict of Label Averages: ", labels_average)               # TODO: Error patient.get_average returns nan
+    print("Dict of Label Averages: ", labels_average)
     print("Dict of Label Standard Deviation: ", labels_std_dev)
     print("Dict of Label NaN: ", labels_rel_NaN)
 
 
     # TODO: Use Averages, std_dev for Pacmap (maybe use label_nan to sort out unnecessary labels or do interpolation)
-    df_avg = test_set_A.get_dataframe_averages()
+    # df_avg = test_set_A.get_dataframe_averages()
+    # print(df_avg)
     # test_pacmap = PacmapAnalysis.get_analysis(test_set_A)
     # test_pacmap.plot_pacmap()

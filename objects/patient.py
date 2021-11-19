@@ -5,8 +5,10 @@ import numpy as np
 class NotUniqueIDError(Exception):
     pass
 
+COUNTER = True
 
 class Patient:
+    global COUNTER
     """
     Class containing and allowing access to a whole patients data.
 
@@ -26,21 +28,21 @@ class Patient:
     def __init__(self, patient_ID: str, patient_data: pd.DataFrame):
         self.__data = patient_data
         self.__patient_ID: str = None
-
-        self.labels_average = {}
-        self.labels_std_dev = {}
-        self.labels_relative_NaN = {}
-
+        # TODO: new attributes (need to cache again):
+        self.original_labels = list(self.__data.columns.values)
+        self.labels_average = dict.fromkeys(self.original_labels)
+        self.labels_std_dev = dict.fromkeys(self.original_labels)
+        self.labels_relative_NaN = dict.fromkeys(self.original_labels)
 
         if patient_ID not in Patient.patient_id_set:
             self.__patient_ID = patient_ID
             Patient.patient_id_set.add(patient_ID)
         else:
             raise NotUniqueIDError(f"Patient ID \"{patient_ID}\" was not unique!")
-
         for label in Patient.LABELS:  # Sanity check of expected labels against present labels in data
             if label not in self.data.columns.values:
                 raise ValueError("Given patient data did not match the expected format! Please check the columns.")
+
 
     def __del__(self):  # removing ID from the set, so it can be given out again
         if self.__patient_ID in Patient.patient_id_set:
@@ -59,17 +61,18 @@ class Patient:
         return self.__data
 
     def get_average(self, label: str) -> float:
+        global COUNTER
         """
         Get the amount of na for a given label (see Patient.LABELS)
         :param label:
         :return:
         """
-        if len(self.labels_average[label]) > 0:
+        if self.labels_average[label] is not None:
             return self.labels_average[label]
         else:
-            a = self.data[label].dropna().to_numpy()            # TODO: Here is a mistake but I dont get it.
-            a = a.astype(np.float)
-            self.labels_average[label] = np.average(a)
+            a = self.data[label].dropna().to_numpy()
+            new_a = np.mean(a).tolist()                         # transform numpy.float64 to normal float
+            self.labels_average[label] = new_a
             return self.labels_average[label]
 
     def get_standard_deviation(self, label: str) -> float:
@@ -78,12 +81,12 @@ class Patient:
         :param label:
         :return:
         """
-        if len(self.labels_std_dev[label]) > 0:
+        if self.labels_std_dev[label] is not None:
             return self.labels_std_dev[label]
         else:
             a = self.data[label].dropna().to_numpy()
-            a = a.astype(np.float)
-            self.labels_std_dev[label] = np.std(a)
+            new_a = np.std(a).tolist()                         # transform numpy.float64 to normal float
+            self.labels_average[label] = new_a
             return self.labels_std_dev[label]
 
     def get_NaN(self, label: str) -> float:
@@ -92,7 +95,7 @@ class Patient:
         :param label:
         :return:
         """
-        if len(self.labels_relative_NaN[label]) > 0:
+        if self.labels_relative_NaN[label] is not None:
             return self.labels_relative_NaN[label]
         else:
             counter_nan = 0                                 # absolute values of NaN not necessary
