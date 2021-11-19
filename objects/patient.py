@@ -27,7 +27,7 @@ class Patient:
         self.__data = patient_data
         self.__patient_ID: str = None
 
-        self.labels_average = {}                            # TODO: Fill these list for each patient > needed for Pacmap
+        self.labels_average = {}
         self.labels_std_dev = {}
         self.labels_relative_NaN = {}
 
