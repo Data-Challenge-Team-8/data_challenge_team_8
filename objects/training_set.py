@@ -46,7 +46,7 @@ class TrainingSet:
         labels_average_dict = dict.fromkeys(self.active_labels)
         labels_std_dev_dict = dict.fromkeys(self.active_labels)
         labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
-        for label in self.active_labels[0:3]:                               # TODO: Only first 4 selected labels
+        for label in self.active_labels[0:3]:                               # TODO: Only first 3 selected labels
             print("Analysing Label: ", label)
             averages_list = []
             std_dev_list = []
@@ -60,9 +60,8 @@ class TrainingSet:
             labels_rel_NaN_dict[label] = sum(rel_nan_list)
         self.labels_average.update(labels_average_dict)                     # TODO: Is update a good solution?
         self.labels_std_dev.update(labels_std_dev_dict)
-        self.labels_rel_NaN.update(labels_rel_NaN_dict)                             # TODO: Absolute value not useful - relative better
+        self.labels_rel_NaN.update(labels_rel_NaN_dict)
         return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
-
 
     def get_dataframe_averages(self):                                       # TODO: Test this implementation. Is patient_id missing?
         data_rows = []
