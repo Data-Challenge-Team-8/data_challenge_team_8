@@ -29,7 +29,7 @@ class Patient:
 
         self.labels_average = {}                            # TODO: Fill these list for each patient > needed for Pacmap
         self.labels_std_dev = {}
-        self.labels_NaN = {}
+        self.labels_relative_NaN = {}
 
 
         if patient_ID not in Patient.patient_id_set:
@@ -64,9 +64,13 @@ class Patient:
         :param label:
         :return:
         """
-        a = self.data[label].dropna().to_numpy()            # TODO: Here is a mistake but I dont get it.
-        a = a.astype(np.float)
-        return np.average(a)
+        if len(self.labels_average[label]) > 0:
+            return self.labels_average[label]
+        else:
+            a = self.data[label].dropna().to_numpy()            # TODO: Here is a mistake but I dont get it.
+            a = a.astype(np.float)
+            self.labels_average[label] = np.average(a)
+            return self.labels_average[label]
 
     def get_standard_deviation(self, label: str) -> float:
         """
@@ -74,9 +78,13 @@ class Patient:
         :param label:
         :return:
         """
-        a = self.data[label].dropna().to_numpy()
-        a = a.astype(np.float)
-        return float(np.std(a))
+        if len(self.labels_std_dev[label]) > 0:
+            return self.labels_std_dev[label]
+        else:
+            a = self.data[label].dropna().to_numpy()
+            a = a.astype(np.float)
+            self.labels_std_dev[label] = np.std(a)
+            return self.labels_std_dev[label]
 
     def get_NaN(self, label: str) -> float:
         """
@@ -84,11 +92,18 @@ class Patient:
         :param label:
         :return:
         """
-        counter = 0
-        for timestep in self.data[label]:
-            if np.isnan(timestep):
-                counter += 1
-        return counter
+        if len(self.labels_relative_NaN[label]) > 0:
+            return self.labels_relative_NaN[label]
+        else:
+            counter_nan = 0                                 # absolute values of NaN not necessary
+            counter_not_nan = 0
+            for timestep in self.data[label]:
+                if np.isnan(timestep):
+                    counter_nan += 1
+                else:
+                    counter_not_nan += 1
+            self.labels_relative_NaN[label] = counter_nan/(counter_not_nan + counter_nan)
+            return self.labels_relative_NaN[label]
 
 
     #################### Vital Signs ######################

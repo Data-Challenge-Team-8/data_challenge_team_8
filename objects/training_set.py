@@ -3,6 +3,7 @@ from typing import Dict, Tuple, List
 import os
 import pickle
 import datetime
+import pandas as pd
 
 from objects.patient import Patient
 from IO.data_reader import DataReader
@@ -30,7 +31,7 @@ class TrainingSet:
         self.active_labels = []
         self.labels_average = {}
         self.labels_std_dev = {}
-        self.labels_NaN = {}
+        self.labels_rel_NaN = {}
 
         self.__load_data_from_cache()
         self.__save_data_to_cache()
@@ -44,23 +45,31 @@ class TrainingSet:
         self.get_active_labels()
         labels_average_dict = dict.fromkeys(self.active_labels)
         labels_std_dev_dict = dict.fromkeys(self.active_labels)
-        labels_NaN_dict = dict.fromkeys(self.active_labels)
+        labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
         for label in self.active_labels[0:3]:                               # TODO: Only first 4 selected labels
             print("Analysing Label: ", label)
             averages_list = []
             std_dev_list = []
-            nan_list = []
+            rel_nan_list = []
             for patient in self.data.values():                              # TODO: Testing of Patient Methods needed.
                 averages_list.append(patient.get_average(label))
                 std_dev_list.append(patient.get_standard_deviation(label))
-                nan_list.append(patient.get_NaN(label))
+                rel_nan_list.append(patient.get_NaN(label))
             labels_average_dict[label] = sum(averages_list) / len(averages_list)
             labels_std_dev_dict[label] = sum(std_dev_list) / len(std_dev_list)
-            labels_NaN_dict[label] = sum(nan_list)
+            labels_rel_NaN_dict[label] = sum(rel_nan_list)
         self.labels_average.update(labels_average_dict)                     # TODO: Is update a good solution?
         self.labels_std_dev.update(labels_std_dev_dict)
-        self.labels_NaN.update(labels_NaN_dict)                             # TODO: Absolute value not useful - relative better
-        return self.labels_average, self.labels_std_dev, self.labels_NaN
+        self.labels_rel_NaN.update(labels_rel_NaN_dict)                             # TODO: Absolute value not useful - relative better
+        return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
+
+
+    def get_dataframe_averages(self):                                       # TODO: Test this implementation. Is patient_id missing?
+        data_rows = []
+        for patient in self.data.values():
+            data_rows.append(list(patient.labels_average.values()))
+        df = pd.DataFrame(data_rows, columns=self.active_labels)
+        return df
 
     def __len__(self):
         return len(self.data.keys())
