@@ -4,6 +4,7 @@ import os
 import pickle
 import datetime
 import pandas as pd
+import numpy as np
 
 from objects.patient import Patient
 from IO.data_reader import DataReader
@@ -37,8 +38,8 @@ class TrainingSet:
         self.__save_data_to_cache()
 
 
-    def get_active_labels(self):  # get labels from first entry(patient) in data_dict
-        self.active_labels = list(self.data.values())[0].data.columns.values.tolist()
+    def get_active_labels(self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
+        self.active_labels = list(self.data.values())[0].data.columns.values
         return self.active_labels
 
     def calc_stats_for_labels(self):
@@ -46,18 +47,19 @@ class TrainingSet:
         labels_average_dict = dict.fromkeys(self.active_labels)
         labels_std_dev_dict = dict.fromkeys(self.active_labels)
         labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
-        for label in self.active_labels[0:3]:                               # TODO: Only first 3 selected labels
+        for label in self.active_labels[0:1]:                               # TODO: Only first selected label
             print("Analysing Label: ", label)
             averages_list = []
             std_dev_list = []
             rel_nan_list = []
-            for patient in self.data.values():                              # TODO: Testing of Patient Methods needed.
+            for patient in self.data.values():
                 averages_list.append(patient.get_average(label))
                 std_dev_list.append(patient.get_standard_deviation(label))
                 rel_nan_list.append(patient.get_NaN(label))
-            labels_average_dict[label] = sum(averages_list) / len(averages_list)
-            labels_std_dev_dict[label] = sum(std_dev_list) / len(std_dev_list)
-            labels_rel_NaN_dict[label] = sum(rel_nan_list)
+            print("List of averages per patient", averages_list[:10])       # All elements in averages list are definitely float (and not numpy.float)
+            labels_average_dict[label] = np.nansum(averages_list) / len(averages_list)          # TODO: 1) Error with sum(list) method ???
+            labels_std_dev_dict[label] = np.nansum(std_dev_list) / len(std_dev_list)
+            labels_rel_NaN_dict[label] = sum(rel_nan_list) / len(rel_nan_list)
         self.labels_average.update(labels_average_dict)                     # TODO: Is update a good solution?
         self.labels_std_dev.update(labels_std_dev_dict)
         self.labels_rel_NaN.update(labels_rel_NaN_dict)
@@ -100,7 +102,7 @@ class TrainingSet:
 
     def __save_data_to_cache(self):
         file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
-        if not os.path.exists(file_path):
+        if not os.path.exists(file_path):                   # TODO: Maybe if forced cache we also want to save the new cache (set True global for both?)
             print("Writing TrainingSet", self.name, "data to pickle cache!")
             pickle.dump(self.data, open(file_path, "wb"))
 
