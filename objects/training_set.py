@@ -35,14 +35,18 @@ class TrainingSet:
         self.name = name
         self.data = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
+
         self.active_labels = []
+
+        self.__dirty: bool = False
+
+        self.average_df_fixed: pd.DataFrame = None
         self.labels_average = {}
         self.labels_std_dev = {}
         self.labels_rel_NaN = {}
 
         self.__load_data_from_cache()
         self.__save_data_to_cache()
-
 
     def get_active_labels(self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
         self.active_labels = list(self.data.values())[0].data.columns.values
@@ -94,7 +98,8 @@ class TrainingSet:
             print(f"Loading TrainingSet {self.name} data from pickle cache")
             start_time = datetime.datetime.now()
             d = pickle.load(open(file_path, "rb"))
-            self.data = d
+            self.data = d["data"]
+            self.average_df_fixed = d["avg_df_fixed"]
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
         else:
@@ -108,9 +113,10 @@ class TrainingSet:
 
     def __save_data_to_cache(self):
         file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
-        if not os.path.exists(file_path):                   # TODO: Maybe if forced cache we also want to save the new cache (set True global for both?)
+        if not os.path.exists(file_path) or self.__dirty:
             print("Writing TrainingSet", self.name, "data to pickle cache!")
-            pickle.dump(self.data, open(file_path, "wb"))
+            self.__dirty = False
+            pickle.dump({"data": self.data, "avg_df_fixed": self.average_df_fixed}, open(file_path, "wb"))
 
     @classmethod
     def get_training_set(cls, name: str, patients: List[str] = None):
@@ -144,6 +150,9 @@ class TrainingSet:
         row removal. Method decision is based on Patient.NAN_DISMISSAL_THRESHOLD.
         :return:
         """
+        if self.average_df_fixed is not None and fix_missing_values:
+            return self.average_df_fixed
+
         avg_dict = {}
         for patient_id in self.data.keys():
             avg_dict[patient_id] = self.data[patient_id].get_average_df(use_interpolation)
@@ -162,14 +171,18 @@ class TrainingSet:
                 print()
 
                 if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/2:  # kick the row because too many missing values
+                    print(f"TrainingSet.get_average_df kicked \"{label}\" out because too many missing values "
+                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD/2})")
                     avg_df.drop(label, inplace=True)
 
                 else:  # try filling with mean imputation
                     for patient_id in avg_dict.keys():
                         if avg_df.isna()[patient_id][label]:
                             avg_df[patient_id][label] = label_avgs[label]
-
-            return avg_df
+            self.average_df_fixed = avg_df
+            self.__dirty = True
+            self.__save_data_to_cache()
+            return self.average_df_fixed
 
     def get_label_averages(self, use_interpolation: bool = False) -> pd.Series:
         """
