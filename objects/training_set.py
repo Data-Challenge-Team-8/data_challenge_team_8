@@ -9,6 +9,9 @@ import numpy as np
 import numpy as np
 import pandas as pd
 
+import numpy as np
+import pandas as pd
+
 from objects.patient import Patient
 from IO.data_reader import DataReader
 
