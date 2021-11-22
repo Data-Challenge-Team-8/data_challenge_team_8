@@ -4,6 +4,7 @@ import pandas as pd
 
 from objects.patient import Patient, NotUniqueIDError
 
+FIGURE_OUTPUT_FOLDER = "output/"
 
 class UnknownDataset(Exception):
     pass
