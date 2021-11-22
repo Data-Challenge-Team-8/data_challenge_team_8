@@ -1,3 +1,4 @@
+from IO.data_reader import FIGURE_OUTPUT_FOLDER
 from objects.patient import Patient
 from objects.training_set import TrainingSet
 
@@ -5,8 +6,6 @@ import os.path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
-FIGURE_OUTPUT_FOLDER = "output/"
 
 
 def plot_data_with_and_without_interpolation(plot_title: str, x_label: str, y_label: str, patient: Patient,
