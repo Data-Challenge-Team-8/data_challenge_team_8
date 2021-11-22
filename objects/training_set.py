@@ -170,7 +170,7 @@ class TrainingSet:
                 rel_missing = avg_df.loc[label].isna().sum() / len(avg_df.loc[label])
                 print()
 
-                if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/2:  # kick the row because too many missing values
+                if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/1.5:  # kick the row because too many missing values
                     print(f"TrainingSet.get_average_df kicked \"{label}\" out because too many missing values "
                           f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD/2})")
                     avg_df.drop(label, inplace=True)
