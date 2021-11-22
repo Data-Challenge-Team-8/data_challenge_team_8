@@ -5,10 +5,8 @@ import numpy as np
 class NotUniqueIDError(Exception):
     pass
 
-COUNTER = True
 
 class Patient:
-    global COUNTER
     """
     Class containing and allowing access to a whole patients data.
 
@@ -20,13 +18,23 @@ class Patient:
               "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
               "PTT", "WBC", "Fibrinogen", "Platelets", "Age", "Gender", "Unit1", "Unit2", "HospAdmTime", "ICULOS",
               "SepsisLabel"]
+    DATA_LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH", "PaCO2", "SaO2",
+                   "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct", "Glucose",
+                   "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
+                   "PTT", "WBC", "Fibrinogen", "Platelets"]
     FEMALE = 0
     MALE = 1
+
+    INTERPOLATION_METHOD = "quadratic"  # default interpolation method. Options are: linear, quadratic,
+    # spline (requires order), linear, nearest
+    NAN_DISMISSAL_THRESHOLD = 0.7  # relative value to the data series length (0.0 to 1.0)
+    CONSECUTIVE_NAN_INTERPOLATION_LIMIT = 1  # relative value to the data series (0.0 to 1.0)
 
     patient_id_set = set()  # for checking uniqueness in ID
 
     def __init__(self, patient_ID: str, patient_data: pd.DataFrame):
         self.__data = patient_data
+        self.__interp_data: pd.DataFrame = None
         self.__patient_ID: str = None
         # TODO: new attributes (need to cache again):
         self.original_labels = list(self.__data.columns.values)
@@ -39,14 +47,17 @@ class Patient:
             Patient.patient_id_set.add(patient_ID)
         else:
             raise NotUniqueIDError(f"Patient ID \"{patient_ID}\" was not unique!")
+
         for label in Patient.LABELS:  # Sanity check of expected labels against present labels in data
             if label not in self.data.columns.values:
                 raise ValueError("Given patient data did not match the expected format! Please check the columns.")
 
-
     def __del__(self):  # removing ID from the set, so it can be given out again
         if self.__patient_ID in Patient.patient_id_set:
             Patient.patient_id_set.remove(self.__patient_ID)
+
+    def __str__(self):
+        return "Patient #"+self.ID
 
     @property
     def ID(self) -> str:
@@ -57,37 +68,81 @@ class Patient:
         return self.__patient_ID
 
     @property
-    def data(self):
+    def data(self) -> pd.DataFrame:
         return self.__data
 
-    def get_average(self, label: str) -> float:
-        global COUNTER
+    def get_interp_data(self, interp_method: str = None, order: int = None):
+        if interp_method is None and self.__interp_data is not None:
+            return self.__interp_data
+
+        if interp_method is None and self.__interp_data is None:
+            interp_method = Patient.INTERPOLATION_METHOD
+
+        series = []
+        for label in Patient.DATA_LABELS:
+
+            if self.data[label].isna().sum() / len(self.data[label]) < Patient.NAN_DISMISSAL_THRESHOLD:
+                series_interp = self.data[label].interpolate(method=interp_method, axis="index", order=order,
+                                                             limit=int(Patient.CONSECUTIVE_NAN_INTERPOLATION_LIMIT
+                                                                       * len(self.data[label])))
+            else:  # too many NANs for interpolation
+                series_interp = pd.Series([np.NAN for i in range(len(self.data[label]))])
+            series.append(series_interp.to_frame(name=label))
+
+        self.__interp_data = pd.concat([s for s in series] +
+                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)
+        return self.__interp_data
+
+    def get_average_df(self, use_interpolation: bool = False):
         """
-        Get the amount of na for a given label (see Patient.LABELS)
+        Calculate the average for every label and return a pd.Series with the result of shape (1, len(Patient.LABELS)
+        :param use_interpolation:
+        :return:
+        """
+        avgs = {}
+        for label in self.LABELS:
+            avgs[label] = self.get_average(label, use_interpolation)
+
+        return pd.Series(avgs)
+
+    def get_average(self, label: str, use_interpolation: bool = False) -> float:
+        """
+        Get the average for a given label (see Patient.LABELS)
+        :param use_interpolation:
         :param label:
         :return:
         """
-        if self.labels_average[label] is not None:
+        if self.labels_average[label] is not None and not use_interpolation:
             return self.labels_average[label]
         else:
-            a = self.data[label].dropna().to_numpy()
-            new_a = np.mean(a).tolist()                         # transform numpy.float64 to normal float
-            self.labels_average[label] = new_a
-            return self.labels_average[label]
+            if use_interpolation:
+                d = self.get_interp_data()[label].dropna()
+                avg_sum = d.sum()
+                avg_len = len(d)
 
-    def get_standard_deviation(self, label: str) -> float:
+                return avg_sum / avg_len
+            else:
+                a = self.data[label].dropna().to_numpy()
+                new_a = np.mean(a).tolist()                         # transform numpy.float64 to normal float
+                self.labels_average[label] = new_a
+                return self.labels_average[label]
+
+    def get_standard_deviation(self, label: str, use_interpolation: bool = False) -> float:
         """
         Get the standard deviation for a given label (see Patient.LABELS)
+        :param use_interpolation:
         :param label:
         :return:
         """
-        if self.labels_std_dev[label] is not None:
+        if self.labels_std_dev[label] is not None and not use_interpolation:
             return self.labels_std_dev[label]
+
+        if not use_interpolation:
+            a = np.std(self.data[label].dropna().to_numpy())
+            self.labels_std_dev[label] = a
         else:
-            a = self.data[label].dropna().to_numpy()
-            new_a = np.std(a).tolist()                         # transform numpy.float64 to normal float
-            self.labels_std_dev[label] = new_a
-            return self.labels_std_dev[label]
+            a = np.std(self.get_interp_data()[label].dropna().to_numpy())
+        return a
 
     def get_NaN(self, label: str) -> float:
         """
@@ -98,18 +153,18 @@ class Patient:
         if self.labels_relative_NaN[label] is not None:
             return self.labels_relative_NaN[label]
         else:
-            counter_nan = 0                                 # absolute values of NaN not necessary
+            counter_nan = 0  # absolute values of NaN not necessary
             counter_not_nan = 0
             for timestep in self.data[label]:
                 if np.isnan(timestep):
                     counter_nan += 1
                 else:
                     counter_not_nan += 1
-            self.labels_relative_NaN[label] = counter_nan/(counter_not_nan + counter_nan)
+            self.labels_relative_NaN[label] = counter_nan / (counter_not_nan + counter_nan)
             return self.labels_relative_NaN[label]
 
-
     #################### Vital Signs ######################
+
     @property
     def vital_signs(self) -> pd.DataFrame:
         """
