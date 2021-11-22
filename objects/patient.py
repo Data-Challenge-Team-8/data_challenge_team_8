@@ -86,7 +86,7 @@ class Patient:
         else:
             a = self.data[label].dropna().to_numpy()
             new_a = np.std(a).tolist()                         # transform numpy.float64 to normal float
-            self.labels_average[label] = new_a
+            self.labels_std_dev[label] = new_a
             return self.labels_std_dev[label]
 
     def get_NaN(self, label: str) -> float:
