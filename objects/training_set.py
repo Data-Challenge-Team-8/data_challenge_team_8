@@ -6,6 +6,9 @@ import datetime
 import pandas as pd
 import numpy as np
 
+import numpy as np
+import pandas as pd
+
 from objects.patient import Patient
 from IO.data_reader import DataReader
 
@@ -125,6 +128,72 @@ class TrainingSet:
                 raise ValueError("Unknown Training Set name")
             else:
                 return TrainingSet(patients=patients, name=name)
+
+    def get_average_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
+        """
+        Calculate a concatenated dataframe of averages for each label/feature of each patient.
+
+        Important: Drops the sepsis label!
+        Note: PacMAP expects a (number of samples, dimension) format. This is (dimension, number of samples).
+        So use transpose()!
+        :param use_interpolation: if interpolation is used by the patient before calculating averages
+        :param fix_missing_values: Attempts to remove NaN values from the dataframe by either imputation or
+        row removal. Method decision is based on Patient.NAN_DISMISSAL_THRESHOLD.
+        :return:
+        """
+        avg_dict = {}
+        for patient_id in self.data.keys():
+            avg_dict[patient_id] = self.data[patient_id].get_average_df(use_interpolation)
+
+        avg_df = pd.DataFrame(avg_dict)
+        avg_df.drop("SepsisLabel", inplace=True)
+
+        if not fix_missing_values:
+            return avg_df
+        else:
+
+            label_avgs = self.get_label_averages(use_interpolation)
+
+            for label in avg_df.index:
+                rel_missing = avg_df.loc[label].isna().sum() / len(avg_df.loc[label])
+                print()
+
+                if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/2:  # kick the row because too many missing values
+                    avg_df.drop(label, inplace=True)
+
+                else:  # try filling with mean imputation
+                    for patient_id in avg_dict.keys():
+                        if avg_df.isna()[patient_id][label]:
+                            avg_df[patient_id][label] = label_avgs[label]
+
+            return avg_df
+
+    def get_label_averages(self, use_interpolation: bool = False) -> pd.Series:
+        """
+        Calculate the average of a label across the whole set
+
+        :param use_interpolation:
+        :return:
+        """
+        label_sums = {key: 0 for key in Patient.LABELS}
+        label_count = {key: 0 for key in Patient.LABELS}
+        for patient_id in self.data.keys():
+            for label in Patient.LABELS:
+                if not use_interpolation:
+                    label_sums[label] += self.data[patient_id].data[label].dropna().sum()
+                    label_count[label] += len(self.data[patient_id].data[label].dropna())
+                else:
+                    label_sums[label] += self.data[patient_id].get_interp_data()[label].dropna().sum()
+                    label_count[label] += len(self.data[patient_id].get_interp_data()[label].dropna())
+
+        avgs = {}
+        for label in label_sums.keys():
+            if label_count[label] == 0:
+                avgs[label] = None
+            else:
+                avgs[label] = label_sums[label] / label_count[label]
+
+        return pd.Series(avgs)
 
     def get_subgroup(self, label: str, low_value, high_value, new_set_id: str = None):
         """
