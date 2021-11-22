@@ -1,32 +1,22 @@
-import os
-from datetime import datetime
-
+import os.path
+import pickle
+from IO.data_reader import DataReader
+from objects.patient import Patient
 from objects.training_set import TrainingSet
-from tools.pacmap_analysis import PacmapAnalysis
+from tools.visualization.interpolation_comparison import plot_most_interesting_interpolation_patients, \
+    plot_data_with_and_without_interpolation
+from tools.pacmap_analysis import calculate_pacmap, plot_pacmap
+
 
 if __name__ == '__main__':
-    # Build Dashboard
-    # os.system("streamlit run "+os.path.join("web", "app.py"))
+    #mini_set = TrainingSet(TrainingSet.PRESETS["Set A"][:61], name="Mini Set")
 
-    # test caching time
-    # start = datetime.now()
-    # print("Starting with cache: ", start)
-    # first_set_A = TrainingSet.get_training_set('Set A')
-    # end = datetime.now()
-    # print("Finished: ", end)
-    # print("Difference: ", end - start)
+    set_a = TrainingSet.get_training_set("Set A")
 
-    # test label stats
-    test_set_A = TrainingSet.get_training_set('Set A')
-    labels_average, labels_std_dev, labels_rel_NaN = test_set_A.calc_stats_for_labels()
+    data = calculate_pacmap(set_a)
 
-    print("Dict of Label Averages: ", labels_average)
-    print("Dict of Label Standard Deviation: ", labels_std_dev)
-    print("Dict of Label NaN: ", labels_rel_NaN)
+    plot_pacmap("test", data)
 
+    set_A = TrainingSet.get_training_set("Set A")
+    plot_most_interesting_interpolation_patients(set_A)
 
-    # TODO: Use Averages, std_dev for Pacmap (maybe use label_nan to sort out unnecessary labels or do interpolation)
-    # df_avg = test_set_A.get_dataframe_averages()
-    # print(df_avg)
-    # test_pacmap = PacmapAnalysis.get_analysis(test_set_A)
-    # test_pacmap.plot_pacmap()
