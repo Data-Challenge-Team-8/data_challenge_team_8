@@ -46,10 +46,10 @@ def plot_pacmap2D_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[st
     for patient_id in patient_ids:
         sepsis_list.append(training_set.data[patient_id].sepsis_label.sum() > 0)  # if the patient has sepsis or not
 
-    plot_pacmap2D(plot_title, data, sepsis_list, "cool", save_to_file)
+    plot_pacmap2D(plot_title, data, sepsis_list, color_map="cool", save_to_file=True)
 
 
-def plot_pacmap2D(plot_title: str, data: np.ndarray, coloring: List[float], color_map: str = "cool", save_to_file: bool = False):
+def plot_pacmap2D(plot_title: str, data: np.ndarray, coloring: List[float], color_map: str, save_to_file: bool):
     """
     Plots the given 2D PaCMAP data using matplotlib with sepsis coloring
     :param coloring: list of floats to be used for coloring with the color map
@@ -79,7 +79,7 @@ def plot_pacmap2D(plot_title: str, data: np.ndarray, coloring: List[float], colo
     plt.close()
 
 
-def plot_pacmap3D(plot_title: str, data: np.ndarray, coloring: List[float], color_map: str = "cool", save_to_file: bool = False):
+def plot_pacmap3D(plot_title: str, data: np.ndarray, coloring: List[float], color_map: str, save_to_file: bool):
     """
     Plots the given 3D PaCMAP data using matplotlib with sepsis coloring
     :param coloring: list of floats to be used for coloring with the color map

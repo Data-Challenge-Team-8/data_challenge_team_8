@@ -36,7 +36,7 @@ class Patient:
         self.__data = patient_data
         self.__interp_data: pd.DataFrame = None
         self.__patient_ID: str = None
-        # TODO: new attributes (need to cache again):
+
         self.original_labels = list(self.__data.columns.values)
         self.labels_average = dict.fromkeys(self.original_labels)
         self.labels_std_dev = dict.fromkeys(self.original_labels)

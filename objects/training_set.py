@@ -36,11 +36,12 @@ class TrainingSet:
         self.data = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
 
-        self.active_labels = []
-
         self.__dirty: bool = False
 
         self.average_df_fixed: pd.DataFrame = None
+
+        # Jakob
+        self.active_labels = []
         self.labels_average = {}
         self.labels_std_dev = {}
         self.labels_rel_NaN = {}
@@ -48,16 +49,18 @@ class TrainingSet:
         self.__load_data_from_cache()
         self.__save_data_to_cache()
 
+    # Jakob
     def get_active_labels(self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
         self.active_labels = list(self.data.values())[0].data.columns.values
         return self.active_labels
 
+    # Jakob
     def calc_stats_for_labels(self):
         self.get_active_labels()
         labels_average_dict = dict.fromkeys(self.active_labels)
         labels_std_dev_dict = dict.fromkeys(self.active_labels)
         labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
-        for label in self.active_labels[0:1]:                               # TODO: Only first selected label
+        for label in Patient.LABELS:                               # TODO: Only first selected label
             print("Analysing Label: ", label)
             averages_list = []
             std_dev_list = []
@@ -66,15 +69,15 @@ class TrainingSet:
                 averages_list.append(patient.get_average(label))
                 std_dev_list.append(patient.get_standard_deviation(label))
                 rel_nan_list.append(patient.get_NaN(label))
-            print("List of averages per patient", averages_list[:10])       # All elements in averages list are definitely float (and not numpy.float)
             labels_average_dict[label] = np.nansum(averages_list) / len(averages_list)          # TODO: 1) Error with sum(list) method ???
             labels_std_dev_dict[label] = np.nansum(std_dev_list) / len(std_dev_list)
             labels_rel_NaN_dict[label] = sum(rel_nan_list) / len(rel_nan_list)
-        self.labels_average.update(labels_average_dict)                     # TODO: Is update a good solution?
+        self.labels_average.update(labels_average_dict)
         self.labels_std_dev.update(labels_std_dev_dict)
         self.labels_rel_NaN.update(labels_rel_NaN_dict)
         return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
 
+    # Jakob
     def get_dataframe_averages(self):                                       # TODO: Test this implementation. Is patient_id missing?
         data_rows = []
         for patient in self.data.values():
