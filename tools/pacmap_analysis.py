@@ -7,6 +7,7 @@ from IO.data_reader import FIGURE_OUTPUT_FOLDER
 import os
 import pacmap
 from matplotlib import pyplot as plt
+import matplotlib
 
 
 def calculate_pacmap(training_set: TrainingSet, dimension: int = 2, use_interpolation: bool = False):
@@ -83,6 +84,9 @@ def plot_pacmap2D(plot_title: str, data: np.ndarray, coloring: List[float], colo
     ax1.scatter(data[:, 0], data[:, 1], cmap=color_map, c=coloring, s=0.6, label="Patient")
 
     plt.legend()
+    fig.colorbar(matplotlib.cm.ScalarMappable(cmap=color_map,
+                                              norm=matplotlib.colors.Normalize(vmin=min(coloring), vmax=max(coloring))),
+                 ax=ax1)
 
     if not save_to_file:
         plt.show()
@@ -113,6 +117,9 @@ def plot_pacmap3D(plot_title: str, data: np.ndarray, coloring: List[float], colo
     ax1.scatter(data[:, 0], data[:, 1], data[:, 2], cmap=color_map, c=coloring, s=0.6, label="Patient")
 
     plt.legend()
+    fig.colorbar(matplotlib.cm.ScalarMappable(cmap=color_map,
+                                              norm=matplotlib.colors.Normalize(vmin=min(coloring), vmax=max(coloring))),
+                 ax=ax1)
 
     if not save_to_file:
         plt.show()
