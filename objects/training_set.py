@@ -38,7 +38,8 @@ class TrainingSet:
 
         self.__dirty: bool = False
 
-        self.average_df_fixed: pd.DataFrame = None
+        self.average_df_fixed_no_interpol: pd.DataFrame = None
+        self.average_df_fixed_interpol: pd.DataFrame = None
 
         # Jakob
         self.active_labels = []
@@ -102,7 +103,8 @@ class TrainingSet:
             start_time = datetime.datetime.now()
             d = pickle.load(open(file_path, "rb"))
             self.data = d["data"]
-            self.average_df_fixed = d["avg_df_fixed"]
+            self.average_df_fixed_no_interpol = d["avg_df_fixed_no_interpol"]
+            self.average_df_fixed_interpol = d["avg_df_fixed_interpol"]
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
         else:
@@ -119,7 +121,8 @@ class TrainingSet:
         if not os.path.exists(file_path) or self.__dirty:
             print("Writing TrainingSet", self.name, "data to pickle cache!")
             self.__dirty = False
-            pickle.dump({"data": self.data, "avg_df_fixed": self.average_df_fixed}, open(file_path, "wb"))
+            pickle.dump({"data": self.data, "avg_df_fixed_no_interpol": self.average_df_fixed_no_interpol,
+                         "avg_df_fixed_interpol": self.average_df_fixed_interpol}, open(file_path, "wb"))
 
     @classmethod
     def get_training_set(cls, name: str, patients: List[str] = None):
@@ -153,8 +156,10 @@ class TrainingSet:
         row removal. Method decision is based on Patient.NAN_DISMISSAL_THRESHOLD.
         :return:
         """
-        if self.average_df_fixed is not None and fix_missing_values:
-            return self.average_df_fixed
+        if self.average_df_fixed_no_interpol is not None and fix_missing_values and not use_interpolation:
+            return self.average_df_fixed_no_interpol
+        elif self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
+            return self.average_df_fixed_interpol
 
         avg_dict = {}
         for patient_id in self.data.keys():
@@ -182,10 +187,10 @@ class TrainingSet:
                     for patient_id in avg_dict.keys():
                         if avg_df.isna()[patient_id][label]:
                             avg_df[patient_id][label] = label_avgs[label]
-            self.average_df_fixed = avg_df
+            self.average_df_fixed_no_interpol = avg_df
             self.__dirty = True
             self.__save_data_to_cache()
-            return self.average_df_fixed
+            return self.average_df_fixed_no_interpol
 
     def get_label_averages(self, use_interpolation: bool = False) -> pd.Series:
         """
