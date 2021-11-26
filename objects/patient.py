@@ -117,6 +117,9 @@ class Patient:
         else:
             if use_interpolation:
                 d = self.get_interp_data()[label].dropna()
+                if len(d) == 0:  # entire column was NaN
+                    return None
+
                 avg_sum = d.sum()
                 avg_len = len(d)
 
