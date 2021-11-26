@@ -3,11 +3,6 @@ from typing import Dict, Tuple, List
 import os
 import pickle
 import datetime
-import pandas as pd
-import numpy as np
-
-import numpy as np
-import pandas as pd
 
 import numpy as np
 import pandas as pd
@@ -179,7 +174,7 @@ class TrainingSet:
                 print()
 
                 if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/1.5:  # kick the row because too many missing values
-                    print(f"TrainingSet.get_average_df kicked \"{label}\" out because too many missing values "
+                    print(f"{self.name}.get_average_df kicked \"{label}\" out because too many missing values "
                           f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD/2})")
                     avg_df.drop(label, inplace=True)
 
