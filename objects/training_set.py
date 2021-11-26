@@ -175,7 +175,7 @@ class TrainingSet:
 
                 if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/1.5:  # kick the row because too many missing values
                     print(f"{self.name}.get_average_df kicked \"{label}\" out because too many missing values "
-                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD/2})")
+                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD/1.5})")
                     avg_df.drop(label, inplace=True)
 
                 else:  # try filling with mean imputation
