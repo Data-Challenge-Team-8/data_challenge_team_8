@@ -11,39 +11,40 @@ from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
 
 
-def calculate_cluster_dbscan(training_set: TrainingSet, eps: float, min_samples: int, use_interpolation: bool = False):
+def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
+    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
+    avg_np = avg_df.transpose().to_numpy()
+    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
+
+    return avg_np
+
+
+def calculate_cluster_dbscan(avg_np: np.ndarray, eps: float, min_samples: int, use_interpolation: bool = False):
     """
     density Based Spatial Clustering of Applications with Noise. Dateninstanzen der selben 'dichten' Region werden geclustert.
     dichte Region := Radius eps mit Mindestanzahl min_samples
 
     Based on TrainingSet.get_average_df() and the fix_missing_values flag
-    :param training_set:
+    :param avg_np:
     :param eps: needed for DBSCAN clustering regions
     :param min_samples: needed for minimum amount of neighbors in DBSAN clustering regions
     :return: list of responding clusters in the same order as patients list
     """
-    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
-    avg_np = avg_df.transpose().to_numpy()
-    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
-
     # we could use weights per label to give imputed labels less weights?
     clustering_obj = DBSCAN(eps=eps, min_samples=min_samples).fit(avg_np)
     clustering_labels_list = clustering_obj.labels_
     return clustering_labels_list
 
 
-def calculate_cluster_kmeans(training_set: TrainingSet, n_clusters: int, use_interpolation: bool = False):
+def calculate_cluster_kmeans(avg_np: np.ndarray, n_clusters: int, use_interpolation: bool = False):
     """
     k-means clustering: choose amount n_clusters to calculate k centroids for these clusters
 
     Based on TrainingSet.get_average_df() and the fix_missing_values flag
-    :param training_set:
+    :param avg_np:
     :param n_clusters: amount of k clusters
     :return: list of responding clusters in the same order as patients list
     """
-    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
-    avg_np = avg_df.transpose().to_numpy()
-    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
 
     # we could use weights per label to give imputed labels less weights?
     kmeans_obj = KMeans(init="k-means++", n_clusters=n_clusters, n_init=4, random_state=0, max_iter=350,

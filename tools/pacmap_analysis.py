@@ -10,20 +10,26 @@ from matplotlib import pyplot as plt
 import matplotlib
 
 
+def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
+    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
+    avg_np = avg_df.transpose().to_numpy()
+    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
+
+    return avg_np
+
+
 def calculate_pacmap(training_set: TrainingSet, dimension: int = 2, use_interpolation: bool = False):
     """
     Calculate a PaCMAP transformation of the given TrainingSet.
 
     Based on TrainingSet.get_average_df() and the fix_missing_values flag
     :param use_interpolation:
-    :param training_set:
+    :param avg_np:
     :param dimension: dimension of the resulting PaCMAP mapping
     :return: data as returned by the PaCMAP algorithm
     """
+    avg_np = training_set_to_data(training_set, use_interpolation)
     avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
-    avg_np = avg_df.transpose().to_numpy()
-
-    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
 
     embedding = pacmap.PaCMAP(n_dims=dimension, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0, verbose=True, random_state=1)
     data_transformed = embedding.fit_transform(avg_np, init="pca")
