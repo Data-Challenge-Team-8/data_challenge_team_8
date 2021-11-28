@@ -182,10 +182,13 @@ class TrainingSet:
                     for patient_id in avg_dict.keys():
                         if avg_df.isna()[patient_id][label]:
                             avg_df[patient_id][label] = label_avgs[label]
-            self.average_df_fixed_no_interpol = avg_df
+            if not use_interpolation:
+                self.average_df_fixed_no_interpol = avg_df
+            else:
+                self.average_df_fixed_interpol = avg_df
             self.__dirty = True
             self.__save_data_to_cache()
-            return self.average_df_fixed_no_interpol
+            return avg_df
 
     def get_label_averages(self, use_interpolation: bool = False) -> pd.Series:
         """
