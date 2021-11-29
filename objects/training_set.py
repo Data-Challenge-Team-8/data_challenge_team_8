@@ -104,18 +104,12 @@ class TrainingSet:
             for col in df.columns:
                 temp_z_val_df['z_' + col] = (df[col] - df[col].mean()) / df[col].std()
             self.z_value_df = temp_z_val_df
-
-            self.__dirty = True
-            self.__save_data_to_cache()
-            return self.z_value_df
+            return self.z_value_df                                  # no save because cache-file would be too large
         else:
             df = self.average_df_fixed_no_interpol
             for col in df.columns:                                  # seems to work but turn the df 90 degree?
                 temp_z_val_df['z_' + col] = (df[col] - df[col].mean()) / df[col].std()
             self.z_value_df_no_interpol = temp_z_val_df
-
-            self.__dirty = True
-            self.__save_data_to_cache()
             return self.z_value_df_no_interpol
 
 
