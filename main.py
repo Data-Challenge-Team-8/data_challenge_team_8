@@ -41,7 +41,7 @@ if __name__ == '__main__':
     z_value_np.reshape(z_value_np.shape[0], -1)
     db_scan_list = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) no interpolation and eps={eps} min_samples={min_samples}_",
+    plot_pacmap2D(f"DBSCAN clusters ({set_a.name}) no interpol. and eps={eps} min_sampl={min_samples}_",
                   data=pacmap_data,                         # Ist pacmap_data hier korrekt?
                   coloring=db_scan_list,
                   color_map='tab20c',
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     z_value_np.reshape(z_value_np.shape[0], -1)
     db_scan_list = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) with interpolation and eps={eps} min_samples={min_samples}_",
+    plot_pacmap2D(f"DBSCAN clusters ({set_a.name}) with interpol. and eps={eps} min_sampl={min_samples}_",
                   data=pacmap_data,
                   coloring=db_scan_list,
                   color_map='tab20c',
@@ -62,14 +62,14 @@ if __name__ == '__main__':
     # DBSCAN auf pacmap-data               # macht das Sinn?
     db_scan_list = calculate_cluster_dbscan(pacmap_data, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) with interpolation and eps={eps} min_samples={min_samples}_",
+    plot_pacmap2D(f"DBSCAN clusters ({set_a.name}) with interpol. and eps={eps} min_sampl={min_samples}_",
                   data=pacmap_data,
                   coloring=db_scan_list,
                   color_map='tab20c',
                   save_to_file=True)
     print("Finished")
     # TODO: 3D funktioniert nicht weil IndexError von data[2] ???
-    # plot_pacmap3D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) without interpolation and parameters: eps={eps} min_samples={min_samples}_",
+    # plot_pacmap3D(f"DBSCAN clusters ({set_a.name}) without interpol. and parameters: eps={eps} min_sampl={min_samples}_",
     #               data=pacmap_data,
     #               coloring=db_scan_list,
     #               color_map='tab20c',
