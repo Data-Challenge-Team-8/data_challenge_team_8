@@ -15,15 +15,6 @@ if __name__ == '__main__':
     set_a = TrainingSet.get_training_set("Set A")
     # plot_most_interesting_interpolation_patients(set_a)
 
-    # Calculate avg_per_patient for each label
-
-    # Calculate std_dev for each label
-
-    # Save std_dev also to cache
-
-    # Calculate z-values = (avg_per_patient - avg_of_label) / std_dev of label
-
-    # Add z-values_per_patient for each label
 
     # Pacmap for Sepsis
     # temporarily caching pacmap_data
@@ -39,39 +30,50 @@ if __name__ == '__main__':
     # plot_pacmap2D_sepsis(f"PaCMAP colored by sepsis ({set_a.name})", pacmap_data, patient_ids, training_set=set_a)
 
 
-    print("Starting with DBSCAN:")
+
     # TODO: We need to find out better settings
+    print("Starting with DBSCAN:")
     eps = 0.4
     min_samples = 8
     # DBSCAN auf z_values_df ohne interpolation
     z_value_df = set_a.get_z_value_df(use_interpolation=False, fix_missing_values=False)
-    # print(z_value_df.head())
     z_value_np = z_value_df.transpose().to_numpy()
     z_value_np.reshape(z_value_np.shape[0], -1)
     db_scan_list = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) without interpolation", pacmap_data, coloring=db_scan_list,
-                  color_map='tab20c', save_to_file=True)
+    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) no interpolation and eps={eps} min_samples={min_samples}_",
+                  data=pacmap_data,                         # Ist pacmap_data hier korrekt?
+                  coloring=db_scan_list,
+                  color_map='tab20c',
+                  save_to_file=True)
 
-    # DBSCAN auf z_values_df mit interpolation # TODO: Ist das auch wirklich mit Interpolation? Die Datasets sehen gleich aus
+    # DBSCAN auf z_values_df mit interpolation # TODO: Ist das auch wirklich mit Interpolation? Die Datasets sehen irgendwie gleich aus
     z_value_df = set_a.get_z_value_df(use_interpolation=True, fix_missing_values=True)
-    # print(z_value_df.head())
     z_value_np = z_value_df.transpose().to_numpy()
     z_value_np.reshape(z_value_np.shape[0], -1)
     db_scan_list = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) with interpolation", pacmap_data, coloring=db_scan_list,
-                  color_map='tab20c', save_to_file=True)
+    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) with interpolation and eps={eps} min_samples={min_samples}_",
+                  data=pacmap_data,
+                  coloring=db_scan_list,
+                  color_map='tab20c',
+                  save_to_file=True)
 
-    # DBSCAN auf pacmap-data
+    # DBSCAN auf pacmap-data               # macht das Sinn?
     db_scan_list = calculate_cluster_dbscan(pacmap_data, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"2D PaCMAP colored by DBSCAN clusters ({set_a.name})", pacmap_data, coloring=db_scan_list,
-                  color_map='tab20c', save_to_file=True)
-    # TODO: 3D funktioniert nicht weil IndexError von data[2]
-    # plot_pacmap3D(f"3D PaCMAP colored by DBSCAN clusters ({set_a.name})", pacmap_data, coloring=db_scan_list,
-    #               color_map='tab20c', save_to_file=True)
-
+    plot_pacmap2D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) with interpolation and eps={eps} min_samples={min_samples}_",
+                  data=pacmap_data,
+                  coloring=db_scan_list,
+                  color_map='tab20c',
+                  save_to_file=True)
+    print("Finished")
+    # TODO: 3D funktioniert nicht weil IndexError von data[2] ???
+    # plot_pacmap3D(f"PaCMAP colored by DBSCAN clusters ({set_a.name}) without interpolation and parameters: eps={eps} min_samples={min_samples}_",
+    #               data=pacmap_data,
+    #               coloring=db_scan_list,
+    #               color_map='tab20c',
+    #               save_to_file=True)
 
 
     # # k-Means without imputation before Pacmap                      # TODO: Frage von Jakob: Wie funktioniert das? Was kommt denn dabei raus?
