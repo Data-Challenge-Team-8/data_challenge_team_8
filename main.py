@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # DBSCAN auf pacmap-data               # macht das Sinn?
     db_scan_list = calculate_cluster_dbscan(pacmap_data, eps=eps, min_samples=min_samples)
     print("Clusters found:", set(db_scan_list))
-    plot_pacmap2D(f"DBSCAN clusters ({set_a.name}) with interpol. and eps={eps} min_sampl={min_samples}_",
+    plot_pacmap2D(f"DBSCAN clusters ({set_a.name}) based on pacmap_data with interpol. and eps={eps} min_sampl={min_samples}_",
                   data=pacmap_data,
                   coloring=db_scan_list,
                   color_map='tab20c',
