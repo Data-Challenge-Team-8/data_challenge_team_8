@@ -11,7 +11,7 @@ import matplotlib
 
 
 def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
-    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
+    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)              # TODO: This takes avg_df we need z-values_df
     avg_np = avg_df.transpose().to_numpy()
     avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
 
@@ -91,8 +91,9 @@ def plot_pacmap2D(plot_title: str, data: np.ndarray, coloring: List[float], colo
 
     plt.legend()
     fig.colorbar(matplotlib.cm.ScalarMappable(cmap=color_map,
-                                              norm=matplotlib.colors.Normalize(vmin=min(coloring), vmax=max(coloring))),
-                 ax=ax1)
+                                              norm=matplotlib.colors.Normalize(vmin=min(coloring),
+                                                                               vmax=max(coloring))),
+                                                                                ax=ax1)
 
     if not save_to_file:
         plt.show()

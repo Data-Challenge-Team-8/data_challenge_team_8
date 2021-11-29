@@ -113,6 +113,14 @@ def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_
     plt.close()
 
 
+def plot_multiple_clusters(avg_silhouettes, krange):
+    plt.figure(dpi=100)
+    plt.plot(krange, avg_silhouettes)
+    plt.xlabel("$k$")
+    plt.ylabel("Average Silhouettes Score")
+    plt.show()
+
+
 def plot_clustering_with_silhouette_score_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[str],
                                                  training_set: TrainingSet, sh_score: float, coloring: List[float],
                                                  color_map: str, save_to_file: bool):

@@ -36,6 +36,9 @@ class TrainingSet:
         self.average_df_fixed_no_interpol: pd.DataFrame = None
         self.average_df_fixed_interpol: pd.DataFrame = None
 
+        self.z_value_df: pd.DataFrame = None
+        self.z_value_df_no_interpol: pd.DataFrame = None
+
         # Jakob
         self.active_labels = []
         self.labels_average = {}
@@ -46,7 +49,8 @@ class TrainingSet:
         self.__save_data_to_cache()
 
     # Jakob
-    def get_active_labels(self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
+    def get_active_labels(
+            self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
         self.active_labels = list(self.data.values())[0].data.columns.values
         return self.active_labels
 
@@ -56,7 +60,7 @@ class TrainingSet:
         labels_average_dict = dict.fromkeys(self.active_labels)
         labels_std_dev_dict = dict.fromkeys(self.active_labels)
         labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
-        for label in Patient.LABELS:                               # TODO: Only first selected label
+        for label in Patient.LABELS:  # TODO: Only first selected label
             print("Analysing Label: ", label)
             averages_list = []
             std_dev_list = []
@@ -65,7 +69,8 @@ class TrainingSet:
                 averages_list.append(patient.get_average(label))
                 std_dev_list.append(patient.get_standard_deviation(label))
                 rel_nan_list.append(patient.get_NaN(label))
-            labels_average_dict[label] = np.nansum(averages_list) / len(averages_list)          # TODO: 1) Error with sum(list) method ???
+            labels_average_dict[label] = np.nansum(averages_list) / len(
+                averages_list)  # TODO: 1) Error with sum(list) method ???
             labels_std_dev_dict[label] = np.nansum(std_dev_list) / len(std_dev_list)
             labels_rel_NaN_dict[label] = sum(rel_nan_list) / len(rel_nan_list)
         self.labels_average.update(labels_average_dict)
@@ -74,7 +79,7 @@ class TrainingSet:
         return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
 
     # Jakob
-    def get_dataframe_averages(self):                                       # TODO: Test this implementation. Is patient_id missing?
+    def get_dataframe_averages(self):  # TODO: Test this implementation. Is patient_id missing?
         data_rows = []
         for patient in self.data.values():
             data_rows.append(list(patient.labels_average.values()))
@@ -83,6 +88,36 @@ class TrainingSet:
 
     def __len__(self):
         return len(self.data.keys())
+
+    # Jakob New
+    def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
+        self.get_average_df(use_interpolation = use_interpolation, fix_missing_values = fix_missing_values)
+
+        if self.z_value_df_no_interpol is not None and fix_missing_values and not use_interpolation:
+            return self.z_value_df_no_interpol
+        elif self.z_value_df is not None and fix_missing_values and use_interpolation:
+            return self.z_value_df
+
+        temp_z_val_df = pd.DataFrame()
+        if use_interpolation:
+            df = self.average_df_fixed_interpol
+            for col in df.columns:
+                temp_z_val_df['z_' + col] = (df[col] - df[col].mean()) / df[col].std()
+            self.z_value_df = temp_z_val_df
+
+            self.__dirty = True
+            self.__save_data_to_cache()
+            return self.z_value_df
+        else:
+            df = self.average_df_fixed_no_interpol
+            for col in df.columns:                                  # seems to work but turn the df 90 degree?
+                temp_z_val_df['z_' + col] = (df[col] - df[col].mean()) / df[col].std()
+            self.z_value_df_no_interpol = temp_z_val_df
+
+            self.__dirty = True
+            self.__save_data_to_cache()
+            return self.z_value_df_no_interpol
+
 
     def __construct_cache_file_name(self):
         key_concat = ""
@@ -166,16 +201,15 @@ class TrainingSet:
         if not fix_missing_values:
             return avg_df
         else:
-
             label_avgs = self.get_label_averages(use_interpolation)
 
             for label in avg_df.index:
                 rel_missing = avg_df.loc[label].isna().sum() / len(avg_df.loc[label])
                 print()
 
-                if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD/1.5:  # kick the row because too many missing values
+                if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD / 1.5:  # kick the row because too many missing values
                     print(f"{self.name}.get_average_df kicked \"{label}\" out because too many missing values "
-                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD/1.5})")
+                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD / 1.5})")
                     avg_df.drop(label, inplace=True)
 
                 else:  # try filling with mean imputation
