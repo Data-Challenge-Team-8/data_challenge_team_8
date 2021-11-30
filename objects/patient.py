@@ -130,6 +130,7 @@ class Patient:
                 self.labels_average[label] = new_a
                 return self.labels_average[label]
 
+    @DeprecationWarning
     def get_standard_deviation(self, label: str, use_interpolation: bool = False) -> float:
         """
         Get the standard deviation for a given label (see Patient.LABELS)
@@ -147,6 +148,7 @@ class Patient:
             a = np.std(self.get_interp_data()[label].dropna().to_numpy())
         return a
 
+    @DeprecationWarning
     def get_NaN(self, label: str) -> float:
         """
         Get the average for a given label (see Patient.LABELS)
