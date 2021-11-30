@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 
 
-    # TODO: We need to find out better settings
+    # TODO: We need to find out better settings --> use silhouette score
     print("Starting with DBSCAN:")
     eps = 0.4
     min_samples = 8
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                   color_map='tab20c',
                   save_to_file=True)
 
-    # DBSCAN auf z_values_df mit interpolation # TODO: Ist das auch wirklich mit Interpolation? Die Datasets sehen irgendwie gleich aus
+    # DBSCAN auf z_values_df mit interpolation
     z_value_df = set_a.get_z_value_df(use_interpolation=True, fix_missing_values=True)
     z_value_np = z_value_df.transpose().to_numpy()
     z_value_np.reshape(z_value_np.shape[0], -1)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                   color_map='tab20c',
                   save_to_file=True)
     print("Finished")
-    # TODO: 3D funktioniert nicht weil IndexError von data[2] ???
+    # TODO: 3D funktioniert nicht weil IndexError von data[2] --> pacmap3D benötigt
     # plot_pacmap3D(f"DBSCAN clusters ({set_a.name}) without interpol. and parameters: eps={eps} min_sampl={min_samples}_",
     #               data=pacmap_data,
     #               coloring=db_scan_list,
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     #               save_to_file=True)
 
 
-    # # k-Means without imputation before Pacmap                      # TODO: Frage von Jakob: Wie funktioniert das? Was kommt denn dabei raus?
+    # # k-Means without imputation before Pacmap
     # amount_of_clusters = 12
     # k_means_list, sh_score = calculate_cluster_kmeans(training_set_to_data(set_a), n_clusters=amount_of_clusters)
     # title = f"{amount_of_clusters} k-Means clusters ({set_a.name})"
