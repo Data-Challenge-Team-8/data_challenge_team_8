@@ -39,7 +39,7 @@ class TrainingSet:
         self.z_value_df: pd.DataFrame = None
         self.z_value_df_no_interpol: pd.DataFrame = None
 
-        # Jakob
+        # TODO: Sind diese 4 attribute auch Deprecated und können weg?
         self.active_labels = []
         self.labels_average = {}
         self.labels_std_dev = {}
@@ -49,12 +49,14 @@ class TrainingSet:
         self.__save_data_to_cache()
 
     # Jakob
+    @DeprecationWarning
     def get_active_labels(
             self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
         self.active_labels = list(self.data.values())[0].data.columns.values
         return self.active_labels
 
     # Jakob
+    @DeprecationWarning
     def calc_stats_for_labels(self):
         self.get_active_labels()
         labels_average_dict = dict.fromkeys(self.active_labels)
@@ -79,6 +81,7 @@ class TrainingSet:
         return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
 
     # Jakob
+    @DeprecationWarning
     def get_dataframe_averages(self):  # TODO: Test this implementation. Is patient_id missing?
         data_rows = []
         for patient in self.data.values():
@@ -89,9 +92,8 @@ class TrainingSet:
     def __len__(self):
         return len(self.data.keys())
 
-    # Jakob New
     def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
-        self.get_average_df(use_interpolation = use_interpolation, fix_missing_values = fix_missing_values)
+        avg_df = self.get_average_df(use_interpolation = use_interpolation, fix_missing_values = fix_missing_values)
 
         if self.z_value_df_no_interpol is not None and fix_missing_values and not use_interpolation:
             return self.z_value_df_no_interpol
@@ -99,16 +101,13 @@ class TrainingSet:
             return self.z_value_df
 
         temp_z_val_df = pd.DataFrame()
-        if use_interpolation:
-            df = self.average_df_fixed_interpol
-            for col in df.columns:
-                temp_z_val_df['z_' + col] = (df[col] - df[col].mean()) / df[col].std()
+        for col in avg_df.columns:
+            temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
+
+        if use_interpolation and fix_missing_values:
             self.z_value_df = temp_z_val_df
-            return self.z_value_df                                  # no save because cache-file would be too large
+            return self.z_value_df
         else:
-            df = self.average_df_fixed_no_interpol
-            for col in df.columns:                                  # seems to work but turn the df 90 degree?
-                temp_z_val_df['z_' + col] = (df[col] - df[col].mean()) / df[col].std()
             self.z_value_df_no_interpol = temp_z_val_df
             return self.z_value_df_no_interpol
 
