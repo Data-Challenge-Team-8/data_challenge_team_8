@@ -27,7 +27,7 @@ def implement_DBSCAN(training_set, pacmap_data, patient_ids):
     for eps in eps_range:
         db_scan_list, sh_score = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
         avg_silhouettes.append(sh_score)
-    plot_multiple_clusters(avg_silhouettes, eps_range)
+    plot_sh_scores(avg_silhouettes, eps_range)
 
 
     # # DBSCAN auf z_values_df ohne interpolation
@@ -87,7 +87,7 @@ def implement_k_means(training_set, pacmap_data, patient_ids):
     for n in krange:
         k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=n)
         avg_silhouettes.append(sh_score)
-    plot_multiple_clusters(avg_silhouettes, krange)
+    plot_sh_scores(avg_silhouettes, krange)
 
 
 def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
@@ -193,7 +193,7 @@ def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_
     plt.close()
 
 
-def plot_multiple_clusters(avg_silhouettes, cluster_range):
+def plot_sh_scores(avg_silhouettes, cluster_range):
     plt.figure(dpi=100)
     plt.plot(cluster_range, avg_silhouettes)
     plt.xlabel("$k$")
