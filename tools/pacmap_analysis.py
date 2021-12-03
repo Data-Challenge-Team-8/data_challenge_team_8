@@ -12,13 +12,15 @@ from matplotlib import pyplot as plt
 import matplotlib
 
 
-def get_pacmap(training_set):                   # also gets it from cache
+def get_pacmap(training_set):
     # Pacmap for Sepsis
     # temporarily caching pacmap_data
     file_path = os.path.join(TrainingSet.CACHE_PATH, 'pacmap_temp_save')
     if os.path.exists(file_path):
         print("Loading pacmap_data from cache.")
         pacmap_data = pickle.load(open(file_path, "rb"))
+        avg_df = training_set.get_average_df()                  # geht noch nicht komplett mit cacheing weil patient_ids nicht im cache
+        patient_ids = avg_df.columns.tolist()
     else:
         pacmap_data, patient_ids = calculate_pacmap(training_set)
         print("Writing pacmap_temp_save to pickle cache!")

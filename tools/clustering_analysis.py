@@ -22,12 +22,16 @@ def implement_DBSCAN(training_set, pacmap_data, patient_ids):
     z_value_np.reshape(z_value_np.shape[0], -1)
 
     avg_silhouettes = []
-    eps_range = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    eps_range = [0.01, 0.025, 0.05, 0.075, 0.1]
     min_samples = 5                             # we can also test this
     for eps in eps_range:
         db_scan_list, sh_score = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
+        plot_pacmap2D(plot_title=f"DBSCAN with eps: {eps} and min_samp=5", data=z_value_np,
+                      coloring=db_scan_list,
+                      color_map="cool",
+                      save_to_file=True)
         avg_silhouettes.append(sh_score)
-    plot_sh_scores(avg_silhouettes, eps_range)
+    plot_sh_scores(avg_silhouettes, eps_range, title="DBSCAN silhouettes score with min_samples=5")
 
 
     # # DBSCAN auf z_values_df ohne interpolation
@@ -193,8 +197,9 @@ def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_
     plt.close()
 
 
-def plot_sh_scores(avg_silhouettes, cluster_range):
+def plot_sh_scores(avg_silhouettes, cluster_range, title="Silhouettes Score"):
     plt.figure(dpi=100)
+    plt.title = title
     plt.plot(cluster_range, avg_silhouettes)
     plt.xlabel("$k$")
     plt.ylabel("Average Silhouettes Score")

@@ -2,6 +2,7 @@ import os
 import pickle
 
 from objects.training_set import TrainingSet
+from tools.subspace_clustering_analysis import implement_bicluster
 from tools.visualization.interpolation_comparison import plot_most_interesting_interpolation_patients, \
     plot_data_with_and_without_interpolation
 from tools.pacmap_analysis import get_pacmap
@@ -22,6 +23,6 @@ if __name__ == '__main__':
     # implement_k_means(set_a, pacmap_data, patient_ids)
 
     # Task 4: Implement different subspace clustering methods
-    # ...
-
-
+    # scikit_learn module biclustering, alternatives: houghnet, biclustlib
+    print("Implementing Biclustering: ")
+    implement_bicluster(set_a)
