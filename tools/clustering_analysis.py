@@ -9,6 +9,85 @@ from sklearn.metrics import silhouette_score
 
 from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
+from tools.pacmap_analysis import plot_pacmap2D, calculate_pacmap
+
+
+def implement_DBSCAN(training_set, pacmap_data, patient_ids):
+    """
+    only used for the actual implementation of a dbscan clustering. To remove it from main.py
+    """
+    # DBSCAN auf z_values_df mit interpolation
+    z_value_df = training_set.get_z_value_df(use_interpolation=True, fix_missing_values=True)
+    z_value_np = z_value_df.transpose().to_numpy()
+    z_value_np.reshape(z_value_np.shape[0], -1)
+
+    avg_silhouettes = []
+    eps_range = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    min_samples = 5                             # we can also test this
+    for eps in eps_range:
+        db_scan_list, sh_score = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
+        avg_silhouettes.append(sh_score)
+    plot_multiple_clusters(avg_silhouettes, eps_range)
+
+
+    # # DBSCAN auf z_values_df ohne interpolation
+    # eps = 0.5
+    # min_samples = 5
+    # z_value_df = training_set.get_z_value_df(use_interpolation=False, fix_missing_values=False)
+    # z_value_np = z_value_df.transpose().to_numpy()
+    # z_value_np.reshape(z_value_np.shape[0], -1)
+    # db_scan_list = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
+    # print("Clusters found:", set(db_scan_list))
+    # plot_pacmap2D(f"DBSCAN clusters ({training_set.name}) no interpol. and eps={eps} min_sampl={min_samples}_",
+    #               data=pacmap_data,  # Ist pacmap_data hier korrekt?
+    #               coloring=db_scan_list,
+    #               color_map='tab20c',
+    #               save_to_file=True)
+    #
+    # # DBSCAN auf pacmap-data
+    # db_scan_list = calculate_cluster_dbscan(pacmap_data, eps=eps, min_samples=min_samples)
+    # print("Clusters found:", set(db_scan_list))
+    # plot_pacmap2D(f"DBSCAN clusters ({training_set.name}) based on pacmap_data with interpol. and eps={eps} min_sampl={min_samples}_",
+    #               data=pacmap_data,
+    #               coloring=db_scan_list,
+    #               color_map='tab20c',
+    #               save_to_file=True)
+
+
+def implement_k_means(training_set, pacmap_data, patient_ids):
+    """
+    only used for the actual implementation of a k-means clustering. To remove it from main.py
+    """
+    # # k-Means without imputation before Pacmap
+    amount_of_clusters = 12
+    k_means_list, sh_score = calculate_cluster_kmeans(training_set_to_data(training_set), n_clusters=amount_of_clusters)
+    title = f"{amount_of_clusters} k-Means clusters ({training_set.name})"
+
+    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+                                                 patient_ids=patient_ids, training_set=training_set,
+                                                 color_map='tab20c', save_to_file=True)
+    # # k-Means without imputation after Pacmap
+    k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=amount_of_clusters)
+    title = f"{amount_of_clusters} k-Means clusters ({training_set.name}) after PaCMAP"
+    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+                                                 patient_ids=patient_ids, training_set=training_set,
+                                                 color_map='tab20c', save_to_file=True)
+    # k-means with imputation after Pacmap
+    data_imp, patient_ids = calculate_pacmap(training_set, use_interpolation=True)
+    k_means_list, sh_score = calculate_cluster_kmeans(training_set_to_data(training_set, use_interpolation=True), n_clusters=amount_of_clusters)
+    title = f"{amount_of_clusters} k-Means ({training_set.name}) (interpolated)"
+    plot_clustering_with_silhouette_score_sepsis(title, data_imp, sh_score=sh_score, coloring=k_means_list,
+                                                 patient_ids=patient_ids, training_set=training_set,
+                                                 color_map='tab20c', save_to_file=True)
+
+    # Implement silhouettes score analysis for k-means clustering
+    print("\nSilhouettes Score Analysis: ")
+    krange = list(range(2, 11))
+    avg_silhouettes = []
+    for n in krange:
+        k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=n)
+        avg_silhouettes.append(sh_score)
+    plot_multiple_clusters(avg_silhouettes, krange)
 
 
 def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
@@ -33,7 +112,8 @@ def calculate_cluster_dbscan(avg_np: np.ndarray, eps: float, min_samples: int, u
     # we could use weights per label to give imputed labels less weights?
     clustering_obj = DBSCAN(eps=eps, min_samples=min_samples).fit(avg_np)
     clustering_labels_list = clustering_obj.labels_
-    return clustering_labels_list
+    sh_score = calculate_silhouette_score(avg_np, clustering_labels_list)
+    return clustering_labels_list, sh_score
 
 
 def calculate_cluster_kmeans(avg_np: np.ndarray, n_clusters: int, use_interpolation: bool = False):
@@ -113,9 +193,9 @@ def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_
     plt.close()
 
 
-def plot_multiple_clusters(avg_silhouettes, krange):
+def plot_multiple_clusters(avg_silhouettes, cluster_range):
     plt.figure(dpi=100)
-    plt.plot(krange, avg_silhouettes)
+    plt.plot(cluster_range, avg_silhouettes)
     plt.xlabel("$k$")
     plt.ylabel("Average Silhouettes Score")
     plt.show()

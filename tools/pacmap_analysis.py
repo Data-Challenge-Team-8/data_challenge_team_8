@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 from typing import Dict, List
 
@@ -10,8 +12,23 @@ from matplotlib import pyplot as plt
 import matplotlib
 
 
+def get_pacmap(training_set):                   # also gets it from cache
+    # Pacmap for Sepsis
+    # temporarily caching pacmap_data
+    file_path = os.path.join(TrainingSet.CACHE_PATH, 'pacmap_temp_save')
+    if os.path.exists(file_path):
+        print("Loading pacmap_data from cache.")
+        pacmap_data = pickle.load(open(file_path, "rb"))
+    else:
+        pacmap_data, patient_ids = calculate_pacmap(training_set)
+        print("Writing pacmap_temp_save to pickle cache!")
+        pickle.dump(pacmap_data, open(file_path, "wb"))
+        # plot_pacmap2D_sepsis(f"PaCMAP colored by sepsis ({training_set.name})", pacmap_data, patient_ids, training_set=training_set)
+    return pacmap_data, patient_ids
+
+
 def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
-    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)              # TODO: This takes avg_df we need z-values_df
+    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
     avg_np = avg_df.transpose().to_numpy()
     avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
 
