@@ -148,8 +148,10 @@ def calculate_silhouette_score(avg_np: np.ndarray, clustering_list: list, use_in
     :return:
     """
     avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
-
-    return silhouette_score(avg_np, labels=clustering_list, metric='euclidean', random_state=0)
+    if len(set(clustering_list)) < 2:
+        return 0
+    else:
+        return silhouette_score(avg_np, labels=clustering_list, metric='euclidean', random_state=0)
 
 
 def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_score: float, coloring: List[float],
