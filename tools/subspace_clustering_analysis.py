@@ -49,13 +49,19 @@ def plot_biclustering(data_raw: np.ndarray, model: sklearn.base.BiclusterMixin, 
     ax.matshow(data, cmap=plt.cm.Blues)
     ax.set_aspect(len(data[0]) / len(data))
     ax.set_xlabel('Features')
+    ax.set_xticks([i for i in range(len(data[0]))])
     ax.set_ylabel('Patients')
     ax.set_title(f'"{training_set.name}" after biclustering; rearranged to show biclusters')
+
+    fig.colorbar(matplotlib.cm.ScalarMappable(cmap=plt.cm.Blues,
+                                              norm=matplotlib.colors.Normalize(vmin=min([min(v) for v in data]),
+                                                                               vmax=max([max(v) for v in data]))),
+                 ax=ax)
 
     if not save_to_file:
         plt.show()
     else:
-        plt.savefig(os.path.join(f"bicluster-{training_set.name}"))
+        plt.savefig(os.path.join(FIGURE_OUTPUT_FOLDER, f"bicluster-{training_set.name}"))
     plt.close()
 
 
