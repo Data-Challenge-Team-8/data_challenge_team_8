@@ -39,55 +39,8 @@ class TrainingSet:
         self.z_value_df: pd.DataFrame = None
         self.z_value_df_no_interpol: pd.DataFrame = None
 
-        # TODO: Sind diese 4 attribute auch Deprecated und können weg?
-        self.active_labels = []
-        self.labels_average = {}
-        self.labels_std_dev = {}
-        self.labels_rel_NaN = {}
-
         self.__load_data_from_cache()
         self.__save_data_to_cache()
-
-    # Jakob
-    @DeprecationWarning
-    def get_active_labels(
-            self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
-        self.active_labels = list(self.data.values())[0].data.columns.values
-        return self.active_labels
-
-    # Jakob
-    @DeprecationWarning
-    def calc_stats_for_labels(self):
-        self.get_active_labels()
-        labels_average_dict = dict.fromkeys(self.active_labels)
-        labels_std_dev_dict = dict.fromkeys(self.active_labels)
-        labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
-        for label in Patient.LABELS:  # TODO: Only first selected label
-            print("Analysing Label: ", label)
-            averages_list = []
-            std_dev_list = []
-            rel_nan_list = []
-            for patient in self.data.values():
-                averages_list.append(patient.get_average(label))
-                std_dev_list.append(patient.get_standard_deviation(label))
-                rel_nan_list.append(patient.get_NaN(label))
-            labels_average_dict[label] = np.nansum(averages_list) / len(
-                averages_list)  # TODO: 1) Error with sum(list) method ???
-            labels_std_dev_dict[label] = np.nansum(std_dev_list) / len(std_dev_list)
-            labels_rel_NaN_dict[label] = sum(rel_nan_list) / len(rel_nan_list)
-        self.labels_average.update(labels_average_dict)
-        self.labels_std_dev.update(labels_std_dev_dict)
-        self.labels_rel_NaN.update(labels_rel_NaN_dict)
-        return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
-
-    # Jakob
-    @DeprecationWarning
-    def get_dataframe_averages(self):  # TODO: Test this implementation. Is patient_id missing?
-        data_rows = []
-        for patient in self.data.values():
-            data_rows.append(list(patient.labels_average.values()))
-        df = pd.DataFrame(data_rows, columns=self.active_labels)
-        return df
 
     def __len__(self):
         return len(self.data.keys())
@@ -144,6 +97,7 @@ class TrainingSet:
         if not os.path.exists(file_path) or self.__dirty:
             print("Writing TrainingSet", self.name, "data to pickle cache!")
             self.__dirty = False
+            # TODO: können wir hier nicht 2 dateien erstellen? Dann lädt es wesentlich schneller
             pickle.dump({"data": self.data, "avg_df_fixed_no_interpol": self.average_df_fixed_no_interpol,
                          "avg_df_fixed_interpol": self.average_df_fixed_interpol}, open(file_path, "wb"))
 
@@ -186,10 +140,10 @@ class TrainingSet:
 
         avg_dict = {}
         for patient_id in self.data.keys():
-            avg_dict[patient_id] = self.data[patient_id].get_average_df(use_interpolation)
+            avg_dict[patient_id] = self.data[patient_id].get_average_df_for_patient(use_interpolation)
 
         avg_df = pd.DataFrame(avg_dict)
-        avg_df.drop("SepsisLabel", inplace=True)
+        # avg_df.drop("SepsisLabel", inplace=True)                # TODO: Besprechen ob SepsisLabel im DataFrame benötigt
 
         if not fix_missing_values:
             return avg_df
