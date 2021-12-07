@@ -58,12 +58,11 @@ def implement_DBSCAN(training_set, pacmap_data, patient_ids):
     #               save_to_file=True)
 
 
-def implement_k_means(training_set, pacmap_data, patient_ids):
+def implement_k_means(training_set, pacmap_data, patient_ids, amount_of_clusters: int = 3):
     """
     only used for the actual implementation of a k-means clustering. To remove it from main.py
     """
     # # k-Means without imputation before Pacmap
-    amount_of_clusters = 12
     k_means_list, sh_score = calculate_cluster_kmeans(training_set_to_data(training_set), n_clusters=amount_of_clusters)
     title = f"{amount_of_clusters} k-Means clusters ({training_set.name})"
 
