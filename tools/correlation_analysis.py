@@ -10,10 +10,14 @@ from objects.patient import Patient
 from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
 
-
 def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_interpolation=True):
-    avg_df = training_set.get_average_df(fix_missing_values=fix_missing_values, use_interpolation=use_interpolation)       # TODO: unterschiedliche df testen
-    avg_df_corr = avg_df.transpose().corr()
+    avg_df = training_set.get_average_df(fix_missing_values=fix_missing_values, use_interpolation=use_interpolation)
+
+    # TODO: diesen schritt testen:
+    transposed_df = avg_df.transpose()
+    added_sepsis_df = transposed_df.append(training_set.get_sepsis_label_df().transpose())
+
+    avg_df_corr = added_sepsis_df.corr()
     # feature_names = np.argsort(avg_df_corr.columns)         # feature_names: [ 6  4  7  0  8  9  3  1  5  2 10]
     feature_names = avg_df_corr.columns
     avg_df_corr_without_nan = avg_df_corr.fillna(0)       # Aus irgend einem grund ist EtCO2 NaN

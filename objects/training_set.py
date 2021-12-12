@@ -33,37 +33,19 @@ class TrainingSet:
 
         self.__dirty: bool = False
 
+        # self.avg_df_no_fixed: pd.DataFrame = None                   # TODO: Brauchen wir nicht auch das?
         self.average_df_fixed_no_interpol: pd.DataFrame = None
         self.average_df_fixed_interpol: pd.DataFrame = None
 
-        self.z_value_df: pd.DataFrame = None
-        self.z_value_df_no_interpol: pd.DataFrame = None
+        self.z_value_df_no_fixed: pd.DataFrame = None
+        # self.z_value_df_fixed_no_interpol: pd.DataFrame = None       # Und das?
+        self.z_value_df_fixed_interpol: pd.DataFrame = None
 
         self.__load_data_from_cache()
         self.__save_data_to_cache()
 
     def __len__(self):
         return len(self.data.keys())
-
-    def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
-        avg_df = self.get_average_df(use_interpolation = use_interpolation, fix_missing_values = fix_missing_values)
-
-        if self.z_value_df_no_interpol is not None and fix_missing_values and not use_interpolation:
-            return self.z_value_df_no_interpol
-        elif self.z_value_df is not None and fix_missing_values and use_interpolation:
-            return self.z_value_df
-
-        temp_z_val_df = pd.DataFrame()
-        for col in avg_df.columns:
-            temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
-
-        if use_interpolation and fix_missing_values:
-            self.z_value_df = temp_z_val_df
-            return self.z_value_df
-        else:
-            self.z_value_df_no_interpol = temp_z_val_df
-            return self.z_value_df_no_interpol
-
 
     def __construct_cache_file_name(self):
         key_concat = ""
@@ -99,7 +81,7 @@ class TrainingSet:
             self.__dirty = False
             # TODO: können wir hier nicht 2 dateien erstellen? Dann lädt es wesentlich schneller
             pickle.dump({"data": self.data, "avg_df_fixed_no_interpol": self.average_df_fixed_no_interpol,
-                         "avg_df_fixed_interpol": self.average_df_fixed_interpol}, open(file_path, "wb"))
+                         "avg_df_fixed_interpol": self.average_df_fixed_interpol}, open(file_path, "wb"))               # TODO: Jakob: Brauchen wir nicht auch self.avg_df_no_fixed?
 
     @classmethod
     def get_training_set(cls, name: str, patients: List[str] = None):
@@ -124,7 +106,6 @@ class TrainingSet:
     def get_average_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
         """
         Calculate a concatenated dataframe of averages for each label/feature of each patient.
-
         Important: Drops the sepsis label!
         Note: PacMAP expects a (number of samples, dimension) format. This is (dimension, number of samples).
         So use transpose()!
@@ -133,17 +114,20 @@ class TrainingSet:
         row removal. Method decision is based on Patient.NAN_DISMISSAL_THRESHOLD.
         :return:
         """
-        if self.average_df_fixed_no_interpol is not None and fix_missing_values and not use_interpolation:
+        if self.average_df_fixed_no_interpol is not None and fix_missing_values:
             return self.average_df_fixed_no_interpol
-        elif self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
-            return self.average_df_fixed_interpol
+        # Jakob: das folgende fehlt hier auch oder?
+        # if self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
+        #     return self.average_df_fixed_interpol
 
         avg_dict = {}
         for patient_id in self.data.keys():
             avg_dict[patient_id] = self.data[patient_id].get_average_df_for_patient(use_interpolation)
 
         avg_df = pd.DataFrame(avg_dict)
-        # avg_df.drop("SepsisLabel", inplace=True)                # TODO: Besprechen ob SepsisLabel im DataFrame benötigt
+        avg_df.drop("SepsisLabel", inplace=True)
+        # TODO: Jakob: bei 1 mal pacmap berechnet wird das hier 2 mal geprintet. Warum doppelt?
+        # print('test avg_df.columns:', avg_df.transpose().columns)        # test ob sepsis label entfernt
 
         if not fix_missing_values:
             return avg_df
@@ -155,21 +139,68 @@ class TrainingSet:
                 print()
 
                 if rel_missing >= Patient.NAN_DISMISSAL_THRESHOLD / 1.5:  # kick the row because too many missing values
-                    print(f"{self.name}.get_average_df kicked \"{label}\" out because too many missing values "
-                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD / 1.5})")
+                    print(f"TrainingSet.get_average_df kicked \"{label}\" out because too many missing values "
+                          f"({rel_missing} > {Patient.NAN_DISMISSAL_THRESHOLD / 2})")
                     avg_df.drop(label, inplace=True)
 
                 else:  # try filling with mean imputation
                     for patient_id in avg_dict.keys():
                         if avg_df.isna()[patient_id][label]:
                             avg_df[patient_id][label] = label_avgs[label]
-            if not use_interpolation:
-                self.average_df_fixed_no_interpol = avg_df
-            else:
+            if use_interpolation:                                               # TODO: Jakob: habe diesen Fall hier hinzugefügt. Hatte das gefehlt?
                 self.average_df_fixed_interpol = avg_df
-            self.__dirty = True
-            self.__save_data_to_cache()
-            return avg_df
+                self.__dirty = True
+                self.__save_data_to_cache()
+                return self.average_df_fixed_interpol
+            else:
+                self.average_df_fixed_no_interpol = avg_df
+                self.__dirty = True
+                self.__save_data_to_cache()
+                return self.average_df_fixed_no_interpol
+
+    def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
+        if self.z_value_df_no_fixed is not None and not fix_missing_values and not use_interpolation:
+            return self.z_value_df_no_fixed
+        elif self.z_value_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
+            return self.z_value_df_fixed_interpol
+
+        avg_df = self.get_average_df(use_interpolation=use_interpolation, fix_missing_values=fix_missing_values)
+        temp_z_val_df = pd.DataFrame()
+        for col in avg_df.columns:
+            # TODO: Wie kann man das hier effizienter machen?
+            # TODO: Und bei no_fixed muss man noch NaN vom avg_df abfangen?
+            # if avg_df[col] == "NaN":
+            #     avg_df[col] = 0
+            temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
+
+
+        # TODO: Was ist mit dem fall fix_missing_values=True, use_interpolation=False ?
+        if use_interpolation and fix_missing_values:
+            self.z_value_df_fixed_interpol = temp_z_val_df
+            return self.z_value_df_fixed_interpol
+        else:
+            self.z_value_df_no_fixed = temp_z_val_df
+            return self.z_value_df_no_fixed
+
+    def get_sepsis_label_df(self) -> pd.DataFrame:
+        sepsis_column_dict = {}
+        for patient_id in self.data.keys():
+            sepsis_column_dict[patient_id] = self.data[patient_id].get_sepsis_label_for_patient()
+        sepsis_df = pd.DataFrame.from_dict(data=sepsis_column_dict, orient='index', dtype='int32')      # Patients are rows, columns = SepsisLabel (no transpose needed)
+        return sepsis_df
+
+    # Jakob: wird benötigt wenn man einen Cluster gezielt untersuchen will, leider habe ich es nicht ganz hinbekommen
+    # def get_patients_for_clusters(self, clustering_list):
+    #     clusters_with_patients: dict = {}
+    #     for cluster in set(clustering_list):
+    #         temp_index: List = []
+    #         temp_patients: List = []
+    #         for index, position in enumerate(clustering_list):
+    #             if position == cluster:
+    #                 temp_index.append(index)
+    #         temp_patients = self.data.iloc(temp_index)              # TODO: iloc nur für df wir haben hier leider dict, wie macht man das?
+    #         clusters_with_patients[cluster] = temp_patients
+    #     return clusters_with_patients
 
     def get_label_averages(self, use_interpolation: bool = False) -> pd.Series:
         """
