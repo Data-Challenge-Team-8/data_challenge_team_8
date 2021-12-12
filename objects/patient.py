@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 import numpy as np
 
@@ -79,7 +81,7 @@ class Patient:
             interp_method = Patient.INTERPOLATION_METHOD
 
         series = []
-        for label in Patient.LABELS:
+        for label in Patient.DATA_LABELS:
             if self.data[label].isna().sum() / len(self.data[label]) < Patient.NAN_DISMISSAL_THRESHOLD:
                 series_interp = self.data[label].interpolate(method=interp_method, axis="index", order=order,
                                                              limit=int(Patient.CONSECUTIVE_NAN_INTERPOLATION_LIMIT
@@ -89,41 +91,25 @@ class Patient:
             series.append(series_interp.to_frame(name=label))
 
         self.__interp_data = pd.concat([s for s in series] +
-                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.LABELS)], axis=1)
-        # TODO: Besprechen ob SepsisLabel wirklich nicht im DF sein soll
-        # for label in Patient.DATA_LABELS:
-        #
-        #     if self.data[label].isna().sum() / len(self.data[label]) < Patient.NAN_DISMISSAL_THRESHOLD:
-        #         series_interp = self.data[label].interpolate(method=interp_method, axis="index", order=order,
-        #                                                      limit=int(Patient.CONSECUTIVE_NAN_INTERPOLATION_LIMIT
-        #                                                                * len(self.data[label])))
-        #     else:  # too many NANs for interpolation
-        #         series_interp = pd.Series([np.NAN for i in range(len(self.data[label]))])
-        #     series.append(series_interp.to_frame(name=label))
-        #
-        # self.__interp_data = pd.concat([s for s in series] +
-        #                                [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)          # TODO: Warum hier LABELS - DATA_LABELS?
+                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)          # TODO: Warum hier LABELS - DATA_LABELS?
         return self.__interp_data
 
     def get_average_df_for_patient(self, use_interpolation: bool = False):
         """
         Calculate the average for every label and return a pd.Series with the result of shape (1, len(Patient.LABELS)
         :param use_interpolation:
-        :return:                                        # TODO: Besprechen ob SepsisLabel im DataFrame benötigt
+        :return:
         """
         avgs = {}
         for label in self.LABELS:
-            if label == "SepsisLabel":
-                d = self.get_interp_data()[label].dropna()
-                sepsis_labels_sum = d.sum()
-                if sepsis_labels_sum > 0:
-                    avgs[label] = 1
-                else:
-                    avgs[label] = 0
-            else:
-                avgs[label] = self.get_average(label, use_interpolation)
-
+            avgs[label] = self.get_average(label, use_interpolation)            # man könnte auch hier schon sepsis_label entfernen
         return pd.Series(avgs)
+
+    def get_sepsis_label_for_patient(self):
+        if self.__data["SepsisLabel"].sum() > 0:  # alternativ max()
+            return 1
+        else:
+            return 0
 
     def get_average(self, label: str, use_interpolation: bool = False) -> float:
         """
