@@ -9,11 +9,15 @@ import pandas as pd
 
 from objects.patient import Patient
 from IO.data_reader import DataReader
+from tools.pacmap_analysis import calculate_pacmap
 
 
 class TrainingSet:
     CACHE_PATH = os.path.join(".", "cache")
-    CACHE_FILE_PREFIX = "trainingset_data-"
+    CACHE_FILE_PREFIX = "trainingset_data"
+    CACHE_FILE_BASIC_POSTFIX = "basic"
+    CACHE_FILE_AVG_POSTFIX = "averages"
+    CACHE_FILE_PACMAP_POSTFIX = "pacmap"
 
     PRESETS = {
         "Set A": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setA"))],
@@ -31,103 +35,38 @@ class TrainingSet:
         self.data = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
 
-        self.__dirty: bool = False
-
         self.average_df_fixed_no_interpol: pd.DataFrame = None
         self.average_df_fixed_interpol: pd.DataFrame = None
 
         self.z_value_df: pd.DataFrame = None
         self.z_value_df_no_interpol: pd.DataFrame = None
 
-        # TODO: Sind diese 4 attribute auch Deprecated und können weg?
-        self.active_labels = []
-        self.labels_average = {}
-        self.labels_std_dev = {}
-        self.labels_rel_NaN = {}
+        self.__pacmap_2d_no_interpol = None
+        self.__pacmap_3d_no_interpol = None
+        self.__pacmap_2d_interpol = None
+        self.__pacmap_3d_interpol = None
 
         self.__load_data_from_cache()
         self.__save_data_to_cache()
 
-    # Jakob
-    @DeprecationWarning
-    def get_active_labels(
-            self):  # get labels from first entry(patient) in data_dict, we could implement label filtering here
-        self.active_labels = list(self.data.values())[0].data.columns.values
-        return self.active_labels
-
-    # Jakob
-    @DeprecationWarning
-    def calc_stats_for_labels(self):
-        self.get_active_labels()
-        labels_average_dict = dict.fromkeys(self.active_labels)
-        labels_std_dev_dict = dict.fromkeys(self.active_labels)
-        labels_rel_NaN_dict = dict.fromkeys(self.active_labels)
-        for label in Patient.LABELS:  # TODO: Only first selected label
-            print("Analysing Label: ", label)
-            averages_list = []
-            std_dev_list = []
-            rel_nan_list = []
-            for patient in self.data.values():
-                averages_list.append(patient.get_average(label))
-                std_dev_list.append(patient.get_standard_deviation(label))
-                rel_nan_list.append(patient.get_NaN(label))
-            labels_average_dict[label] = np.nansum(averages_list) / len(
-                averages_list)  # TODO: 1) Error with sum(list) method ???
-            labels_std_dev_dict[label] = np.nansum(std_dev_list) / len(std_dev_list)
-            labels_rel_NaN_dict[label] = sum(rel_nan_list) / len(rel_nan_list)
-        self.labels_average.update(labels_average_dict)
-        self.labels_std_dev.update(labels_std_dev_dict)
-        self.labels_rel_NaN.update(labels_rel_NaN_dict)
-        return self.labels_average, self.labels_std_dev, self.labels_rel_NaN
-
-    # Jakob
-    @DeprecationWarning
-    def get_dataframe_averages(self):  # TODO: Test this implementation. Is patient_id missing?
-        data_rows = []
-        for patient in self.data.values():
-            data_rows.append(list(patient.labels_average.values()))
-        df = pd.DataFrame(data_rows, columns=self.active_labels)
-        return df
-
     def __len__(self):
         return len(self.data.keys())
 
-    def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
-        avg_df = self.get_average_df(use_interpolation = use_interpolation, fix_missing_values = fix_missing_values)
-
-        if self.z_value_df_no_interpol is not None and fix_missing_values and not use_interpolation:
-            return self.z_value_df_no_interpol
-        elif self.z_value_df is not None and fix_missing_values and use_interpolation:
-            return self.z_value_df
-
-        temp_z_val_df = pd.DataFrame()
-        for col in avg_df.columns:
-            temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
-
-        if use_interpolation and fix_missing_values:
-            self.z_value_df = temp_z_val_df
-            return self.z_value_df
-        else:
-            self.z_value_df_no_interpol = temp_z_val_df
-            return self.z_value_df_no_interpol
-
-
-    def __construct_cache_file_name(self):
+    def __construct_cache_file_name(self) -> str:
         key_concat = ""
         for patient_id in self.data.keys():
             key_concat += patient_id
 
-        return hashlib.md5(key_concat.encode('utf-8')).hexdigest() + ".pickle"
+        return hashlib.md5(key_concat.encode('utf-8')).hexdigest()
 
     def __load_data_from_cache(self, force_no_cache: bool = False):
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
-        if not force_no_cache and os.path.exists(file_path) and os.path.isfile(file_path):
-            print(f"Loading TrainingSet {self.name} data from pickle cache")
+        # basic/patient data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_BASIC_POSTFIX}.pickle")
+        if not force_no_cache and os.path.isfile(file_path):
+            print(f"Loading TrainingSet {self.name} patient data from pickle cache")
             start_time = datetime.datetime.now()
-            d = pickle.load(open(file_path, "rb"))
-            self.data = d["data"]
-            self.average_df_fixed_no_interpol = d["avg_df_fixed_no_interpol"]
-            self.average_df_fixed_interpol = d["avg_df_fixed_interpol"]
+            self.data = pickle.load(open(file_path, "rb"))
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
         else:
@@ -139,13 +78,123 @@ class TrainingSet:
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from DataReader!")
 
+        # avg_df data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_AVG_POSTFIX}.pickle")
+        if not force_no_cache and os.path.isfile(file_path):
+            print(f"Loading TrainingSet {self.name} average data from pickle cache")
+            start_time = datetime.datetime.now()
+            d = pickle.load(open(file_path, 'rb'))
+            self.average_df_fixed_no_interpol = d["fixed_no_interpolation"]
+            self.average_df_fixed_interpol = d["fixed_interpolation"]
+            end_time = datetime.datetime.now()
+            print("Took", end_time - start_time, "to load from pickle!")
+        else:
+            print("Found no pickle cache for average data!")
+            pass
+
+        # pacmap data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_PACMAP_POSTFIX}.pickle")
+        if not force_no_cache and os.path.isfile(file_path):
+            print(f"Loading TrainingSet {self.name} PaCMAP data from pickle cache")
+            start_time = datetime.datetime.now()
+            d = pickle.load(open(file_path, 'rb'))
+            self.__pacmap_2d_no_interpol = d["no_interpolation"]["2d"]
+            self.__pacmap_3d_no_interpol = d["no_interpolation"]["3d"]
+            self.__pacmap_2d_interpol = d["interpolation"]["2d"]
+            self.__pacmap_3d_interpol = d["interpolation"]["3d"]
+            end_time = datetime.datetime.now()
+            print("Took", end_time - start_time, "to load from pickle!")
+
     def __save_data_to_cache(self):
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX + self.cache_name)
-        if not os.path.exists(file_path) or self.__dirty:
-            print("Writing TrainingSet", self.name, "data to pickle cache!")
-            self.__dirty = False
-            pickle.dump({"data": self.data, "avg_df_fixed_no_interpol": self.average_df_fixed_no_interpol,
-                         "avg_df_fixed_interpol": self.average_df_fixed_interpol}, open(file_path, "wb"))
+        self.__save_basic_data_to_cache()
+        if self.average_df_fixed_interpol is not None or self.average_df_fixed_no_interpol is not None:
+            self.__save_average_data_to_cache()
+        if self.__pacmap_2d_interpol is not None or self.__pacmap_2d_no_interpol is not None or \
+                self.__pacmap_3d_no_interpol is not None or self.__pacmap_3d_interpol is not None:
+            self.__save_pacmap_data_to_cache()
+
+    def __save_basic_data_to_cache(self):
+        # basic/patient data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_BASIC_POSTFIX}.pickle")
+        print("Writing TrainingSet", self.name, "patient data to pickle cache!")
+        pickle.dump(self.data, open(file_path, "wb"))
+
+    def __save_average_data_to_cache(self):
+        # average data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_AVG_POSTFIX}.pickle")
+        print("Writing TrainingSet", self.name, "average data to pickle cache!")
+        pickle.dump({"fixed_no_interpolation": self.average_df_fixed_no_interpol,
+                     "fixed_interpolation": self.average_df_fixed_interpol},
+                    open(file_path, "wb"))
+
+    def __save_pacmap_data_to_cache(self):
+        # pacmap data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_PACMAP_POSTFIX}.pickle")
+        print(f"Writing TrainingSet {self.name} PaCMAP data to pickle cache!")
+        pickle.dump({"no_interpolation": {"2d": self.__pacmap_2d_no_interpol, "3d": self.__pacmap_3d_no_interpol},
+                     "interpolation": {"2d": self.__pacmap_2d_interpol, "3d": self.__pacmap_3d_interpol}},
+                    open(file_path, 'wb'))
+
+    def get_pacmap(self, dimension: int = 2, use_interpolation: bool = False):
+        """
+        Return the requested PaCMAP data for this training set. Uses precalculated results if available,
+        otherwise calculates them.
+        :param dimension:
+        :param use_interpolation:
+        :return:
+        """
+        pacmap_data = None
+        patient_ids = None
+        if not use_interpolation:
+            if dimension == 2:
+                if self.__pacmap_2d_no_interpol is not None:
+                    return self.__pacmap_2d_no_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+                .columns.tolist()
+                else:
+                    self.__pacmap_2d_no_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+                                                                                 use_interpolation=use_interpolation)
+                    self.__save_pacmap_data_to_cache()
+                    return self.__pacmap_2d_no_interpol, patient_ids
+            elif dimension == 3:
+                if self.__pacmap_3d_no_interpol is not None:
+                    return self.__pacmap_3d_no_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+                .columns.tolist()
+                else:
+                    self.__pacmap_3d_no_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+                                                                                 use_interpolation=use_interpolation)
+                    self.__save_pacmap_data_to_cache()
+                    return self.__pacmap_3d_no_interpol, patient_ids
+
+        else:  # used interpolation
+            if dimension == 2:
+                if self.__pacmap_2d_interpol is not None:
+                    return self.__pacmap_2d_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+                .columns.tolist()
+                else:
+                    print(f"Calculating PaCMAP {dimension}D data for TrainingSet {self.name} with"
+                          f"{'out' if not use_interpolation else ''} interpolation")
+                    self.__pacmap_2d_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+                                                                              use_interpolation=use_interpolation)
+                    self.__save_pacmap_data_to_cache()
+                    return self.__pacmap_2d_interpol, patient_ids
+
+            elif dimension == 3:
+                if self.__pacmap_3d_interpol is not None:
+                    return self.__pacmap_3d_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+                .columns.tolist()
+                else:
+                    self.__pacmap_3d_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+                                                                              use_interpolation=use_interpolation)
+                    self.__save_pacmap_data_to_cache()
+                    return self.__pacmap_3d_interpol, patient_ids
+
+
+        return pacmap_data, patient_ids
 
     @classmethod
     def get_training_set(cls, name: str, patients: List[str] = None):
@@ -194,7 +243,7 @@ class TrainingSet:
         if not fix_missing_values:
             return avg_df
         else:
-            label_avgs = self.get_label_averages(use_interpolation)
+            label_avgs = self.get_label_averages(use_interpolation=use_interpolation)
 
             for label in avg_df.index:
                 rel_missing = avg_df.loc[label].isna().sum() / len(avg_df.loc[label])
@@ -217,30 +266,64 @@ class TrainingSet:
             self.__save_data_to_cache()
             return avg_df
 
-    def get_label_averages(self, use_interpolation: bool = False) -> pd.Series:
+    def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
+        """
+        Used for DBScan calculation
+        :param use_interpolation:
+        :param fix_missing_values:
+        :return:
+        """
+        avg_df = self.get_average_df(use_interpolation = use_interpolation, fix_missing_values = fix_missing_values)
+
+        if self.z_value_df_no_interpol is not None and fix_missing_values and not use_interpolation:
+            return self.z_value_df_no_interpol
+        elif self.z_value_df is not None and fix_missing_values and use_interpolation:
+            return self.z_value_df
+
+        temp_z_val_df = pd.DataFrame()
+        for col in avg_df.columns:
+            temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
+
+        if use_interpolation and fix_missing_values:
+            self.z_value_df = temp_z_val_df
+            return self.z_value_df
+        else:
+            self.z_value_df_no_interpol = temp_z_val_df
+            return self.z_value_df_no_interpol
+
+    def get_label_averages(self, label: str = None, use_interpolation: bool = False) -> pd.Series:
         """
         Calculate the average of a label across the whole set
 
+        :param label: optional, if None all averages are calculated
         :param use_interpolation:
-        :return:
+        :return: pd.Series of the averages calculated
         """
         label_sums = {key: 0 for key in Patient.LABELS}
         label_count = {key: 0 for key in Patient.LABELS}
         for patient_id in self.data.keys():
-            for label in Patient.LABELS:
+            if label is None:  # calculating for all labels
+                for l in Patient.LABELS:
+                    if not use_interpolation:
+                        label_sums[l] += self.data[patient_id].data[l].dropna().sum()
+                        label_count[l] += len(self.data[patient_id].data[l].dropna())
+                    else:
+                        label_sums[l] += self.data[patient_id].get_interp_data()[l].dropna().sum()
+                        label_count[l] += len(self.data[patient_id].get_interp_data()[l].dropna())
+            else:  # calculating only for given label
                 if not use_interpolation:
-                    label_sums[label] += self.data[patient_id].data[label].dropna().sum()
-                    label_count[label] += len(self.data[patient_id].data[label].dropna())
+                    label_sums[l] += self.data[patient_id].data[l].dropna().sum()
+                    label_count[l] += len(self.data[patient_id].data[l].dropna())
                 else:
-                    label_sums[label] += self.data[patient_id].get_interp_data()[label].dropna().sum()
-                    label_count[label] += len(self.data[patient_id].get_interp_data()[label].dropna())
+                    label_sums[l] += self.data[patient_id].get_interp_data()[l].dropna().sum()
+                    label_count[l] += len(self.data[patient_id].get_interp_data()[l].dropna())
 
         avgs = {}
-        for label in label_sums.keys():
-            if label_count[label] == 0:
-                avgs[label] = None
+        for l in label_sums.keys():
+            if label_count[l] == 0:
+                avgs[l] = None
             else:
-                avgs[label] = label_sums[label] / label_count[label]
+                avgs[l] = label_sums[l] / label_count[l]
 
         return pd.Series(avgs)
 
