@@ -13,9 +13,8 @@ from IO.data_reader import FIGURE_OUTPUT_FOLDER
 def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_interpolation=True):
     avg_df = training_set.get_average_df(fix_missing_values=fix_missing_values, use_interpolation=use_interpolation)
 
-    # TODO: diesen schritt testen:
     transposed_df = avg_df.transpose()
-    added_sepsis_df = transposed_df.append(training_set.get_sepsis_label_df().transpose())
+    added_sepsis_df = transposed_df.append(training_set.get_sepsis_label_df().transpose())              # TODO: Testen ob das noch nach allen Änderungen funktioniert
 
     avg_df_corr = added_sepsis_df.corr()
     # feature_names = np.argsort(avg_df_corr.columns)         # feature_names: [ 6  4  7  0  8  9  3  1  5  2 10]
