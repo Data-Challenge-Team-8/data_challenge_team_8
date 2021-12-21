@@ -3,7 +3,6 @@ import pickle
 import numpy as np
 from typing import Dict, List
 
-from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
 
 import os
@@ -12,24 +11,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 
 
-def get_pacmap(training_set):
-    # Pacmap for Sepsis
-    # temporarily caching pacmap_data
-    file_path = os.path.join(TrainingSet.CACHE_PATH, 'pacmap_temp_save')
-    if os.path.exists(file_path):
-        print("Loading pacmap_data from cache.")
-        pacmap_data = pickle.load(open(file_path, "rb"))
-        avg_df = training_set.get_average_df()                  # geht noch nicht komplett mit cacheing weil patient_ids nicht im cache
-        patient_ids = avg_df.columns.tolist()
-    else:
-        pacmap_data, patient_ids = calculate_pacmap(training_set)
-        print("Writing pacmap_temp_save to pickle cache!")
-        pickle.dump(pacmap_data, open(file_path, "wb"))
-        # plot_pacmap2D_sepsis(f"PaCMAP colored by sepsis ({training_set.name})", pacmap_data, patient_ids, training_set=training_set)
-    return pacmap_data, patient_ids
-
-
-def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
+def training_set_to_data(training_set, use_interpolation: bool = False) -> np.ndarray:
     avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
     avg_np = avg_df.transpose().to_numpy()
     avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
@@ -37,7 +19,7 @@ def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = Fa
     return avg_np
 
 
-def calculate_pacmap(training_set: TrainingSet, dimension: int = 2, use_interpolation: bool = False):
+def calculate_pacmap(training_set, dimension: int = 2, use_interpolation: bool = False):
     """
     Calculate a PaCMAP transformation of the given TrainingSet.
 
@@ -58,7 +40,7 @@ def calculate_pacmap(training_set: TrainingSet, dimension: int = 2, use_interpol
     return data_transformed, patient_ids
 
 
-def plot_pacmap2D_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[str], training_set: TrainingSet, save_to_file: bool = False):
+def plot_pacmap2D_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[str], training_set, save_to_file: bool = False):
     """
     Plots the given 2D PaCMAP data using matplotlib with sepsis coloring
     :param patient_ids: ordering is expected to be in sync with data
@@ -75,7 +57,7 @@ def plot_pacmap2D_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[st
     plot_pacmap2D(plot_title, data, sepsis_list, color_map="cool", save_to_file=save_to_file)
 
 
-def plot_pacmap3D_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[str], training_set: TrainingSet, save_to_file: bool = False):
+def plot_pacmap3D_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[str], training_set, save_to_file: bool = False):
     """
     Plots the given 3D PaCMAP data using matplotlib with sepsis coloring
     :param plot_title:
