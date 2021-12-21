@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # Task 3: Implement different clustering methods
     pacmap_data, patient_ids = set_a.get_pacmap()
-    #implement_DBSCAN(set_a, pacmap_data, patient_ids)
+    implement_DBSCAN(set_a, pacmap_data, patient_ids)
     # implement_k_means(set_a, pacmap_data, patient_ids)
 
     # Task 4: Implement different subspace clustering methods
