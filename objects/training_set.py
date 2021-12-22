@@ -275,10 +275,17 @@ class TrainingSet:
 
     def get_sepsis_label_df(self) -> pd.DataFrame:
         sepsis_column_dict = {}
+        sepsis_value = {}
         for patient_id in self.data.keys():
-            sepsis_column_dict[patient_id] = self.data[patient_id].get_sepsis_label_for_patient()
-        sepsis_df = pd.DataFrame.from_dict(data=sepsis_column_dict, orient='index', dtype='int32')      # Patients are rows, columns = SepsisLabel (no transpose needed)
-        return sepsis_df
+            patient = self.data[patient_id]
+            if patient.data["SepsisLabel"].sum() > 0:  # alternativ max()
+                sepsis_value["SepsisLabel"] = 1
+                sepsis_column_dict[patient_id] = pd.Series(sepsis_value)            # needs to be a series to be in the same format like avg_df
+            else:
+                sepsis_value["SepsisLabel"] = 0
+                sepsis_column_dict[patient_id] = pd.Series(sepsis_value)
+        sepsis_df = pd.DataFrame(data=sepsis_column_dict, dtype='int32')
+        return sepsis_df.transpose()          # Patients are rows, columns = SepsisLabel (no transpose needed)
 
     # Vorschlag von Jakob: wird benötigt wenn man einen Cluster gezielt untersuchen will, leider habe ich es nicht ganz hinbekommen
     # def get_patients_for_clusters(self, clustering_list):

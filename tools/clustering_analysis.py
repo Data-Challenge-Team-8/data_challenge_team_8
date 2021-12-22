@@ -22,16 +22,27 @@ def implement_DBSCAN(training_set: TrainingSet, pacmap_data, patient_ids):      
     test_df = training_set.get_average_df()
     z_value_df = training_set.get_z_value_df(use_interpolation=False, fix_missing_values=False)
     transposed_df = z_value_df.transpose()  # labels are transposed from rows to columns
-    sepsis_df = training_set.get_sepsis_label_df()          # no transpose needed
-    print("sepsis_df testing", sepsis_df.head())
-    print("sepsis_df type:", type(sepsis_df))
-    added_sepsis_df = transposed_df.append(sepsis_df)               # TODO: Was funktioniert hier nicht? Sepsis_df hat die korrekten Daten aber durch append wird alles NaN
-    print("z_val unit2:", added_sepsis_df['Unit2'].head())          # hier sind noch NaN drin wenn nicht fix_missing_vals, muss das korrigiert werden oder geht clustering trotzdem?
-    print("added_sepsis_df:", added_sepsis_df.head())
+
+    sepsis_df = training_set.get_sepsis_label_df()                              # no transpose needed
+
+    # so hat es nicht funktioniert:
+    # sepsis_df = sepsis_df.set_index(transposed_df.index)
+    # print(sepsis_df.head())
+    # print("sepsis_df type:", type(sepsis_df))
+    # added_sepsis_df = transposed_df.append(sepsis_df)
+
+    added_sepsis_df = transposed_df
+    added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
+    # angeblich besser mit numpy?
+    # added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].to_numpy()
+
+    # fix NaN problem
+    # print(added_sepsis_df['Unit2'].head())
+    added_sepsis_df = added_sepsis_df.fillna(0)                 # TODO: Besprechen ist NaN -> 0 eine gute Lösung?
 
     # Optional: Select Labels to Focus on
-    # labels_to_keep: List = added_sepsis_df.columns.to_list()                # use this option if all labels wanted
-    labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]                  # TODO: Wirft Fehlermeldung weil SepsisLabel ist komplett NaN???
+    labels_to_keep: List = added_sepsis_df.columns.to_list()                # use this option if all labels wanted
+    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]
     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
 
     # Transform filtered_df to numpy

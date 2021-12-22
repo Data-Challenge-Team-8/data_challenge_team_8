@@ -105,12 +105,6 @@ class Patient:
             avgs[label] = self.get_average(label, use_interpolation)            # man könnte auch hier schon sepsis_label entfernen
         return pd.Series(avgs)
 
-    def get_sepsis_label_for_patient(self):
-        if self.__data["SepsisLabel"].sum() > 0:  # alternativ max()
-            return 1
-        else:
-            return 0
-
     def get_average(self, label: str, use_interpolation: bool = False) -> float:
         """
         Get the average for a given label (see Patient.LABELS)

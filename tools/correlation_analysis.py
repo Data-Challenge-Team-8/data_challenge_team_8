@@ -12,9 +12,16 @@ from IO.data_reader import FIGURE_OUTPUT_FOLDER
 
 def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_interpolation=True):
     avg_df = training_set.get_average_df(fix_missing_values=fix_missing_values, use_interpolation=use_interpolation)
-
+    sepsis_df = training_set.get_sepsis_label_df()  # no transpose needed
     transposed_df = avg_df.transpose()
-    added_sepsis_df = transposed_df.append(training_set.get_sepsis_label_df().transpose())              # TODO: Testen ob das noch nach allen Änderungen funktioniert
+    added_sepsis_df = transposed_df
+    added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
+    added_sepsis_df = added_sepsis_df.fillna(0)                             # fix NaN problem
+
+    # Optional: Select Labels to Focus on
+    labels_to_keep: List = added_sepsis_df.columns.to_list()                # use this option if all labels wanted
+    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]
+    filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
 
     avg_df_corr = added_sepsis_df.corr()
     # feature_names = np.argsort(avg_df_corr.columns)         # feature_names: [ 6  4  7  0  8  9  3  1  5  2 10]
