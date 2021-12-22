@@ -10,7 +10,7 @@ from tools.clustering_analysis import implement_DBSCAN, implement_k_means
 
 if __name__ == '__main__':
     # Task 1: Build a Dashboard for Visualization of general statistics
-    correlation_to_sepsis_df = get_and_plot_sepsis_correlation(set_a)
+    # correlation_to_sepsis_df = get_and_plot_sepsis_correlation(set_a)
     # start streamlit app mit web.app.create_app()
 
     # Task 2: Load Trainingset with interpolation (and caching)
