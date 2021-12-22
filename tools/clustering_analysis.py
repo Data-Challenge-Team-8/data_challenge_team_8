@@ -42,7 +42,7 @@ def implement_DBSCAN(training_set: TrainingSet, pacmap_data, patient_ids):      
 
     # Optional: Select Labels to Focus on
     labels_to_keep: List = added_sepsis_df.columns.to_list()                # use this option if all labels wanted
-    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]
+    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]          # TODO: Besprechen welche optionen wir hiermit mal prüfen wollen
     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
 
     # Transform filtered_df to numpy
