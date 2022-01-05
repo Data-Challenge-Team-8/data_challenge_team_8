@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 import numpy as np
 
@@ -80,7 +82,6 @@ class Patient:
 
         series = []
         for label in Patient.DATA_LABELS:
-
             if self.data[label].isna().sum() / len(self.data[label]) < Patient.NAN_DISMISSAL_THRESHOLD:
                 series_interp = self.data[label].interpolate(method=interp_method, axis="index", order=order,
                                                              limit=int(Patient.CONSECUTIVE_NAN_INTERPOLATION_LIMIT
@@ -90,7 +91,7 @@ class Patient:
             series.append(series_interp.to_frame(name=label))
 
         self.__interp_data = pd.concat([s for s in series] +
-                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)
+                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)          # TODO: Warum hier LABELS - DATA_LABELS?
         return self.__interp_data
 
     def get_average_df(self, use_interpolation: bool = False):
@@ -101,8 +102,7 @@ class Patient:
         """
         avgs = {}
         for label in self.LABELS:
-            avgs[label] = self.get_average(label, use_interpolation)
-
+            avgs[label] = self.get_average(label, use_interpolation)            # man könnte auch hier schon sepsis_label entfernen
         return pd.Series(avgs)
 
     def get_average(self, label: str, use_interpolation: bool = False) -> float:

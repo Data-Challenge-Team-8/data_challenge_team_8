@@ -35,11 +35,14 @@ class TrainingSet:
         self.data = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
 
+        # TODO: Besprechen brauchen die beiden auskommentieren avg doch auch?
+        # self.avg_df_no_fixed: pd.DataFrame = None
         self.average_df_fixed_no_interpol: pd.DataFrame = None
         self.average_df_fixed_interpol: pd.DataFrame = None
 
-        self.z_value_df: pd.DataFrame = None
         self.z_value_df_no_interpol: pd.DataFrame = None
+        # self.z_value_df_fixed_no_interpol: pd.DataFrame = None       # Und das?
+        self.z_value_df: pd.DataFrame = None
 
         self.__pacmap_2d_no_interpol = None
         self.__pacmap_3d_no_interpol = None
@@ -219,7 +222,6 @@ class TrainingSet:
     def get_average_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
         """
         Calculate a concatenated dataframe of averages for each label/feature of each patient.
-
         Important: Drops the sepsis label!
         Note: PacMAP expects a (number of samples, dimension) format. This is (dimension, number of samples).
         So use transpose()!
@@ -232,13 +234,18 @@ class TrainingSet:
             return self.average_df_fixed_no_interpol
         elif self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
             return self.average_df_fixed_interpol
+        # TODO Frage von Jakob: das folgende fehlt hier auch oder?
+        # if self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
+        #     return self.average_df_fixed_interpol
 
         avg_dict = {}
         for patient_id in self.data.keys():
-            avg_dict[patient_id] = self.data[patient_id].get_average_df(use_interpolation)
+            avg_dict[patient_id] = self.data[patient_id].get_average_df_for_patient(use_interpolation)
 
         avg_df = pd.DataFrame(avg_dict)
         avg_df.drop("SepsisLabel", inplace=True)
+        # TODO: Jakob: bei 1 mal pacmap berechnet wurde das hier 2 mal geprintet. Warum doppelt? (zumindest war das vor dem Merge noch so)
+        # print('test avg_df.columns:', avg_df.transpose().columns)        # test ob sepsis label entfernt
 
         if not fix_missing_values:
             return avg_df
@@ -266,6 +273,33 @@ class TrainingSet:
             self.__save_data_to_cache()
             return avg_df
 
+    def get_sepsis_label_df(self) -> pd.DataFrame:
+        sepsis_column_dict = {}
+        sepsis_value = {}
+        for patient_id in self.data.keys():
+            patient = self.data[patient_id]
+            if patient.data["SepsisLabel"].sum() > 0:  # alternativ max()
+                sepsis_value["SepsisLabel"] = 1
+                sepsis_column_dict[patient_id] = pd.Series(sepsis_value)            # needs to be a series to be in the same format like avg_df
+            else:
+                sepsis_value["SepsisLabel"] = 0
+                sepsis_column_dict[patient_id] = pd.Series(sepsis_value)
+        sepsis_df = pd.DataFrame(data=sepsis_column_dict, dtype='int32')
+        return sepsis_df.transpose()          # Patients are rows, columns = SepsisLabel (no transpose needed)
+
+    # Vorschlag von Jakob: wird benötigt wenn man einen Cluster gezielt untersuchen will, leider habe ich es nicht ganz hinbekommen
+    # def get_patients_for_clusters(self, clustering_list):
+    #     clusters_with_patients: dict = {}
+    #     for cluster in set(clustering_list):
+    #         temp_index: List = []
+    #         temp_patients: List = []
+    #         for index, position in enumerate(clustering_list):
+    #             if position == cluster:
+    #                 temp_index.append(index)
+    #         temp_patients = self.data.iloc(temp_index)              # TODO: iloc nur für df wir haben hier leider dict, wie macht man das?
+    #         clusters_with_patients[cluster] = temp_patients
+    #     return clusters_with_patients
+
     def get_z_value_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
         """
         Used for DBScan calculation
@@ -282,8 +316,13 @@ class TrainingSet:
 
         temp_z_val_df = pd.DataFrame()
         for col in avg_df.columns:
+            # TODO: Wie kann man das hier effizienter machen?
+            # TODO: Und bei no_fixed muss man noch NaN vom avg_df abfangen?
+            # if avg_df[col] == "NaN":
+            #     avg_df[col] = 0
             temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
 
+        # TODO: Was ist mit dem fall fix_missing_values=True, use_interpolation=False ?
         if use_interpolation and fix_missing_values:
             self.z_value_df = temp_z_val_df
             return self.z_value_df
