@@ -94,7 +94,7 @@ class Patient:
                                        [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)          # TODO: Warum hier LABELS - DATA_LABELS?
         return self.__interp_data
 
-    def get_average_df_for_patient(self, use_interpolation: bool = False):
+    def get_average_df(self, use_interpolation: bool = False):
         """
         Calculate the average for every label and return a pd.Series with the result of shape (1, len(Patient.LABELS)
         :param use_interpolation:
