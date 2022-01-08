@@ -50,7 +50,7 @@ class TrainingSet:
         self.__pacmap_3d_interpol = None
 
         self.__load_data_from_cache()
-        self.__save_data_to_cache()
+        #self.__save_data_to_cache()
 
     def __len__(self):
         return len(self.data.keys())
