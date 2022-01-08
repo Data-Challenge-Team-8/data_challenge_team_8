@@ -240,7 +240,7 @@ class TrainingSet:
 
         avg_dict = {}
         for patient_id in self.data.keys():
-            avg_dict[patient_id] = self.data[patient_id].get_average_df_for_patient(use_interpolation)
+            avg_dict[patient_id] = self.data[patient_id].get_average_df(use_interpolation)
 
         avg_df = pd.DataFrame(avg_dict)
         avg_df.drop("SepsisLabel", inplace=True)
