@@ -1,17 +1,16 @@
 import pandas as pd
-from numpy import ndarray
-from pandas import DataFrame
-from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
 from classifier.classifier import Classifier
 
 
-class DecisionTree(Classifier):
+class RandomForest(Classifier):
 
-    def __init__(self, max_depth: int = 5, class_weight=None):
+    def __init__(self, max_depth: int = 5, tree_count: int = 100, use_bootstrapping: bool = True):
         super().__init__()
-        self.__model = DecisionTreeClassifier(max_depth=max_depth, random_state=1337, class_weight=class_weight)
+        self.__model = RandomForestClassifier(n_estimators=tree_count, max_depth=max_depth, bootstrap=use_bootstrapping)
 
     def train(self, x_data, y_data):
         self.__model.fit(x_data, y_data)
@@ -22,7 +21,7 @@ class DecisionTree(Classifier):
     def test(self, x_data, y_data):
         return self.get_confusion_matrix(y_data, self.predict(x_data))
 
-    def get_confusion_matrix(self, y_data, y_predicted) -> ndarray:
+    def get_confusion_matrix(self, y_data, y_predicted) -> np.ndarray:
         cm = confusion_matrix(y_data, y_predicted)
         return cm
 
@@ -33,7 +32,7 @@ class DecisionTree(Classifier):
     def test_df(self, x_data, y_data):
         return self.get_confusion_matrix_df(y_data, self.predict(x_data))
 
-    def get_confusion_matrix_df(self, y_data, y_predicted) -> DataFrame:
+    def get_confusion_matrix_df(self, y_data, y_predicted) -> pd.DataFrame:
         cm = confusion_matrix(y_data, y_predicted)
         cm_df = pd.DataFrame({
             "predicts_false": {"is_false": cm[0][0], "is_true": cm[0][1]},
