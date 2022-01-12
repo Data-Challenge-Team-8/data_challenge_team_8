@@ -1,14 +1,6 @@
-from sklearn.model_selection import train_test_split
-
 from objects.training_set import TrainingSet
-from tools.classifier import implement_decision_tree
-from tools.correlation_analysis import get_and_plot_sepsis_correlation
-from tools.subspace_clustering_analysis import implement_bicluster_spectralcoclustering, \
-    implement_bicluster_spectralbiclustering
-from tools.visualization.interpolation_comparison import plot_most_interesting_interpolation_patients, \
-    plot_data_with_and_without_interpolation
-from tools.clustering_analysis import implement_DBSCAN, implement_k_means
-from classifier.decisiontree.decisiontree import DecisionTree
+from tools.classifier.decision_tree import implement_decision_tree
+from tools.classifier.random_forest import implement_random_forest
 
 if __name__ == '__main__':
     # Task 1: Build a Dashboard for Visualization of general statistics
@@ -36,4 +28,4 @@ if __name__ == '__main__':
     avg_df = set_a.get_average_df(use_interpolation=True, fix_missing_values=True)
     sepsis_df = set_a.get_sepsis_label_df()
     print("Implementing Decision Tree Clustering.")
-    implement_decision_tree(avg_df, sepsis_df)
+    implement_random_forest(avg_df, sepsis_df)

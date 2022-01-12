@@ -11,6 +11,7 @@ from imblearn.under_sampling import NearMiss
 
 from classifier.decisiontree.decisiontree import DecisionTree
 
+
 def implement_decision_tree(avg_df, sepsis_df):
     """
     Used for the actual implementation of decision tree classification.
@@ -42,6 +43,7 @@ def implement_decision_tree(avg_df, sepsis_df):
         display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version=str(version))
 
     # todo: man könnte noch versuchen einen Scatter Plot zu erstellen und mit PacMap anzuzeigen, welche Patients noch im Dataset sind.
+
 
 def display_confusion_matrix(clf, x_test, y_test, version: str, plotting: bool = False):
     # confusion matrix as df (old version for print)
