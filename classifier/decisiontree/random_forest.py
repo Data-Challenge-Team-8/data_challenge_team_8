@@ -10,7 +10,8 @@ class RandomForest(Classifier):
 
     def __init__(self, max_depth: int = 5, tree_count: int = 100, use_bootstrapping: bool = True):
         super().__init__()
-        self.__model = RandomForestClassifier(n_estimators=tree_count, max_depth=max_depth, bootstrap=use_bootstrapping)
+        self.__model = RandomForestClassifier(n_estimators=tree_count, max_depth=max_depth, bootstrap=use_bootstrapping,
+                                              random_state=1337)            # Jakob: added random state here
 
     def train(self, x_data, y_data):
         self.__model.fit(x_data, y_data)
@@ -35,7 +36,7 @@ class RandomForest(Classifier):
     def get_confusion_matrix_df(self, y_data, y_predicted) -> pd.DataFrame:
         cm = confusion_matrix(y_data, y_predicted)
         cm_df = pd.DataFrame({
-            "predicts_false": {"is_false": cm[0][0], "is_true": cm[0][1]},
-            "predicts_true": {"is_false": cm[1][0], "is_true": cm[1][1]}
+            "predicts_false": {"is_false": cm[0][0], "is_true": cm[1][0]},          # jakob: changed fields buttom left and top right
+            "predicts_true": {"is_false": cm[0][1], "is_true": cm[1][1]}
         })
         return cm_df
