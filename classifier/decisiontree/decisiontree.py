@@ -36,7 +36,7 @@ class DecisionTree(Classifier):
     def get_confusion_matrix_df(self, y_data, y_predicted) -> DataFrame:
         cm = confusion_matrix(y_data, y_predicted)
         cm_df = pd.DataFrame({
-            "predicts_false": {"is_false": cm[0][0], "is_true": cm[0][1]},
-            "predicts_true": {"is_false": cm[1][0], "is_true": cm[1][1]}
+            "predicts_false": {"is_false": cm[0][0], "is_true": cm[1][0]},
+            "predicts_true": {"is_false": cm[0][1], "is_true": cm[1][1]}
         })
         return cm_df
