@@ -28,4 +28,6 @@ if __name__ == '__main__':
     avg_df = set_a.get_average_df(use_interpolation=True, fix_missing_values=True)
     sepsis_df = set_a.get_sepsis_label_df()
     print("Implementing Decision Tree Clustering.")
-    implement_random_forest(avg_df, sepsis_df)
+    implement_decision_tree(avg_df, sepsis_df)
+    # print("Implementing Random Forest Clustering.")
+    # implement_random_forest(avg_df, sepsis_df)
