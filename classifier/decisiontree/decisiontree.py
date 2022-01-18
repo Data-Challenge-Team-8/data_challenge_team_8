@@ -1,6 +1,7 @@
 import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
+from sklearn import tree
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 
@@ -40,3 +41,12 @@ class DecisionTree(Classifier):
             "predicts_true": {"is_false": cm[0][1], "is_true": cm[1][1]}
         })
         return cm_df
+
+    def plot_tree(self, max_depth: int = 15):
+        print("Plotting the Tree:")
+        tree.plot_tree(self.__model)
+                       # max_depth=max_depth,
+                       # feature_names=["no_sepsis", "sepsis"],   # todo: braucht man die?
+                       # class_names=["no_sepsis", "sepsis"],
+                       # filled=True)
+        tree.export_text(self.__model)
