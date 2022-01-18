@@ -31,7 +31,7 @@ def implement_decision_tree(avg_df, sepsis_df):
                                                                         random_state=1337)
     clf.train(x_train_smote, y_train_smote)
     print("Classification Report for SMOTE oversampling")
-    # display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="SMOTE oversampling")
+    display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="SMOTE oversampling")
     clf.plot_tree(max_depth=12)
 
     # Undersampling: NearMiss
@@ -43,7 +43,7 @@ def implement_decision_tree(avg_df, sepsis_df):
                                                                             random_state=1337)
         clf.train(x_data=new_x_train, y_data=new_y_train)
         print("Classification Report for NearMiss Version:", version)
-        # display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version=str(version))
+        display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version=str(version))
 
 
 def display_confusion_matrix(clf, x_test, y_test, version: str, plotting: bool = False):
