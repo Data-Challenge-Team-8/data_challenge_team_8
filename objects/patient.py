@@ -20,10 +20,10 @@ class Patient:
               "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
               "PTT", "WBC", "Fibrinogen", "Platelets", "Age", "Gender", "Unit1", "Unit2", "HospAdmTime", "ICULOS",
               "SepsisLabel"]
-    DATA_LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH", "PaCO2", "SaO2",
-                   "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct", "Glucose",
-                   "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
-                   "PTT", "WBC", "Fibrinogen", "Platelets"]
+    DATA_LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "HCO3", "FiO2", "pH",
+                   "PaCO2", "SaO2", "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine",
+                   "Bilirubin_direct", "Glucose", "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total",
+                   "TroponinI", "Hct", "Hgb", "PTT", "WBC", "Fibrinogen", "Platelets"]
     FEMALE = 0
     MALE = 1
 
@@ -73,9 +73,12 @@ class Patient:
     def data(self) -> pd.DataFrame:
         return self.__data
 
-    def get_interp_data(self, interp_method: str = None, order: int = None):
+    def get_interp_data(self, interp_method: str = None, order: int = None, limit_to_features: List[str] = None):
         if interp_method is None and self.__interp_data is not None:
-            return self.__interp_data
+            if limit_to_features is None:
+                return self.__interp_data
+            else:
+                return self.__interp_data[limit_to_features]
 
         if interp_method is None and self.__interp_data is None:
             interp_method = Patient.INTERPOLATION_METHOD
@@ -91,8 +94,8 @@ class Patient:
             series.append(series_interp.to_frame(name=label))
 
         self.__interp_data = pd.concat([s for s in series] +
-                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)          # TODO: Warum hier LABELS - DATA_LABELS?
-        return self.__interp_data
+                                       [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)
+        return self.__interp_data[limit_to_features]
 
     def get_average_df(self, use_interpolation: bool = False):
         """
