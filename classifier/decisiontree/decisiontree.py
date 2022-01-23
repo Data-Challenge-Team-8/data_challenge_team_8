@@ -49,4 +49,6 @@ class DecisionTree(Classifier):
                        # feature_names=["no_sepsis", "sepsis"],   # todo: braucht man die?
                        # class_names=["no_sepsis", "sepsis"],
                        # filled=True)
-        tree.export_text(self.__model)
+        print("------ Text report --------")
+        print(tree.export_text(self.__model))
+        print("----- END Text report ------")
