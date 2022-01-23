@@ -55,7 +55,7 @@ def display_confusion_matrix(clf, x_test, y_test, version: str, plotting: bool =
     print(report)
     # confusion matrix plot
     if plotting:
-        cm: ndarray = clf.test(x_test, y_test)
+        cm: ndarray = clf.predict(x_test, y_test)
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No Sepsis", "Sepsis"])
         disp.plot()
         # funktioniert leider nicht mit title
