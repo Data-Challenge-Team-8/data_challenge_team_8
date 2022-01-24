@@ -3,6 +3,7 @@ import streamlit as st
 from web.categories.landing_page import LandingPage
 from web.categories.exploratory_data_analysis import ExploratoryDataAnalysis
 from web.categories.sepsis_research import SepsisResearch
+from web.categories.ts_analysis import TimeSeriesAnalysis
 
 
 def create_app():
@@ -14,7 +15,8 @@ def create_app():
         (
             'General Information',
             'Exploratory Data Analysis',
-            'Sepsis Research'
+            'Sepsis Research',
+            'Timeseries Analysis'
         )
     )
 
@@ -24,6 +26,8 @@ def create_app():
         expl_ana = ExploratoryDataAnalysis()
     if methode == 'Sepsis Research':
         math_stat = SepsisResearch()
+    if methode == 'Timeseries Analysis':
+        math_stat = TimeSeriesAnalysis()
 
 
 create_app()
