@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 from objects.training_set import TrainingSet
 
@@ -52,3 +54,32 @@ class TimeSeriesClassifier:
         :return:
         """
         raise NotImplementedError
+
+    def test(self, x_data, y_data):
+        return self.get_confusion_matrix(y_data, self.predict(x_data))
+
+    def get_confusion_matrix(self, y_data, y_predicted) -> np.ndarray:
+        cm = confusion_matrix(y_data, y_predicted)
+        return cm
+
+    def get_classification_report(self, x_data, y_data):
+        report = classification_report(y_data, self.predict(x_data))
+        return report
+
+    def display_confusion_matrix(self, test_set=None, plotting: bool = False):
+        if test_set is None:
+            test_set = self.test_data
+        x_test, y_test = test_set
+
+        # classification_report
+        report = self.get_classification_report(x_test, y_test)
+        print(report)
+        # confusion matrix plot
+        if plotting:
+            cm: np.ndarray = self.test(x_test, y_test)
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No Sepsis", "Sepsis"])
+            disp.plot()
+            # funktioniert leider nicht mit title
+            # temp_text_obj = Text(x=100, y=50, text=f"Confusion Matrix for version: {version}")
+            # disp.ax_.title = temp_text_obj
+            plt.show()
