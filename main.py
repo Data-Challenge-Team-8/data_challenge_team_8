@@ -1,20 +1,63 @@
 from objects.training_set import TrainingSet
 from classifier.timeseries.time_series_forest import TimeSeriesForest
-from tools.visualization.time_series_comparison import plot_time_series_density
+from tools.visualization.time_series_comparison import plot_time_series_density, plot_two_time_series, \
+    plot_time_series_sepsis_background
 
 if __name__ == '__main__':
     set_a = TrainingSet.get_training_set("rnd Sample A")
-    #set_a = TrainingSet.get_training_set("Set A")
-    #avg_df = set_a.get_average_df(use_interpolation=True, fix_missing_values=True)
-    #sepsis_df = set_a.get_sepsis_label_df()
+    # set_a = TrainingSet.get_training_set("Set A")
+    # avg_df = set_a.get_average_df(use_interpolation=True, fix_missing_values=True)
+    # sepsis_df = set_a.get_sepsis_label_df()
+    list_of_features = ["HR", "SepsisLabel"]
+    time_series = set_a.get_timeseries_df(use_interpolation=True, fix_missing_values=True,
+                                          limit_to_features=list_of_features)
+    set_a_sepsis_df = set_a.get_sepsis_label_df()
 
-    tsf = TimeSeriesForest(data_set=set_a, train_fraction=0.8, feature="HR")
-    print("Starting setup ...")
-    tsf.setup()
-    print("Starting plotting ...")
-    plot_time_series_density(tsf.train_data[0], label="HR", set_name=set_a.name+" (fixed, interpolated)")
-    print("Start training & testing ...")
-    tsf.train()
+    # plotting time_series for a single patient
+    plot_counter = 0
+    for patient_id in set_a.data:
+        if set_a.check_patient_has_sepsis(set_a_sepsis_df, patient_id):
+            temp_patient = set_a.get_patient_form_id(patient_id)
+            temp_patient.plot_features_time_series(list_of_features)
+            plot_counter += 1
+            if plot_counter > 100:
+                break
 
-    tsf.display_confusion_matrix(plotting=True)
-    print(":)")
+    # plotting the time_series data that was reduced to only 39 timesteps
+    # temp_hr = None
+    # for patient_feature_tuple in time_series.transpose():
+    #     if set_a.check_patient_has_sepsis(set_a_sepsis_df, patient_feature_tuple[0]):
+    #         if patient_feature_tuple[1] == "HR":                        # select complete column
+    #             temp_hr = time_series.loc[patient_feature_tuple]
+    #         elif patient_feature_tuple[1] == "SepsisLabel":
+    #             temp_sepsis = time_series.loc[patient_feature_tuple]
+    #             try:
+    #                 if temp_hr.name[0] == temp_sepsis.name[0]:
+    #                     # plot_two_time_series(patient_id=patient_feature_tuple[0],
+    #                     #                      series_one=temp_hr,
+    #                     #                      label_one="HR",
+    #                     #                      series_two=temp_sepsis,
+    #                     #                      label_two="SepsisLabel")
+    #                     plot_time_series_sepsis_background(patient_id=patient_feature_tuple[0],
+    #                                                        series_one=temp_hr,
+    #                                                        label_one="HR",
+    #                                                        series_two=temp_sepsis,
+    #                                                        label_two="SepsisLabel")
+    #             except AttributeError:
+    #                 pass
+    #         else:
+    #             pass
+    #     else:
+    #         pass
+
+
+    # Implement TimeSeriesForest classification
+    # tsf = TimeSeriesForest(data_set=set_a, train_fraction=0.8, feature="HR")
+    # print("Starting setup ...")
+    # tsf.setup()
+    # print("Starting plotting ...")
+    # plot_time_series_density(tsf.train_data[0], label="HR", set_name=set_a.name+" (fixed, interpolated)")
+    # print("Start training & testing ...")
+    # tsf.train()
+    #
+    # tsf.display_confusion_matrix(plotting=True)
