@@ -2,6 +2,7 @@ from typing import List
 
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 class NotUniqueIDError(Exception):
@@ -60,6 +61,18 @@ class Patient:
 
     def __str__(self):
         return "Patient #"+self.ID
+
+    def plot_features_time_series(self, selected_features: List[str]):
+        fig, axs = plt.subplots(len(selected_features))
+
+        for index, feature in enumerate(selected_features):
+            temp_feature_time_series = self.get_interp_data(limit_to_features=[feature])
+            axs[index].set_title(f"Time series data ({feature}, {self.__patient_ID})")
+            axs[index].plot(temp_feature_time_series)
+
+        fig.tight_layout()
+        plt.show()
+
 
     @property
     def ID(self) -> str:
