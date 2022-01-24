@@ -3,6 +3,7 @@ from typing import Dict, Tuple, List
 import os
 import pickle
 import datetime
+import random
 
 import numpy as np
 import pandas as pd
@@ -12,18 +13,36 @@ from IO.data_reader import DataReader
 from tools.pacmap_analysis import calculate_pacmap
 
 
+def get_set_a() -> List[str]:
+    return [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setA"))]
+
+
+def get_set_b() -> List[str]:
+    return [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setB"))]
+
+
+def get_rnd_sample_a() -> List[str]:
+    random.seed(1337)
+    sample = []
+    set_a = get_set_a()
+    for i in range(200):
+        sample.append(set_a[random.randint(0, len(set_a))])
+    return sample
+
+
 class TrainingSet:
     CACHE_PATH = os.path.join(".", "cache")
     CACHE_FILE_PREFIX = "trainingset_data"
     CACHE_FILE_BASIC_POSTFIX = "basic"
     CACHE_FILE_AVG_POSTFIX = "averages"
+    CACHE_FILE_TS_POSTFIX = "timeseries"
     CACHE_FILE_PACMAP_POSTFIX = "pacmap"
 
     PRESETS = {
-        "Set A": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setA"))],
-        "Set B": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setB"))],
-        "Set A + B": [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setA"))]
-                     + [file_name.split(".")[0] for file_name in os.listdir(os.path.join(".", "data", "training_setB"))]
+        "Set A": get_set_a,
+        "Set B": get_set_b,
+        "Set A + B": lambda: get_set_a() + get_set_b(),
+        "rnd Sample A": get_rnd_sample_a,
     }
 
     __instances = {}
@@ -49,8 +68,13 @@ class TrainingSet:
         self.__pacmap_2d_interpol = None
         self.__pacmap_3d_interpol = None
 
-        self.__load_data_from_cache()
-        #self.__save_data_to_cache()
+        self.__timeseries_interpol_no_fix = None
+        self.__timeseries_interpol_fix = None
+        self.__timeseries_no_interpol = None
+        self.__timeseries_no_interpol_fix = None
+
+        if not self.__load_data_from_cache():  # if we couldn't load basics from cache, create one for next time
+            self.__save_data_to_cache()
 
     def __len__(self):
         return len(self.data.keys())
@@ -62,12 +86,14 @@ class TrainingSet:
 
         return hashlib.md5(key_concat.encode('utf-8')).hexdigest()
 
-    def __load_data_from_cache(self, force_no_cache: bool = False):
+    def __load_data_from_cache(self, force_no_cache: bool = False) -> bool:
         # basic/patient data
+        loaded_basics_from_cache = None
         file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
                                  + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_BASIC_POSTFIX}.pickle")
         if not force_no_cache and os.path.isfile(file_path):
             print(f"Loading TrainingSet {self.name} patient data from pickle cache")
+            loaded_basics_from_cache = True
             start_time = datetime.datetime.now()
             self.data = pickle.load(open(file_path, "rb"))
             end_time = datetime.datetime.now()
@@ -80,6 +106,7 @@ class TrainingSet:
                     self.data[key] = DataReader.get_instance().get_patient(key)
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from DataReader!")
+            loaded_basics_from_cache = False
 
         # avg_df data
         file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
@@ -94,7 +121,6 @@ class TrainingSet:
             print("Took", end_time - start_time, "to load from pickle!")
         else:
             print("Found no pickle cache for average data!")
-            pass
 
         # pacmap data
         file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
@@ -110,6 +136,20 @@ class TrainingSet:
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
 
+        # timeseries data
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_TS_POSTFIX}.pickle")
+        if not force_no_cache and os.path.isfile(file_path):
+            print(f"Loading TrainingSet {self.name} interp timeseries data from pickle cache")
+            start_time = datetime.datetime.now()
+            d = pickle.load(open(file_path, 'rb'))
+            self.__timeseries_no_interpol = d["no_interpolation"]["no_fix"]
+            self.__timeseries_no_interpol_fix = d["no_interpolation"]["fix"]
+            self.__timeseries_interpol_no_fix = d["interpolation"]["no_fix"]
+            self.__timeseries_interpol_fix = d["interpolation"]["fix"]
+            end_time = datetime.datetime.now()
+            print("Took", end_time - start_time, "to load from pickle!")
+
     def __save_data_to_cache(self):
         self.__save_basic_data_to_cache()
         if self.average_df_fixed_interpol is not None or self.average_df_fixed_no_interpol is not None:
@@ -117,6 +157,9 @@ class TrainingSet:
         if self.__pacmap_2d_interpol is not None or self.__pacmap_2d_no_interpol is not None or \
                 self.__pacmap_3d_no_interpol is not None or self.__pacmap_3d_interpol is not None:
             self.__save_pacmap_data_to_cache()
+        if self.__timeseries_interpol_no_fix is not None or self.__timeseries_no_interpol_fix is not None or \
+                self.__timeseries_interpol_fix is not None or self.__timeseries_interpol_no_fix is not None:
+            self.__save_timeseries_data_to_cache()
 
     def __save_basic_data_to_cache(self):
         # basic/patient data
@@ -141,6 +184,16 @@ class TrainingSet:
         print(f"Writing TrainingSet {self.name} PaCMAP data to pickle cache!")
         pickle.dump({"no_interpolation": {"2d": self.__pacmap_2d_no_interpol, "3d": self.__pacmap_3d_no_interpol},
                      "interpolation": {"2d": self.__pacmap_2d_interpol, "3d": self.__pacmap_3d_interpol}},
+                    open(file_path, 'wb'))
+
+    def __save_timeseries_data_to_cache(self):
+        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
+                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_TS_POSTFIX}.pickle")
+        print(f"Writing TrainingSet {self.name} Timeseries data to pickle cache!")
+        pickle.dump({"no_interpolation": {"no_fix": self.__timeseries_no_interpol,
+                                          "fix": self.__timeseries_no_interpol_fix},
+                     "interpolation": {"no_fix": self.__timeseries_interpol_no_fix,
+                                       "fix": self.__timeseries_interpol_fix}},
                     open(file_path, 'wb'))
 
     def get_pacmap(self, dimension: int = 2, use_interpolation: bool = False):
@@ -212,7 +265,7 @@ class TrainingSet:
         if name in TrainingSet.__instances.keys():
             return TrainingSet.__instances[name]
         elif name in TrainingSet.PRESETS.keys():
-            return TrainingSet(TrainingSet.PRESETS[name], name)
+            return TrainingSet(TrainingSet.PRESETS[name](), name)
         else:
             if patients is None:
                 raise ValueError("Unknown Training Set name")
@@ -234,9 +287,6 @@ class TrainingSet:
             return self.average_df_fixed_no_interpol
         elif self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
             return self.average_df_fixed_interpol
-        # TODO Frage von Jakob: das folgende fehlt hier auch oder?
-        # if self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
-        #     return self.average_df_fixed_interpol
 
         avg_dict = {}
         for patient_id in self.data.keys():
@@ -244,8 +294,6 @@ class TrainingSet:
 
         avg_df = pd.DataFrame(avg_dict)
         avg_df.drop("SepsisLabel", inplace=True)
-        # TODO: Jakob: bei 1 mal pacmap berechnet wurde das hier 2 mal geprintet. Warum doppelt? (zumindest war das vor dem Merge noch so)
-        # print('test avg_df.columns:', avg_df.transpose().columns)        # test ob sepsis label entfernt
 
         if not fix_missing_values:
             return avg_df
@@ -269,9 +317,100 @@ class TrainingSet:
                 self.average_df_fixed_no_interpol = avg_df
             else:
                 self.average_df_fixed_interpol = avg_df
-            self.__dirty = True
             self.__save_data_to_cache()
             return avg_df
+
+    def get_timeseries_df(self, use_interpolation: bool = False, fix_missing_values: bool = False,
+                          limit_to_features: List[str] = None) -> pd.DataFrame:
+        """
+        Return a DataFrame with all the timeseries data per patient.
+
+        The list limit_to_features is used to filter the dataframe for only specific features (e.g. only "HR").
+        :param use_interpolation:
+        :param fix_missing_values:
+        :param limit_to_features:
+        :return:
+        """
+        if use_interpolation:
+            if self.__timeseries_interpol_no_fix is not None:
+                return self.__timeseries_interpol_no_fix
+        print(f"Creating timeseries DataFrame for TrainingSet {self.name} "+"with interpolation" if use_interpolation else "")
+        time_series_dict = dict()
+
+        start_time = datetime.datetime.now()
+        print("Creating time_series_dict ...")
+        max_series_len = -1
+        for patient_id in self.data.keys():
+            if use_interpolation:
+                time_series_dict[patient_id] = pd.DataFrame(self.data[patient_id]
+                                                            .get_interp_data(limit_to_features=limit_to_features))
+            else:
+                time_series_dict[patient_id] = pd.DataFrame(self.data[patient_id].data)
+            max_series_len = len(time_series_dict[patient_id]) if len(
+                time_series_dict[patient_id]) > max_series_len else max_series_len
+        end_time = datetime.datetime.now()
+        print("Finished creating raw time_series_dict in", end_time-start_time)
+
+        max_timeseries_length = 40
+        if fix_missing_values:
+            max_series_len = max_timeseries_length
+            for patient_id in time_series_dict.keys():
+                time_series_dict[patient_id] = \
+                    time_series_dict[patient_id].loc[1:max_timeseries_length]
+
+
+        # pad timeseries lengths to biggest denominator
+        start_time = datetime.datetime.now()
+        print("Padding timeseries to biggest denominator ...")
+        values = []
+        for patient_id in time_series_dict.keys():
+            for label in list(time_series_dict[list(time_series_dict.keys())[0]].columns):
+                curr_len = max_series_len - len(time_series_dict[patient_id][label])
+                padded_time_series = time_series_dict[patient_id][label] \
+                    .append(pd.Series([np.NAN for i in range(curr_len)]), ignore_index=True)
+                if use_interpolation:
+                    padded_time_series.interpolate(method="linear", inplace=True)
+                    padded_time_series.bfill(inplace=True)
+                    padded_time_series.fillna(method='ffill', inplace=True)
+                values.append(padded_time_series)
+        end_time = datetime.datetime.now()
+        print("Finished padding timeseries to biggest denominator in", end_time-start_time)
+
+        print("Creating timeseries index ...")
+        multi_index = pd.MultiIndex.from_product([time_series_dict.keys(),
+                                                  list(time_series_dict[list(time_series_dict.keys())[0]].columns)])
+        ts_df = pd.DataFrame(values, index=multi_index).transpose()
+
+        print("Dropping unwanted features from dataframe ...")
+        if limit_to_features is not None:  # might already be covered done by get_interp_data()
+            for patient_id, label in multi_index:
+                if label not in limit_to_features:
+                    ts_df.drop((patient_id, label), axis=1, inplace=True)
+
+        ts_df.drop(0, inplace=True)  # drop very first column (it keeps containing NaNs after interpolation)
+        ts_df = ts_df.transpose()
+        print("Dropping patients with all-NaN data:", ts_df[ts_df.isna().sum(axis=1) != 0].index)
+        ts_df.drop(ts_df[ts_df.isna().sum(axis=1) != 0].index, inplace=True)
+
+        if use_interpolation and not fix_missing_values:
+            if self.__timeseries_interpol_no_fix is None:
+                self.__timeseries_interpol_no_fix = dict()
+            self.__timeseries_interpol_no_fix[tuple(limit_to_features)] = ts_df
+        if use_interpolation and fix_missing_values:
+            if self.__timeseries_interpol_fix is None:
+                self.__timeseries_interpol_fix = dict()
+            self.__timeseries_interpol_fix[tuple(limit_to_features)] = ts_df
+        if not use_interpolation and not fix_missing_values:
+            if self.__timeseries_no_interpol is None:
+                self.__timeseries_no_interpol = dict()
+            self.__timeseries_no_interpol[tuple(limit_to_features)] = ts_df
+        if not use_interpolation and fix_missing_values:
+            if self.__timeseries_no_interpol_fix is None:
+                self.__timeseries_no_interpol_fix = dict()
+            self.__timeseries_no_interpol_fix[tuple(limit_to_features)] = ts_df
+        self.__save_data_to_cache()
+
+        return ts_df
 
     def get_sepsis_label_df(self) -> pd.DataFrame:
         sepsis_column_dict = {}
@@ -280,7 +419,7 @@ class TrainingSet:
             patient = self.data[patient_id]
             if patient.data["SepsisLabel"].sum() > 0:  # alternativ max()
                 sepsis_value["SepsisLabel"] = 1
-                sepsis_column_dict[patient_id] = pd.Series(sepsis_value)            # needs to be a series to be in the same format like avg_df
+                sepsis_column_dict[patient_id] = pd.Series(sepsis_value) # needs to be a series to be in the same format like avg_df
             else:
                 sepsis_value["SepsisLabel"] = 0
                 sepsis_column_dict[patient_id] = pd.Series(sepsis_value)
