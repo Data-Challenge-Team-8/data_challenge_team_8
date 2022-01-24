@@ -1,4 +1,5 @@
 import pandas as pd
+from matplotlib import pyplot as plt
 from numpy import ndarray
 from pandas import DataFrame
 from sklearn import tree
@@ -42,11 +43,15 @@ class DecisionTree(Classifier):
         })
         return cm_df
 
-    def plot_tree(self, max_depth: int = 15):
+    def plot_tree(self, max_depth: int = 10):
         print("Plotting the Tree:")
-        tree.plot_tree(self.__model)
-                       # max_depth=max_depth,
-                       # feature_names=["no_sepsis", "sepsis"],   # todo: braucht man die?
-                       # class_names=["no_sepsis", "sepsis"],
-                       # filled=True)
-        tree.export_text(self.__model)
+        tree.plot_tree(decision_tree=self.__model,
+                       max_depth=max_depth,
+                       # feature_names=self.__model.feature_names_in_,
+                       class_names=["no_sepsis", "sepsis"],
+                       filled=True)
+        plt.show()
+        # tree_text = tree.export_text(self.__model, feature_names=self.__model.feature_names_in_)
+        # print("------ Text report --------")
+        # print(tree_text)
+        # print("----- END Text report ------")

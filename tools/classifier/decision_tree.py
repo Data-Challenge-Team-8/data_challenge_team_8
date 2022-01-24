@@ -20,8 +20,8 @@ def implement_decision_tree(avg_df, sepsis_df):
     x_train, x_test, y_train, y_test = train_test_split(avg_df.transpose(), sepsis_df, test_size=0.2, random_state=1337)
     clf.train(x_data=x_train, y_data=y_train)
     print("Classification Report for complete (imbalanced) dataset:")
-    display_confusion_matrix(clf, x_test, y_test, plotting=True, version="complete dataset")
-    clf.plot_tree(max_depth=6)
+    # display_confusion_matrix(clf, x_test, y_test, plotting=True, version="complete dataset")
+    clf.plot_tree(max_depth=3)
 
     # man könnte bei imbalanced learning noch versuchen einen Scatter Plot zu erstellen und mit PacMap anzuzeigen, welche Patients noch im Dataset sind.
     # Oversampling: SMOTE
@@ -31,8 +31,8 @@ def implement_decision_tree(avg_df, sepsis_df):
                                                                         random_state=1337)
     clf.train(x_train_smote, y_train_smote)
     print("Classification Report for SMOTE oversampling")
-    display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="SMOTE oversampling")
-    clf.plot_tree(max_depth=12)
+    # display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="SMOTE oversampling")
+    clf.plot_tree(max_depth=2)
 
     # Undersampling: NearMiss
     versions: List = [1, 2, 3]
