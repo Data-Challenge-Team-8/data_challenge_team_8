@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
@@ -17,7 +19,7 @@ class TimeSeriesClassifier:
         self.model = None
         self.__train_fraction = train_fraction
 
-    def transform_data_set(self, data_set, label_set) -> pd.DataFrame:
+    def transform_data_set(self, data_set, label_set):
         """
         Transform the given TrainingSet into a format used by the classifier
         :param data_set:
@@ -33,24 +35,24 @@ class TimeSeriesClassifier:
         """
         raise NotImplementedError
 
-    def train(self, train_set: pd.DataFrame = None):
+    def train(self, train_set: Tuple[pd.DataFrame, np.ndarray] = None):
         """
         Train this model with the training set derived from the given data_set if train_set is None
         else use the given train_set.
 
         See train_fraction to adjust the size
-        :param train_set: training data set as transformed by self.transform_data_set()
+        :param train_set: training data set as transformed by self.transform_data_set() (X_data, y_data)
         :return:
         """
         raise NotImplementedError
 
-    def predict(self, test_set: pd.DataFrame = None):
+    def predict(self, test_set: Tuple[pd.DataFrame, np.ndarray] = None):
         """
         Test this instances model against the test set derived from the given data_set if test_set is None
         else use the given test_set.
 
         The size of this test set is  1 - train_fraction * len(data_set)
-        :param test_set: test data set as transformed by self.transform_data_set()
+        :param test_set: test data set as transformed by self.transform_data_set() (X_data, y_data)
         :return:
         """
         raise NotImplementedError
@@ -75,8 +77,9 @@ class TimeSeriesClassifier:
         report = self.get_classification_report(x_test, y_test)
         print(report)
         # confusion matrix plot
+        cm: np.ndarray = self.test(x_test, y_test)
+        print(cm)
         if plotting:
-            cm: np.ndarray = self.test(x_test, y_test)
             disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No Sepsis", "Sepsis"])
             disp.plot()
             # funktioniert leider nicht mit title
