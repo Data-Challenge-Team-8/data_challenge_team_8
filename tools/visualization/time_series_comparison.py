@@ -88,13 +88,13 @@ def plot_time_series_density(series_data, label: str, set_name: str):
     plt.show()
 
 
-def plot_complete_time_series_for_patients(training_set: TrainingSet, list_of_features: List[str], plot_maximum: int):
+def plot_complete_time_series_for_patients(training_set: TrainingSet, limit_to_features: List[str], plot_maximum: int):
     sepsis_df = training_set.get_sepsis_label_df()
     plot_counter = 0
     for patient_id in training_set.data:
         if training_set.check_patient_has_sepsis(sepsis_df, patient_id):
             temp_patient = training_set.get_patient_form_id(patient_id)
-            temp_patient.plot_features_time_series(list_of_features)
+            temp_patient.plot_features_time_series(limit_to_features)
             plot_counter += 1
             if plot_counter > plot_maximum:
                 break
