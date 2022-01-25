@@ -84,3 +84,38 @@ def plot_time_series_density(series_data, label: str, set_name: str):
     fig.tight_layout()
 
     plt.show()
+
+def plot_two_time_series(patient_id: str, series_one, label_one: str, series_two, label_two: str):
+    fig, axs = plt.subplots(2)
+    # vlt auch für mehr als zwei features bauen?
+
+    axs[0].set_title(f"Time series data ({label_one}, {patient_id})")
+    axs[0].plot(series_one)
+    axs[1].set_title(f"Time series data ({label_two}, {patient_id})")
+    axs[1].plot(series_two)
+
+    fig.tight_layout()
+    plt.show()
+
+def plot_time_series_sepsis_background(patient_id, series_one, label_one, series_two, label_two):
+    fig, axs = plt.subplots(1)
+    # vlt auch für mehr als zwei features bauen?
+
+    axs.set_title(f"Time series data ({label_one}, {patient_id})")
+    axs.plot(series_one)
+
+    temp_df = series_two.to_frame()
+    sepsis_indices = temp_df.loc[(temp_df[series_two.name] >= 1)]             # careful: series_two_name is not "SepsisLabel" but "<patient_id>_SepsisLabel"
+    highlight(sepsis_indices.index, axs)
+
+    fig.tight_layout()
+    plt.show()
+
+def highlight(indices, ax):
+    i = 0
+    try:
+        while i < len(indices):
+            ax.axvspan(indices[i]-0.5, indices[i]+0.5, facecolor='pink', edgecolor='none', alpha=.2)
+            i += 1
+    except KeyError:            # this happens if indices is empty
+        pass
