@@ -25,7 +25,7 @@ def get_rnd_sample_a() -> List[str]:
     random.seed(1337)
     sample = []
     set_a = get_set_a()
-    for i in range(500):
+    for i in range(2000):
         sample.append(set_a[random.randint(0, len(set_a))])
     return sample
 
