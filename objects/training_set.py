@@ -25,7 +25,7 @@ def get_rnd_sample_a() -> List[str]:
     random.seed(1337)
     sample = []
     set_a = get_set_a()
-    for i in range(200):
+    for i in range(500):
         sample.append(set_a[random.randint(0, len(set_a))])
     return sample
 
@@ -195,6 +195,9 @@ class TrainingSet:
                      "interpolation": {"no_fix": self.__timeseries_interpol_no_fix,
                                        "fix": self.__timeseries_interpol_fix}},
                     open(file_path, 'wb'))
+
+    def get_patient_form_id(self, patient_id) -> Patient:
+        return self.data[patient_id]
 
     def get_pacmap(self, dimension: int = 2, use_interpolation: bool = False):
         """
@@ -424,7 +427,13 @@ class TrainingSet:
                 sepsis_value["SepsisLabel"] = 0
                 sepsis_column_dict[patient_id] = pd.Series(sepsis_value)
         sepsis_df = pd.DataFrame(data=sepsis_column_dict, dtype='int32')
-        return sepsis_df.transpose()          # Patients are rows, columns = SepsisLabel (no transpose needed)
+        return sepsis_df.transpose()          # Patients are rows, columns = SepsisLabel (no transpose needed)  - stimmt das??
+
+    def check_patient_has_sepsis(self, sepsis_df, patient_id) -> bool:
+        if sepsis_df.loc[patient_id, "SepsisLabel"] >= 1:
+            return True
+        else:
+            return False
 
     # Vorschlag von Jakob: wird benötigt wenn man einen Cluster gezielt untersuchen will, leider habe ich es nicht ganz hinbekommen
     # def get_patients_for_clusters(self, clustering_list):

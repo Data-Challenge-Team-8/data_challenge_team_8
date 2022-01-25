@@ -23,7 +23,6 @@ def implement_decision_tree(avg_df, sepsis_df):
     display_confusion_matrix(clf, x_test, y_test, plotting=True, version="complete dataset")
     clf.plot_tree(max_depth=6)
 
-    # man könnte bei imbalanced learning noch versuchen einen Scatter Plot zu erstellen und mit PacMap anzuzeigen, welche Patients noch im Dataset sind.
     # Oversampling: SMOTE
     smote = SMOTE(random_state=1337)
     x_train_smote, y_train_smote = smote.fit_resample(x_train, y_train)
