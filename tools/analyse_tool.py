@@ -12,20 +12,13 @@ from objects.training_set import TrainingSet
 
 USE_CACHE = True
 
-# todo: old version - FileNotFoundError
+# This function is unique for Analysis Objects and not the same as training_set caches
 def construct_cache_file_name(selected_label: str, selected_set: str):
     # keys is a list of the inputs selected f.e. ['Label', 'Set']
     key_concat = ""
     key_concat += selected_label
     key_concat += selected_set
     return hashlib.md5(key_concat.encode("utf-8")).hexdigest() + "_OBJ" + ".pickle"
-
-def new_construct_cache_file_name(self) -> str:
-    key_concat = ""
-    for patient_id in self.data.keys():
-        key_concat += patient_id
-
-    return hashlib.md5(key_concat.encode('utf-8')).hexdigest()
 
 class CompleteAnalysis:
     global USE_CACHE

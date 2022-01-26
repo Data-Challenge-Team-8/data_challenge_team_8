@@ -10,7 +10,7 @@ def display_feature_graphic():
     st.image(feature_graphic, caption='Descriptions for each feature from the underlying PhysioNet paper')
 
 
-def display_table():  # TODO: get our own general info per dataset (amount of patients etc)
+def display_table():  # TODO: Aufgabe Aline: calculate our own general info per dataset (amount of patients etc) - not just import of an image
     feature_graphic = Image.open(r'./data/descriptive_table.jpg')
     st.image(feature_graphic, caption='Descriptions for each feature from the underlying PhysioNet paper')
 

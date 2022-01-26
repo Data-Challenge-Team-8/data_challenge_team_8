@@ -54,7 +54,7 @@ class TrainingSet:
         self.data = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
 
-        # TODO: Besprechen brauchen die beiden auskommentieren avg doch auch?
+        # TODO: Besprechen brauchen wir die beiden auskommentieren avg cases doch auch?
         # self.avg_df_no_fixed: pd.DataFrame = None
         self.average_df_fixed_no_interpol: pd.DataFrame = None
         self.average_df_fixed_interpol: pd.DataFrame = None
@@ -444,7 +444,7 @@ class TrainingSet:
     #         for index, position in enumerate(clustering_list):
     #             if position == cluster:
     #                 temp_index.append(index)
-    #         temp_patients = self.data.iloc(temp_index)              # TODO: iloc nur für df wir haben hier leider dict, wie macht man das?
+    #         temp_patients = self.data.iloc(temp_index)              # Problem: iloc geht nur für df, wir haben hier leider dict, wie macht man das?
     #         clusters_with_patients[cluster] = temp_patients
     #     return clusters_with_patients
 
@@ -464,13 +464,12 @@ class TrainingSet:
 
         temp_z_val_df = pd.DataFrame()
         for col in avg_df.columns:
-            # TODO: Wie kann man das hier effizienter machen?
-            # TODO: Und bei no_fixed muss man noch NaN vom avg_df abfangen?
+            # TODO: Frage an Philipp: Wie kann man das hier effizienter machen? Und bei no_fixed muss man noch NaN vom avg_df abfangen?
             # if avg_df[col] == "NaN":
             #     avg_df[col] = 0
             temp_z_val_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
 
-        # TODO: Was ist mit dem fall fix_missing_values=True, use_interpolation=False ?
+        # TODO: Frage an Philipp: Was ist mit dem Fall fix_missing_values=True, use_interpolation=False ? (siehe TODO im Konstruktor, brauchen wir noch weitere avg cases?)
         if use_interpolation and fix_missing_values:
             self.z_value_df = temp_z_val_df
             return self.z_value_df
