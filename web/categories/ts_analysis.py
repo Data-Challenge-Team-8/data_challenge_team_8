@@ -12,6 +12,8 @@ from objects.training_set import TrainingSet
 class TimeSeriesAnalysis:
 
     def __init__(self):
+        st.markdown("<h2 style='text-align: left; color: black;'>Time Series Visualization per Patient</h2>",
+                    unsafe_allow_html=True)
         # Client selects the dataset he wants to analyse
         option_set = st.selectbox(
             'Select a data set:',
