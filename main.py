@@ -9,6 +9,7 @@ if __name__ == '__main__':
     # TASK 06: WebApp Visualization of TimeSeries
     sys.argv = ["streamlit", "run", ".\\web\\app.py"]
     sys.exit(stcli.main())
+
     # set_a = TrainingSet.get_training_set("Set A")
 
 
