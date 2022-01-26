@@ -8,8 +8,8 @@ import csv
 from IO.data_writer import DataWriter
 from objects.patient import Patient
 
-
-# TODO: Naming too similar with complete_analysis - but this is needed for analysing more focussed on time_series_data
+# This is very old Code! There are also some Bugs here
+# Also naming too similar with complete_analysis - but this is might be useful for analysing more focussed on time_series_data
 class AnalyseTool:
     """
     This Class contains methods to analyse the patient data.
@@ -287,7 +287,7 @@ class AnalyseTool:
         return nan_count / c
 
 
-    # TODO: nachfolgend bekomme ich KeyError 0.0 bei den x for x in ...
+    # nachfolgend bekomme ich KeyError 0.0 bei den x for x in ...
     # Ich weiss nicht was falsch ist. Aber so kann man nicht auf den dataframe zugreifen.
     def min_single(self, label, patient_ID) -> float:
         """ returns the min value in one patient data """
