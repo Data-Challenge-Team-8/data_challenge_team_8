@@ -14,7 +14,7 @@ class Label:
     FEMALE = 0
     MALE = 1
 
-    def __init__(self, name: str):                    # TODO: This could be an important Class/Objects to implement correlation
+    def __init__(self, name: str):
         self.name = name
         # self.__min_for_label: Dict[str, Tuple[str, float]] = {}
         # self.__max_for_label: Dict[str, Tuple[str, float]] = {}
