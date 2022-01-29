@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 
+from objects.training_set import TrainingSet
+
 
 def dbscan_1d(values: List[int]):
     np_values = np.array(values)
@@ -84,6 +86,49 @@ def plot_time_series_density(series_data, label: str, set_name: str):
     fig.tight_layout()
 
     plt.show()
+
+
+def plot_complete_time_series_for_patients(training_set: TrainingSet, limit_to_features: List[str], plot_maximum: int):
+    sepsis_df = training_set.get_sepsis_label_df()
+    plot_counter = 0
+    for patient_id in training_set.data:
+        if training_set.check_patient_has_sepsis(sepsis_df, patient_id):
+            temp_patient = training_set.get_patient_form_id(patient_id)
+            temp_patient.plot_features_time_series(limit_to_features)
+            plot_counter += 1
+            if plot_counter > plot_maximum:
+                break
+
+def plot_reduced_time_series_data(training_set, time_series):
+    """ This method is used to plot the reduced timeseries data (only 40 timesteps) for all patients
+    that have sepsis. You can select the feature which you wish to compare to the SepsisLabel. """
+    sepsis_df = training_set.get_sepsis_label_df()
+    temp_hr = None
+    for patient_feature_tuple in time_series.transpose():
+        if training_set.check_patient_has_sepsis(sepsis_df, patient_feature_tuple[0]):
+            if patient_feature_tuple[1] == "HR":  # select desired feature here
+                temp_hr = time_series.loc[patient_feature_tuple]
+            elif patient_feature_tuple[1] == "SepsisLabel":
+                temp_sepsis = time_series.loc[patient_feature_tuple]
+                try:
+                    if temp_hr.name[0] == temp_sepsis.name[0]:
+                        # plot_two_time_series(patient_id=patient_feature_tuple[0],
+                        #                      series_one=temp_hr,
+                        #                      label_one="HR",
+                        #                      series_two=temp_sepsis,
+                        #                      label_two="SepsisLabel")
+                        plot_time_series_sepsis_background(patient_id=patient_feature_tuple[0],
+                                                           series_one=temp_hr,
+                                                           label_one="HR",
+                                                           series_two=temp_sepsis,
+                                                           label_two="SepsisLabel")
+                except AttributeError:
+                    pass
+            else:
+                pass
+        else:
+            pass
+
 
 def plot_two_time_series(patient_id: str, series_one, label_one: str, series_two, label_two: str):
     fig, axs = plt.subplots(2)

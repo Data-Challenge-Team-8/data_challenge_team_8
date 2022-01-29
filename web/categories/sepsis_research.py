@@ -2,6 +2,7 @@ import numpy
 import streamlit as st
 import statistics
 from matplotlib import pyplot as plt
+from PIL import Image
 
 from tools.analyse_tool import CompleteAnalysis
 
@@ -53,8 +54,13 @@ def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
     col3.metric("", no_sepsis_var)
 
 
+# TODO: Aufgabe Aline: This should be a true calculation of correlations not just the .png - (probably with a cache otherwise it takes to long
+def plot_correlations():
+    feature_graphic = Image.open(r'./data/sepsis_correlation_fixed_values.png')
+    st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
+
 class SepsisResearch:
-    LABELS = ["Temp", "HR", "pH", "Age", "Gender"]  # TODO: Do we need further, more important Labels?
+    LABELS = ["HR", "Resp", "Temp", "pH", "Age", "Gender", "ICOLUS"]  # Do we need further, more important Labels?
 
     def __init__(self):
         st.markdown("<h2 style='text-align: left; color: black;'>Histogram for Sepsis Research</h2>",
@@ -67,6 +73,11 @@ class SepsisResearch:
                                                                 selected_set=selected_set)
         plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool)
 
+        st.markdown("<h2 style='text-align: left; color: black;'>Correlation of relevant Features to the SepsisLabel</h2>",
+                    unsafe_allow_html=True)
+        plot_correlations()
+
+
     def create_selectors(self, col1):
         selected_label = col1.selectbox('Choose a label:', self.LABELS)
         selected_set = col1.selectbox('Choose a Set:', ("Set A", "Set B", "Set A + B"))
@@ -74,3 +85,5 @@ class SepsisResearch:
                                          ("positive + negative", "positive", "negative"))
         selected_tool = selected_sepsis
         return selected_label, selected_set, selected_tool
+
+

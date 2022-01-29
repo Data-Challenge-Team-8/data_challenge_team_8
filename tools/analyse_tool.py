@@ -12,24 +12,26 @@ from objects.training_set import TrainingSet
 
 USE_CACHE = True
 
-
-def construct_cache_file_name(selected_label, selected_set):                # removed "tool" from here - always complete analysis for all features
+# This function is unique for Analysis Objects and not the same as training_set caches
+def construct_cache_file_name(selected_label: str, selected_set: str):
     # keys is a list of the inputs selected f.e. ['Label', 'Set']
-    key_concat = ""  # not good to use keys.sort() -> changes every time
+    key_concat = ""
     key_concat += selected_label
     key_concat += selected_set
-    return hashlib.md5(key_concat.encode("utf-8")).hexdigest() + "_OBJ" + ".pickle"         # Now working with OBJ - bad size, but better usefulness of get_analysis
-
+    return hashlib.md5(key_concat.encode("utf-8")).hexdigest() + "_OBJ" + ".pickle"
 
 class CompleteAnalysis:
     global USE_CACHE
-    CACHE_PATH = os.path.join("../web/UI_tools", "cache")
+    # CACHE_PATH = os.path.join("../web", "cache") # Error: FileNotFoundError
+    cur_dir = os.path.curdir
+    CACHE_PATH = os.path.join(cur_dir, "cache")
 
-    def __init__(self, selected_label, selected_tool, selected_set, training_set: TrainingSet):
+
+    def __init__(self, selected_label: str, selected_tool: str, selected_set: str, training_set: TrainingSet):
         self.selected_set = selected_set
         self.selected_tool = selected_tool
         self.selected_label = selected_label
-        self.analysis_cache_name = construct_cache_file_name(selected_label, selected_set)
+        self.analysis_cache_name = construct_cache_file_name(selected_label=selected_label, selected_set=selected_set)
 
         # variables are declared here and calculated in analysis
         self.min_for_label: Dict[str, Tuple[str, float]] = {}
@@ -38,7 +40,7 @@ class CompleteAnalysis:
         self.NaN_amount_for_label: Dict[str, int] = {}
         self.rel_NaN_for_label: float = None
         self.non_NaN_amount_for_label: Dict[str, int] = {}
-        self.plot_label_to_sepsis: Dict[str, Tuple[List[float], List[float]]] = {}          # TODO: This is on time frame level not patient level for the histogram!
+        self.plot_label_to_sepsis: Dict[str, Tuple[List[float], List[float]]] = {}
         self.min_data_duration: Tuple[str, int] = None
         self.max_data_duration: Tuple[str, int] = None
         self.avg_data_duration: float = None
@@ -52,8 +54,8 @@ class CompleteAnalysis:
         return os.path.isfile(os.path.join(CompleteAnalysis.CACHE_PATH, file_name))
 
     @classmethod
-    def get_analysis(cls, selected_label, selected_tool, selected_set):
-        file_name = construct_cache_file_name(selected_label, selected_set)
+    def get_analysis(cls, selected_label: str, selected_tool: str, selected_set: str):
+        file_name = construct_cache_file_name(selected_label=selected_label, selected_set=selected_set)
         if CompleteAnalysis.check_analysis_is_cached(file_name) and USE_CACHE:
             print("\nLoading Analysis for", selected_label, selected_set, "from cache:", file_name,
                   " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
@@ -61,12 +63,11 @@ class CompleteAnalysis:
         else:
             print("\nStarting new Analysis for", selected_label, selected_set, "with cache name:", file_name,
                   " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
-            loaded_training_set = TrainingSet.get_training_set(name=selected_set)  # if analysis not cached TS needs
-            # to be loaded
-            CompleteAnalysis(selected_label=selected_label, selected_tool=selected_tool,
+            loaded_training_set: TrainingSet = TrainingSet.get_training_set(name=selected_set)  # if analysis not cached TS must be loaded
+            new_analysis = CompleteAnalysis(selected_label=selected_label, selected_tool=selected_tool,
                              selected_set=selected_set,
                              training_set=loaded_training_set)  # Construct this new Analysis, directly calculate all and save to cache
-            return CompleteAnalysis.load_analysis_from_cache(file_name), file_name  # get this analysis_dict from cache
+            return new_analysis, file_name  # get this analysis_dict from cache
 
     @classmethod
     def load_analysis_from_cache(cls, file_name: str):
@@ -184,7 +185,7 @@ class CompleteAnalysis:
 
         return count
 
-    def get_rel_NaN_amount_for_label(self, label: str, training_set) -> float:          # TODO: This will be helpful for Task 2.2 b)
+    def get_rel_NaN_amount_for_label(self, label: str, training_set) -> float:
         """
         Get the average relative amount of NaN values for the label across all Patient objects in this set
         :param label:
@@ -368,10 +369,12 @@ class CompleteAnalysis:
         return self.plot_label_to_sepsis
 
     def save_analysis_obj_to_cache(self):
-        print(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name)
-        pickle.dump(self, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
-        print("Analysis Object was cached into file", self.analysis_cache_name,
+        try:
+            pickle.dump(self, open(os.path.join(CompleteAnalysis.CACHE_PATH, self.analysis_cache_name), "wb"))
+            print("Analysis Object was cached into file", self.analysis_cache_name,
               " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+        except FileNotFoundError:
+            print("FileNotFoundError: CACHE_PATH not found. Analysis could not be saved.")
 
     def save_analysis_to_cache(self):
         pickle_data = {
