@@ -15,7 +15,7 @@ from objects.training_set import TrainingSet, Patient
 class ShapeletClassifier(TimeSeriesClassifier):
 
     def __init__(self, data_set: TrainingSet, target_label: str = None, train_fraction: float = 0.8, features=None,
-                 time_limit=10):
+                 time_limit=1):
         """
 
         :param data_set: TrainingSet instance to be used as a data set for training and/or testing
