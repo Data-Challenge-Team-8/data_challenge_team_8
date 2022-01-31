@@ -252,7 +252,6 @@ class TrainingSet:
                     self.__save_pacmap_data_to_cache()
                     return self.__pacmap_3d_interpol, patient_ids
 
-
         return pacmap_data, patient_ids
 
     @classmethod
