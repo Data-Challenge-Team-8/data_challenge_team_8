@@ -10,7 +10,10 @@ from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import NearMiss
 
+import tools
 from classifier.decisiontree.decisiontree import DecisionTree
+from tools.imbalance_methods import get_near_miss_for_split_data, get_smote_for_split_data
+
 
 def implement_decision_tree(avg_df, sepsis_df):
     """
@@ -24,8 +27,7 @@ def implement_decision_tree(avg_df, sepsis_df):
     clf.plot_tree(max_depth=6)
 
     # Oversampling: SMOTE
-    smote = SMOTE(random_state=1337)
-    x_train_smote, y_train_smote = smote.fit_resample(x_train, y_train)
+    x_train_smote, y_train_smote = get_smote_for_split_data(x_matrix=x_train, y_label=y_train)
     new_x_train, new_x_test, new_y_train, new_y_test = train_test_split(x_train_smote, y_train_smote, test_size=0.2,
                                                                         random_state=1337)
     clf.train(x_train_smote, y_train_smote)
@@ -36,9 +38,8 @@ def implement_decision_tree(avg_df, sepsis_df):
     # Undersampling: NearMiss
     versions: List = [1, 2, 3]
     for version in versions:
-        near_miss = NearMiss(version=version)
-        new_x, new_y = near_miss.fit_resample(x_test, y_test)
-        new_x_train, new_x_test, new_y_train, new_y_test = train_test_split(new_x, new_y, test_size=0.2,
+        x_train_nearmiss, y_train_nearmiss = get_near_miss_for_split_data(version=version, x_matrix=x_test, y_label=y_test)
+        new_x_train, new_x_test, new_y_train, new_y_test = train_test_split(x_train_nearmiss, y_train_nearmiss, test_size=0.2,
                                                                             random_state=1337)
         clf.train(x_data=new_x_train, y_data=new_y_train)
         print("Classification Report for NearMiss Version:", version)

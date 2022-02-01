@@ -23,7 +23,7 @@ def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_i
     # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]
     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
 
-    avg_df_corr = added_sepsis_df.corr()
+    avg_df_corr = added_sepsis_df.corr()                        # todo: gucken ob man das im frontend performant hinbekommt
     # feature_names = np.argsort(avg_df_corr.columns)         # feature_names: [ 6  4  7  0  8  9  3  1  5  2 10]
     feature_names = avg_df_corr.columns
     avg_df_corr_without_nan = avg_df_corr.fillna(0)       # Aus irgend einem grund ist EtCO2 NaN
