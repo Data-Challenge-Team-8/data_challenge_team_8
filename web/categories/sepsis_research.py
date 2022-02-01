@@ -54,7 +54,7 @@ def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
     col3.metric("", no_sepsis_var)
 
 
-# TODO: Aufgabe Aline: This should be a true calculation of correlations not just the .png - (probably with a cache otherwise it takes to long
+# TODO: Aufgabe Aline: This should be a true calculation of correlations not just the .png - (probably with a cache otherwise it takes too long
 def plot_correlations():
     feature_graphic = Image.open(r'./data/sepsis_correlation_fixed_values.png')
     st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
