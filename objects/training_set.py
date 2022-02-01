@@ -51,7 +51,7 @@ class TrainingSet:
         TrainingSet.__instances[name] = self
 
         self.name = name
-        self.data = {key: None for key in patients}
+        self.data: Dict[str, Patient] = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
 
         # TODO: Besprechen brauchen wir die beiden auskommentieren avg cases doch auch?
@@ -196,6 +196,23 @@ class TrainingSet:
                                        "fix": self.__timeseries_interpol_fix}},
                     open(file_path, 'wb'))
 
+    def get_feature(self, feature: str) -> pd.DataFrame:
+        """
+        Query for a specific feature by name (must be present in Patient) and return a DataFrame with only that feature.
+        :param feature:
+        :return:
+        """
+        data = {}
+        if feature == "SepsisLabel":
+            feature = "sepsis_label"
+        for p in self.data.keys():
+            data[p] = getattr(self.data[p], feature)
+
+        s = pd.DataFrame(data)
+        if feature == "sepsis_label":
+            return s.max()
+        return s
+
     def get_patient_from_id(self, patient_id) -> Patient:
         return self.data[patient_id]
 
@@ -264,6 +281,7 @@ class TrainingSet:
         :param name:
         :return:
         """
+        print(f"Fetching TrainingSet \"{name}\" ...")
         if name in TrainingSet.__instances.keys():
             return TrainingSet.__instances[name]
         elif name in TrainingSet.PRESETS.keys():
