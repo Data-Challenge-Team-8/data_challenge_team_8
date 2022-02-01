@@ -196,7 +196,7 @@ class TrainingSet:
                                        "fix": self.__timeseries_interpol_fix}},
                     open(file_path, 'wb'))
 
-    def get_patient_form_id(self, patient_id) -> Patient:
+    def get_patient_from_id(self, patient_id) -> Patient:
         return self.data[patient_id]
 
     def get_pacmap(self, dimension: int = 2, use_interpolation: bool = False):

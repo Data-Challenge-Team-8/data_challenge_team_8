@@ -35,7 +35,7 @@ class TimeSeriesAnalysis:
             # we load the dataset
             dataset = TrainingSet.get_training_set(option_set)
             # We load the patient
-            patient = dataset.get_patient_form_id(option_patient)
+            patient = dataset.get_patient_from_id(option_patient)
             data_list = []
             for feature in option_features:
                 series_feature = getattr(patient, feature)
