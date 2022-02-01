@@ -12,16 +12,18 @@ def get_near_miss_for_training_set(training_set: TrainingSet, version: int = 2) 
     avg_df = training_set.get_average_df(use_interpolation=True, fix_missing_values=True)
     sepsis_df = training_set.get_sepsis_label_df()
 
-    avg_df = avg_df.transpose()                       # needs to be calculated transposed?
-    index = avg_df.index.to_series(index=pd.Index(["patient_id"]))
-
-    x_matrix = pd.concat([avg_df, index], ignore_index=True)
+    x_matrix = avg_df.transpose()
+    # todo: fix index for new_x (patient_ids are turned into numbers by near_miss.fit_resample())
+    # index = x_matrix.index.to_series(index=pd.Index(["patient_id"]))
+    # index = x_matrix.index.to_series(name="patient_id")
+    #
+    # x_matrix = pd.concat([x_matrix, index], ignore_index=True)
 
     near_miss = NearMiss(version=version)
     new_x, new_y = near_miss.fit_resample(x_matrix, sepsis_df)
 
-    new_x.set_index(new_x["patient_id"], inplace=True)
-    new_x.drop(["patient_id"], inplace=True)
+    # new_x.set_index(new_x["patient_id"], inplace=True)
+    # new_x.drop(["patient_id"], inplace=True)
 
     return new_x, new_y
 
