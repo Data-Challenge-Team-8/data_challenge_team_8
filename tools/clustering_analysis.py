@@ -33,9 +33,9 @@ def implement_k_means_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, ad
         if sh_score > best_score:
             best_score = sh_score
         if additional_options_title is None:
-            title = f"k-Means clusters: {n} for {training_set.name}"
+            title = f"k_Means_clusters_{n} for {training_set.name}"
         else:
-            title = f"k-Means clusters: {n} for {training_set.name} with settings: {additional_options_title}"
+            title = f"k_Means_clusters_{n} for {training_set.name} with settings_{additional_options_title}"
         plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=sh_score, coloring=k_means_list,
                                                      patient_ids=patient_ids, training_set=training_set,
                                                      color_map='tab20c', save_to_file=save_to_file)
@@ -425,7 +425,7 @@ def save_to_file_function(save_to_file, plot_title: str):
         if not os.path.exists(FIGURE_OUTPUT_FOLDER):
             os.mkdir(FIGURE_OUTPUT_FOLDER)
 
-        f = os.path.join(FIGURE_OUTPUT_FOLDER, "pacmap-" + plot_title.replace(" ", "_") + ".png")
+        f = os.path.join(FIGURE_OUTPUT_FOLDER, "pacmap_" + plot_title.replace(" ", "_") + ".png")
         print(f"Saving figure \"{plot_title}\" to file {f}")
         plt.savefig(f, bbox_inches="tight")
     plt.close()
