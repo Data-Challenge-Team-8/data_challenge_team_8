@@ -3,6 +3,7 @@ import os
 from streamlit import cli as stcli
 from objects.training_set import TrainingSet
 from classifier.timeseries.time_series_forest import TimeSeriesForest
+from tools.clustering_analysis import implement_clustering_on_avg_df
 from tools.imbalance_methods import get_near_miss_for_training_set
 from tools.pacmap_analysis import plot_pacmap2D_sepsis, calculate_pacmap_on_avg_df
 from tools.visualization.time_series_comparison import plot_time_series_density, plot_complete_time_series_for_patients, \
@@ -15,12 +16,9 @@ if __name__ == '__main__':
 
     # TASK FINAL: Implementing Balanced Set for Clustering
     set_a = TrainingSet.get_training_set("Set A")
+
+    # PacMap imbalanced set
     # avg_df = set_a.get_average_df(use_interpolation=True, fix_missing_values=True)
-    avg_df_near_miss, sepsis_label_near_miss = get_near_miss_for_training_set(training_set=set_a, version=2)
-
-    # problem: avg_df_near_miss has numbers as index and not "p002008" ids
-    avg_df_near_miss_transposed = avg_df_near_miss.transpose()
-
     # Plot PacMap of normal (imbalanced) set and of near_miss (balanced) set
     # pacmap_data_normal, sepsis_ids_normal = calculate_pacmap_on_avg_df(avg_df)
     # plot_pacmap2D_sepsis(plot_title="PacMap on Set A, interpolated, Imbalanced",
@@ -29,14 +27,20 @@ if __name__ == '__main__':
     #                      training_set=set_a,
     #                      save_to_file=True)
 
-    pacmap_data_near_miss, sepsis_ids_near_miss = calculate_pacmap_on_avg_df(avg_df_near_miss_transposed)
-    plot_pacmap2D_sepsis(plot_title="PacMap on Set A, interpolated, NearMiss(v2)",
-                         data=pacmap_data_near_miss,
-                         patient_ids=sepsis_ids_near_miss,
-                         training_set=set_a,
-                         save_to_file=True)
+    # PacMap balanced set
+    avg_df_near_miss, sepsis_label_near_miss = get_near_miss_for_training_set(training_set=set_a, version=2)
 
-    # todo 2: clustering with normal and after near miss
+    # pacmap_data_near_miss, sepsis_ids_near_miss = calculate_pacmap_on_avg_df(avg_df_near_miss.transpose())
+    # plot_pacmap2D_sepsis(plot_title="PacMap on Set A, interpolated, NearMiss(v2)",
+    #                      data=pacmap_data_near_miss,
+    #                      patient_ids=sepsis_ids_near_miss,
+    #                      training_set=set_a,
+    #                      save_to_file=True)
+
+    # Clustering after near miss                # todo. also implement DBSCAN
+    implement_clustering_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss,
+                                   additional_options_title="interpolated, NearMiss(v2)", save_to_file=False)
+
 
 
 

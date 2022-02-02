@@ -52,7 +52,7 @@ def calculate_pacmap_on_avg_df(avg_df: DataFrame, dimension: int = 2):
     :return: data as returned by the PaCMAP algorithm
     """
     avg_np = avg_df.transpose().to_numpy()
-    # avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
+    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
 
     embedding = pacmap.PaCMAP(n_dims=dimension, n_neighbors=None, MN_ratio=0.5, FP_ratio=2.0, verbose=True, random_state=1)
     data_transformed = embedding.fit_transform(avg_np, init="pca")

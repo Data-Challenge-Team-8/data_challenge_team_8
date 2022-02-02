@@ -4,14 +4,90 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas
+from pandas import DataFrame
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.metrics import silhouette_score
 
-from objects.patient import Patient
 from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
-from tools.pacmap_analysis import plot_pacmap2D, calculate_pacmap
+from tools.pacmap_analysis import plot_pacmap2D, calculate_pacmap, calculate_pacmap_on_avg_df
+
+
+def implement_clustering_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, additional_options_title: str = None,
+                                   save_to_file: bool = False):
+    """
+    Used to implement k-means on a selected df
+    """
+    avg_np = avg_df.transpose().to_numpy()
+    avg_np.reshape(avg_np.shape[0], -1)
+    pacmap_data, patient_ids = calculate_pacmap_on_avg_df(avg_df.transpose())
+
+    # Plot silhouettes score analysis for k-means clustering
+    print("\nSilhouettes Score Analysis: ")
+    krange = list(range(2, 11))
+    avg_silhouettes = []
+    best_score = 0
+    best_cluster_option = 2
+    for n in krange:
+        k_means_list, sh_score = calculate_cluster_kmeans(avg_np, n_clusters=n)
+        avg_silhouettes.append(sh_score)
+        if sh_score > best_score:
+            best_score = sh_score
+            best_cluster_option = n
+    plot_sh_scores(avg_silhouettes, krange, save_to_file=save_to_file)
+
+
+    # plot k-means for best_cluster_option
+    k_means_list, sh_score = calculate_cluster_kmeans(avg_np, n_clusters=best_cluster_option)
+    if additional_options_title is None:
+        title = f"k-Means cluster count: {best_cluster_option} for {training_set.name}"
+    else:
+        title = f"k-Means cluster count: {best_cluster_option} for {training_set.name} with settings: {additional_options_title}"
+    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+                                                 patient_ids=patient_ids, training_set=training_set,
+                                                 color_map='tab20c', save_to_file=save_to_file)
+
+def implement_k_means_on_training_set(training_set, pacmap_data, patient_ids, amount_of_clusters: int = 3):
+    """
+    only used for the actual implementation of a k-means clustering. To remove it from main.py
+    """
+    avg_df_no_interpolation = training_set.get_average_df(fix_missing_values=True, use_interpolation=False)
+    avg_np_no_interpolation = avg_df_no_interpolation.transpose().to_numpy()
+    avg_np_no_interpolation.reshape(avg_np_no_interpolation.shape[0], -1)
+
+    avg_df_interpolated = training_set.get_average_df(fix_missing_values=True, use_interpolation=False)
+    avg_np_interpolated = avg_df_interpolated.transpose().to_numpy()
+    avg_np_interpolated.reshape(avg_np_interpolated.shape[0], -1)
+
+    # # k-Means without imputation before Pacmap
+    k_means_list, sh_score = calculate_cluster_kmeans(avg_np_no_interpolation, n_clusters=amount_of_clusters)
+    title = f"{amount_of_clusters} k-Means clusters ({training_set.name})"
+
+    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+                                                 patient_ids=patient_ids, training_set=training_set,
+                                                 color_map='tab20c', save_to_file=True)
+    # # k-Means without imputation after Pacmap -> macht nicht viel Sinn
+    # k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=amount_of_clusters)
+    # title = f"{amount_of_clusters} k-Means clusters ({training_set.name}) after PaCMAP"
+    # plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+    #                                              patient_ids=patient_ids, training_set=training_set,
+    #                                              color_map='tab20c', save_to_file=True)
+    # k-means with imputation after Pacmap
+    data_imp, patient_ids = calculate_pacmap(training_set, use_interpolation=True)
+    k_means_list, sh_score = calculate_cluster_kmeans(avg_np_interpolated, n_clusters=amount_of_clusters)
+    title = f"{amount_of_clusters} k-Means ({training_set.name}) (interpolated)"
+    plot_clustering_with_silhouette_score_sepsis(title, data_imp, sh_score=sh_score, coloring=k_means_list,
+                                                 patient_ids=patient_ids, training_set=training_set,
+                                                 color_map='tab20c', save_to_file=True)
+
+    # Implement silhouettes score analysis for k-means clustering
+    print("\nSilhouettes Score Analysis: ")
+    krange = list(range(2, 11))
+    avg_silhouettes = []
+    for n in krange:
+        k_means_list, sh_score = calculate_cluster_kmeans(avg_np_interpolated, n_clusters=n)
+        avg_silhouettes.append(sh_score)
+    plot_sh_scores(avg_silhouettes, krange)
 
 
 def implement_DBSCAN(training_set: TrainingSet, pacmap_data, patient_ids):           # keine gute methode für gesamtes TrainingSet -> Punkte sind zu nah.
@@ -97,50 +173,6 @@ def implement_DBSCAN(training_set: TrainingSet, pacmap_data, patient_ids):      
     #               coloring=db_scan_list,
     #               color_map='tab20c',
     #               save_to_file=True)
-
-
-def implement_k_means(training_set, pacmap_data, patient_ids, amount_of_clusters: int = 3):
-    """
-    only used for the actual implementation of a k-means clustering. To remove it from main.py
-    """
-    # # k-Means without imputation before Pacmap
-    k_means_list, sh_score = calculate_cluster_kmeans(training_set_to_data(training_set), n_clusters=amount_of_clusters)
-    title = f"{amount_of_clusters} k-Means clusters ({training_set.name})"
-
-    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
-                                                 patient_ids=patient_ids, training_set=training_set,
-                                                 color_map='tab20c', save_to_file=True)
-    # # k-Means without imputation after Pacmap
-    k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=amount_of_clusters)
-    title = f"{amount_of_clusters} k-Means clusters ({training_set.name}) after PaCMAP"
-    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
-                                                 patient_ids=patient_ids, training_set=training_set,
-                                                 color_map='tab20c', save_to_file=True)
-    # k-means with imputation after Pacmap
-    data_imp, patient_ids = calculate_pacmap(training_set, use_interpolation=True)
-    k_means_list, sh_score = calculate_cluster_kmeans(training_set_to_data(training_set, use_interpolation=True), n_clusters=amount_of_clusters)
-    title = f"{amount_of_clusters} k-Means ({training_set.name}) (interpolated)"
-    plot_clustering_with_silhouette_score_sepsis(title, data_imp, sh_score=sh_score, coloring=k_means_list,
-                                                 patient_ids=patient_ids, training_set=training_set,
-                                                 color_map='tab20c', save_to_file=True)
-
-    # Implement silhouettes score analysis for k-means clustering
-    print("\nSilhouettes Score Analysis: ")
-    krange = list(range(2, 11))
-    avg_silhouettes = []
-    for n in krange:
-        k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=n)
-        avg_silhouettes.append(sh_score)
-    plot_sh_scores(avg_silhouettes, krange)
-
-
-def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = False) -> np.ndarray:
-    avg_df = training_set.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation)
-    avg_np = avg_df.transpose().to_numpy()
-    avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
-
-    return avg_np
-
 
 def calculate_cluster_dbscan(avg_np: np.ndarray, eps: float, min_samples: int, use_interpolation: bool = False):
     """
@@ -239,13 +271,13 @@ def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_
     plt.close()
 
 
-def plot_sh_scores(avg_silhouettes, cluster_range, title="Silhouettes Score"):
+def plot_sh_scores(avg_silhouettes, cluster_range, title="Silhouettes Score", save_to_file: bool = False):
     plt.figure(dpi=100)
     plt.title = title
     plt.plot(cluster_range, avg_silhouettes)
     plt.xlabel("$k$")
     plt.ylabel("Average Silhouettes Score")
-    plt.show()
+    save_to_file_function(plot_title=title, save_to_file=save_to_file)
 
 
 def plot_clustering_with_silhouette_score_sepsis(plot_title: str, data: np.ndarray, patient_ids: List[str],
@@ -319,7 +351,10 @@ def plot_clustering_with_silhouette_score_sepsis(plot_title: str, data: np.ndarr
                       color=plt.get_cmap(color_map)(cluster/max(coloring)))
 
     # plt.legend()
+    save_to_file_function(save_to_file, plot_title)
 
+
+def save_to_file_function(save_to_file, plot_title: str):
     if not save_to_file:
         plt.show()
     else:
