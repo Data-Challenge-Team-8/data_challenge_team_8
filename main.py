@@ -3,7 +3,7 @@ import os
 from streamlit import cli as stcli
 from objects.training_set import TrainingSet
 from classifier.timeseries.time_series_forest import TimeSeriesForest
-from tools.clustering_analysis import implement_clustering_on_avg_df
+from tools.clustering_analysis import implement_DBSCAN_on_avg_df, implement_k_means_on_avg_df
 from tools.imbalance_methods import get_near_miss_for_training_set
 from tools.pacmap_analysis import plot_pacmap2D_sepsis, calculate_pacmap_on_avg_df
 from tools.visualization.time_series_comparison import plot_time_series_density, plot_complete_time_series_for_patients, \
@@ -29,7 +29,6 @@ if __name__ == '__main__':
 
     # PacMap balanced set
     avg_df_near_miss, sepsis_label_near_miss = get_near_miss_for_training_set(training_set=set_a, version=2)
-
     # pacmap_data_near_miss, sepsis_ids_near_miss = calculate_pacmap_on_avg_df(avg_df_near_miss.transpose())
     # plot_pacmap2D_sepsis(plot_title="PacMap on Set A, interpolated, NearMiss(v2)",
     #                      data=pacmap_data_near_miss,
@@ -37,11 +36,12 @@ if __name__ == '__main__':
     #                      training_set=set_a,
     #                      save_to_file=True)
 
-    # Clustering after near miss                # todo. also implement DBSCAN
-    implement_clustering_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss,
-                                   additional_options_title="interpolated, NearMiss(v2)", save_to_file=False)
+    # Clustering after near miss
+    implement_k_means_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss,
+                                additional_options_title="interpolated, NearMiss(v2)", save_to_file=True)
 
-
+    # todo. also implement DBSCAN
+    # implement_DBSCAN_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss, additional_options_title="interpolated, NearMiss(v2)", save_to_file=False)
 
 
     # TASK 06: TimeSeries Visualization & Classification

@@ -13,37 +13,100 @@ from IO.data_reader import FIGURE_OUTPUT_FOLDER
 from tools.pacmap_analysis import plot_pacmap2D, calculate_pacmap, calculate_pacmap_on_avg_df
 
 
-def implement_clustering_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, additional_options_title: str = None,
+def implement_k_means_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, additional_options_title: str = None,
                                    save_to_file: bool = False):
     """
     Used to implement k-means on a selected df
     """
-    avg_np = avg_df.transpose().to_numpy()
+    avg_np = avg_df.to_numpy()
     avg_np.reshape(avg_np.shape[0], -1)
     pacmap_data, patient_ids = calculate_pacmap_on_avg_df(avg_df.transpose())
 
     # Plot silhouettes score analysis for k-means clustering
     print("\nSilhouettes Score Analysis: ")
-    krange = list(range(2, 11))
+    krange = list(range(2, 15))
     avg_silhouettes = []
     best_score = 0
-    best_cluster_option = 2
     for n in krange:
         k_means_list, sh_score = calculate_cluster_kmeans(avg_np, n_clusters=n)
         avg_silhouettes.append(sh_score)
         if sh_score > best_score:
             best_score = sh_score
-            best_cluster_option = n
-    plot_sh_scores(avg_silhouettes, krange, save_to_file=save_to_file)
+        if additional_options_title is None:
+            title = f"k-Means clusters: {n} for {training_set.name}"
+        else:
+            title = f"k-Means clusters: {n} for {training_set.name} with settings: {additional_options_title}"
+        plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=sh_score, coloring=k_means_list,
+                                                     patient_ids=patient_ids, training_set=training_set,
+                                                     color_map='tab20c', save_to_file=save_to_file)
+
+    plot_sh_scores(avg_silhouettes, krange, save_to_file=save_to_file, title="Silhouette Score for k-Means")
 
 
-    # plot k-means for best_cluster_option
-    k_means_list, sh_score = calculate_cluster_kmeans(avg_np, n_clusters=best_cluster_option)
+def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, additional_options_title: str = None,
+                                save_to_file: bool = False):
+    """
+    only used for the actual implementation of a dbscan clustering. To remove it from main.py
+    """
+    # DBSCAN auf z_values_df mit interpolation
+    z_value_df = training_set.get_z_value_df(use_interpolation=False, fix_missing_values=False)
+    transposed_df = z_value_df.transpose()  # labels are transposed from rows to columns
+
+    sepsis_df = training_set.get_sepsis_label_df()  # no transpose needed
+
+    # so hat es nicht funktioniert:
+    # sepsis_df = sepsis_df.set_index(transposed_df.index)
+    # print(sepsis_df.head())
+    # print("sepsis_df type:", type(sepsis_df))
+    # added_sepsis_df = transposed_df.append(sepsis_df)
+
+    added_sepsis_df = transposed_df
+    added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
+    # angeblich besser mit numpy?
+    # added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].to_numpy()
+
+    # fix NaN problem
+    # print(added_sepsis_df['Unit2'].head())
+    added_sepsis_df = added_sepsis_df.fillna(0)
+
+    # Optional: Select Labels to Focus on
+    labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
+    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]              # you can select different labels here
+    filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
+
+    # Transform filtered_df to numpy
+    z_value_np = filtered_df.to_numpy()
+    z_value_np.reshape(z_value_np.shape[0], -1)
+
+    # Try DBSCAN for multiple parameter values
+    avg_silhouettes = []
+    eps_range = [0.2, 0.4, 0.6, 0.8, 1]
+    min_samples = 5  # we could also test different min_samples
+    saved_db_scan_list = []
+    sh_score = 0
+    saved_eps = 0
+    for eps in eps_range:
+        print("eps:", eps)
+        db_scan_list, temp_sh_score = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
+        plot_pacmap2D(plot_title=f"DBSCAN with eps={eps} and min_samp=5", data=z_value_np,
+                      coloring=db_scan_list,
+                      color_map="cool",
+                      save_to_file=True)
+        if temp_sh_score > sh_score:
+            saved_db_scan_list = db_scan_list
+            saved_eps = eps
+            sh_score = temp_sh_score
+        avg_silhouettes.append(temp_sh_score)
+
+    # plot best DBSCAN in detail
+    plot_sh_scores(avg_silhouettes, eps_range, title="DBSCAN silhouettes score with min_samples=5")
+
+
     if additional_options_title is None:
         title = f"k-Means cluster count: {best_cluster_option} for {training_set.name}"
     else:
         title = f"k-Means cluster count: {best_cluster_option} for {training_set.name} with settings: {additional_options_title}"
-    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+    plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=sh_score, coloring=k_means_list,
                                                  patient_ids=patient_ids, training_set=training_set,
                                                  color_map='tab20c', save_to_file=save_to_file)
 
@@ -90,7 +153,7 @@ def implement_k_means_on_training_set(training_set, pacmap_data, patient_ids, am
     plot_sh_scores(avg_silhouettes, krange)
 
 
-def implement_DBSCAN(training_set: TrainingSet, pacmap_data, patient_ids):           # keine gute methode für gesamtes TrainingSet -> Punkte sind zu nah.
+def implement_DBSCAN_on_training_set(training_set: TrainingSet, pacmap_data, patient_ids):           # keine gute methode für gesamtes TrainingSet -> Punkte sind zu nah.
     """
     only used for the actual implementation of a dbscan clustering. To remove it from main.py
     """
@@ -226,54 +289,54 @@ def calculate_silhouette_score(avg_np: np.ndarray, clustering_list: list, use_in
         return silhouette_score(avg_np, labels=clustering_list, metric='euclidean', random_state=0)
 
 
-def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_score: float, coloring: List[float],
-                                          color_map: str, save_to_file: bool):
-    """
-    Plot a clustering with its silhouette score.
-
-    Based on PaCMAP plotting methods
-    :param plot_title:
-    :param data:
-    :param sh_score:
-    :param coloring:
-    :param color_map:
-    :param save_to_file:
-    :return:
-    """
-    fig = plt.figure()
-    axs = fig.subplots(2, 2)
-    fig.tight_layout(h_pad=2)
-
-    axs[0, 0].set_title(plot_title)
-
-    axs[0, 0].scatter(data[:, 0], data[:, 1], cmap=color_map, c=coloring, s=0.6, label="Patient")
-
-    cb = fig.colorbar(matplotlib.cm.ScalarMappable(cmap=color_map,
-                                                   norm=matplotlib.colors.Normalize(vmin=min(coloring), vmax=max(coloring))),
-                 ax=axs[0, 0])
-    cb.set_label("Clusters")
-    cb.set_ticks(list(set(coloring)))
-
-    axs[1, 0].set_title("Silhouette Score")
-    axs[1, 0].set_xlim(0, 1.0)
-    axs[1, 0].barh("score", sh_score)
-    # plt.legend()
-
-    if not save_to_file:
-        plt.show()
-    else:
-        if not os.path.exists(FIGURE_OUTPUT_FOLDER):
-            os.mkdir(FIGURE_OUTPUT_FOLDER)
-
-        f = os.path.join(FIGURE_OUTPUT_FOLDER, "pacmap-" + plot_title.replace(" ", "_") + ".png")
-        print(f"Saving figure \"{plot_title}\" to file {f}")
-        plt.savefig(f)
-    plt.close()
+# def plot_clustering_with_silhouette_score(plot_title: str, data: np.ndarray, sh_score: float, coloring: List[float],
+#                                           color_map: str, save_to_file: bool):
+#     """
+#     Plot a clustering with its silhouette score.
+#
+#     Based on PaCMAP plotting methods
+#     :param plot_title:
+#     :param data:
+#     :param sh_score:
+#     :param coloring:
+#     :param color_map:
+#     :param save_to_file:
+#     :return:
+#     """
+#     fig = plt.figure()
+#     axs = fig.subplots(2, 2)
+#     fig.tight_layout(h_pad=2)
+#
+#     axs[0, 0].set_title(plot_title)
+#
+#     axs[0, 0].scatter(data[:, 0], data[:, 1], cmap=color_map, c=coloring, s=0.6, label="Patient")
+#
+#     cb = fig.colorbar(matplotlib.cm.ScalarMappable(cmap=color_map,
+#                                                    norm=matplotlib.colors.Normalize(vmin=min(coloring), vmax=max(coloring))),
+#                  ax=axs[0, 0])
+#     cb.set_label("Clusters")
+#     cb.set_ticks(list(set(coloring)))
+#
+#     axs[1, 0].set_title("Silhouette Score")
+#     axs[1, 0].set_xlim(0, 1.0)
+#     axs[1, 0].barh("score", sh_score)
+#     # plt.legend()
+#
+#     if not save_to_file:
+#         plt.show()
+#     else:
+#         if not os.path.exists(FIGURE_OUTPUT_FOLDER):
+#             os.mkdir(FIGURE_OUTPUT_FOLDER)
+#
+#         f = os.path.join(FIGURE_OUTPUT_FOLDER, "pacmap-" + plot_title.replace(" ", "_") + ".png")
+#         print(f"Saving figure \"{plot_title}\" to file {f}")
+#         plt.savefig(f)
+#     plt.close()
 
 
 def plot_sh_scores(avg_silhouettes, cluster_range, title="Silhouettes Score", save_to_file: bool = False):
     plt.figure(dpi=100)
-    plt.title = title
+    plt.title(title)
     plt.plot(cluster_range, avg_silhouettes)
     plt.xlabel("$k$")
     plt.ylabel("Average Silhouettes Score")
@@ -298,11 +361,12 @@ def plot_clustering_with_silhouette_score_sepsis(plot_title: str, data: np.ndarr
     :return:
     """
     fig = plt.figure()
+    plt.suptitle(plot_title)
     axs = fig.subplots(2, 2)
     fig.tight_layout(h_pad=2, w_pad=2)
 
     # Clustering
-    axs[0, 0].set_title(plot_title)
+    axs[0, 0].set_title("Visualization on Pacmap")
 
     axs[0, 0].scatter(data[:, 0], data[:, 1], cmap=color_map, c=coloring, s=0.6, label="Patient")
 
