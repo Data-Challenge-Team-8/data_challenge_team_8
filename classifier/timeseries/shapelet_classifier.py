@@ -30,9 +30,6 @@ class ShapeletClassifier(TimeSeriesClassifier):
             raise ValueError("[WARNING] Using more than one feature with ShapeletClassifier might have terrible results!")
         # this (instead of list expression as default argument) prevents it to be mutable (serious bug)
 
-        self.train_data: Tuple[pd.DataFrame, np.ndarray] = None
-        self.test_data: Tuple[pd.DataFrame, np.ndarray] = None
-
         self.model: Pipeline = Pipeline([
             (
                 "st",

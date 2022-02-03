@@ -1,17 +1,19 @@
 import sys
 import pandas as pd
 
+import os
 from streamlit import cli as stcli
 from objects.training_set import TrainingSet
-#from classifier.timeseries.time_series_forest import TimeSeriesForest
-#from tools.visualization.time_series_comparison import plot_time_series_density, plot_complete_time_series_for_patients, \
-#    plot_reduced_time_series_data
-from tools.analyse_tool import CompleteAnalysis
+from classifier.timeseries.time_series_forest import TimeSeriesForest
+from tools.visualization.time_series_comparison import plot_time_series_density, plot_complete_time_series_for_patients, \
+    plot_reduced_time_series_data
 
 if __name__ == '__main__':
     # TASK 06: WebApp Visualization of TimeSeries
-    sys.argv = ["streamlit", "run", ".\\web\\app.py"]
+    sys.argv = ["streamlit", "run", os.path.join(".", "web", "app.py")]
     sys.exit(stcli.main())
+
+    # set_a = TrainingSet.get_training_set("Set A")
 
 
     # TASK 06: TimeSeries Visualization & Classification
