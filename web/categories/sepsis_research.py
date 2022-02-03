@@ -5,12 +5,21 @@ from matplotlib import pyplot as plt
 from PIL import Image
 
 from tools.analyse_tool import CompleteAnalysis
+from objects.training_set import TrainingSet
+from objects.patient import Patient
 
 
 def create_description():
     info_p1 = "This Sepsis Research Analysis focuses on displaying the relation of selected features and " \
               "the occurrence of sepsis. A histogram is used to visualize the collected data."
     st.markdown(info_p1)
+
+
+SEPSIS_TOOL_CHOICE = {
+    "both": "positive + negative",
+    "sepsis": "positive",
+    "no_sepsis": "negative",
+}
 
 
 def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
@@ -23,12 +32,14 @@ def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
     # Actually Plotting the Histogram
     fig, ax1 = plt.subplots()
     fig.title = "Histogram"  # doesnt work
-    if selected_tool == "positive + negative":
-        ax1.hist([plot_data[0], plot_data[1]], density=True, color=['r', 'g'], bins=bins, alpha=0.6)
-    elif selected_tool == "positive":
-        ax1.hist(plot_data[0], bins=bins, alpha=0.6, color="r")
-    elif selected_tool == "negative":
-        ax1.hist(plot_data[1], bins=bins, alpha=0.6, color="g")
+    if selected_tool == SEPSIS_TOOL_CHOICE["both"]:
+        ax1.hist([plot_data[0], plot_data[1]], density=True, color=['r', 'g'], bins=bins, alpha=0.6,
+                 label=["Sepsis", "No Sepsis"])
+    elif selected_tool == SEPSIS_TOOL_CHOICE["sepsis"]:
+        ax1.hist(plot_data[0], bins=bins, alpha=0.6, color="r", label="Sepsis")
+    elif selected_tool == SEPSIS_TOOL_CHOICE["no_sepsis"]:
+        ax1.hist(plot_data[1], bins=bins, alpha=0.6, color="g", label="No Sepsis")
+    ax1.legend()
     col2.pyplot(fig)
     headline = "Further Statistics for the label " + selected_label + ": "
     st.subheader(headline)
@@ -60,8 +71,8 @@ def plot_correlations():
     #st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
     pass
 
+
 class SepsisResearch:
-    LABELS = ["HR", "Resp", "Temp", "pH", "Age", "Gender", "ICOLUS"]  # Do we need further, more important Labels?
 
     def __init__(self):
         st.markdown("<h2 style='text-align: left; color: black;'>Histogram for Sepsis Research</h2>",
@@ -74,17 +85,15 @@ class SepsisResearch:
                                                                 selected_set=selected_set)
         plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool)
 
-        st.markdown("<h2 style='text-align: left; color: black;'>Correlation of relevant Features to the SepsisLabel</h2>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            "<h2 style='text-align: left; color: black;'>Correlation of relevant Features to the SepsisLabel</h2>",
+            unsafe_allow_html=True)
         plot_correlations()
 
-
     def create_selectors(self, col1):
-        selected_label = col1.selectbox('Choose a label:', self.LABELS)
-        selected_set = col1.selectbox('Choose a Set:', ("Set A", "Set B", "Set A + B"))
+        selected_label = col1.selectbox('Choose a label:', Patient.LABELS)
+        selected_set = col1.selectbox('Choose a Set:', TrainingSet.PRESETS.keys())
         selected_sepsis = col1.selectbox('Choose if sepsis positive or negative:',
-                                         ("positive + negative", "positive", "negative"))
+                                         tuple(SEPSIS_TOOL_CHOICE.values()))
         selected_tool = selected_sepsis
         return selected_label, selected_set, selected_tool
-
-

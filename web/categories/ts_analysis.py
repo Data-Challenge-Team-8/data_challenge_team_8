@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy
 import numpy as np
 import pandas as pd
@@ -14,11 +16,12 @@ class TimeSeriesAnalysis:
     def __init__(self):
         st.markdown("<h2 style='text-align: left; color: black;'>Time Series Visualization per Patient</h2>",
                     unsafe_allow_html=True)
+        self.available_patients: List[str] = None
+
         # Client selects the dataset he wants to analyse
         option_set = st.selectbox(
             'Select a data set:',
-            ('Set A', 'Set B', 'Set A + B'))
-
+            TrainingSet.PRESETS)
 
 
         # Client enters a patient ID
@@ -29,13 +32,13 @@ class TimeSeriesAnalysis:
             Patient.LABELS,
             ['HR', 'O2Sat'])
 
-        st.write('The data is interpolated using the quadratic methode.')
+        st.write('Note: quadratic interpolation is applied to the data')
 
         if st.button('Submit'):
             # we load the dataset
             dataset = TrainingSet.get_training_set(option_set)
             # We load the patient
-            patient = dataset.get_patient_form_id(option_patient)
+            patient = dataset.get_patient_from_id(option_patient)
             data_list = []
             for feature in option_features:
                 series_feature = getattr(patient, feature)

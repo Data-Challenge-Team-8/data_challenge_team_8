@@ -1,3 +1,4 @@
+import os.path
 from typing import Tuple
 
 import numpy as np
@@ -18,6 +19,8 @@ class TimeSeriesClassifier:
         self.label_set = custom_label
         self.model = None
         self.__train_fraction = train_fraction
+        self.train_data: Tuple[pd.DataFrame, np.ndarray] = None
+        self.test_data: Tuple[pd.DataFrame, np.ndarray] = None
 
     def transform_data_set(self, data_set, label_set):
         """
@@ -68,7 +71,7 @@ class TimeSeriesClassifier:
         report = classification_report(y_data, self.predict(x_data))
         return report
 
-    def display_confusion_matrix(self, test_set=None, plotting: bool = False):
+    def display_confusion_matrix(self, test_set=None, plotting: bool = False, save_to_file: bool = False, save_name_postfix: str = ""):
         if test_set is None:
             test_set = self.test_data
         x_test, y_test = test_set
@@ -76,6 +79,11 @@ class TimeSeriesClassifier:
         # classification_report
         report = self.get_classification_report(x_test, y_test)
         print(report)
+        if save_to_file:
+            save_name_postfix.replace(" ", "_")
+            file_path = os.path.join(os.getcwd(), "output", f"tsf_{self.data_set.name}_{save_name_postfix}")
+            file = open(file_path+".txt", "w")
+            file.write(str(report))
         # confusion matrix plot
         cm: np.ndarray = self.test(x_test, y_test)
         print(cm)
@@ -85,4 +93,8 @@ class TimeSeriesClassifier:
             # funktioniert leider nicht mit title
             # temp_text_obj = Text(x=100, y=50, text=f"Confusion Matrix for version: {version}")
             # disp.ax_.title = temp_text_obj
-            plt.show()
+            if save_to_file:
+                print(f"Saving plot to file \"{file_path}\"")
+                plt.savefig(file_path+".png")
+            else:
+                plt.show()
