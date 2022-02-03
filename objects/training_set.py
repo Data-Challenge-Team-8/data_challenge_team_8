@@ -54,8 +54,8 @@ class TrainingSet:
         self.data: Dict[str, Patient] = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
 
-        # TODO: Besprechen brauchen wir die beiden auskommentieren avg cases doch auch?
-        # self.avg_df_no_fixed: pd.DataFrame = None
+        self.average_df_no_fixed: pd.DataFrame = None
+        self.average_df_no_fixed_interpol: pd.DataFrame = None
         self.average_df_fixed_no_interpol: pd.DataFrame = None
         self.average_df_fixed_interpol: pd.DataFrame = None
 
@@ -117,6 +117,8 @@ class TrainingSet:
             d = pickle.load(open(file_path, 'rb'))
             self.average_df_fixed_no_interpol = d["fixed_no_interpolation"]
             self.average_df_fixed_interpol = d["fixed_interpolation"]
+            self.average_df_no_fixed = d["no_fixed"]
+            self.average_df_no_fixed_interpol = d["no_fixed_interpolation"]
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
         else:
@@ -152,7 +154,8 @@ class TrainingSet:
 
     def __save_data_to_cache(self):
         self.__save_basic_data_to_cache()
-        if self.average_df_fixed_interpol is not None or self.average_df_fixed_no_interpol is not None:
+        if self.average_df_fixed_interpol is not None or self.average_df_fixed_no_interpol is not None or \
+                self.average_df_no_fixed is not None or self.average_df_no_fixed_interpol is not None:
             self.__save_average_data_to_cache()
         if self.__pacmap_2d_interpol is not None or self.__pacmap_2d_no_interpol is not None or \
                 self.__pacmap_3d_no_interpol is not None or self.__pacmap_3d_interpol is not None:
@@ -172,7 +175,9 @@ class TrainingSet:
         file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_AVG_POSTFIX)
         print("Writing TrainingSet", self.name, "average data to pickle cache!")
         pickle.dump({"fixed_no_interpolation": self.average_df_fixed_no_interpol,
-                     "fixed_interpolation": self.average_df_fixed_interpol},
+                     "fixed_interpolation": self.average_df_fixed_interpol,
+                     "no_fixed": self.average_df_no_fixed,
+                     "no_fixed_interpolation": self.average_df_no_fixed_interpol},
                     open(file_path, "wb"))
 
     def __save_pacmap_data_to_cache(self):
