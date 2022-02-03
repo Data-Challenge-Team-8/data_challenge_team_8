@@ -56,8 +56,9 @@ def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
 
 # TODO: Aufgabe Aline: This should be a true calculation of correlations not just the .png - (probably with a cache otherwise it takes to long
 def plot_correlations():
-    feature_graphic = Image.open(r'./data/sepsis_correlation_fixed_values.png')
-    st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
+    #feature_graphic = Image.open(r'./data/sepsis_correlation_fixed_values.png')
+    #st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
+    pass
 
 class SepsisResearch:
     LABELS = ["HR", "Resp", "Temp", "pH", "Age", "Gender", "ICOLUS"]  # Do we need further, more important Labels?
