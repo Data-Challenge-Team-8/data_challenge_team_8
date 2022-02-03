@@ -37,11 +37,10 @@ if __name__ == '__main__':
     #                      save_to_file=True)
 
     # Clustering after near miss
-    implement_k_means_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss,
-                                additional_options_title="interpolated_NearMiss(v2)", save_to_file=True)
-
-    # todo. also implement DBSCAN
-    # implement_DBSCAN_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss, additional_options_title="interpolated, NearMiss(v2)", save_to_file=False)
+    # implement_k_means_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss,
+    #                             additional_options_title="interpolated_NearMiss(v2)", save_to_file=True)
+    implement_DBSCAN_on_avg_df(training_set=set_a, avg_df=avg_df_near_miss,
+                               additional_options_title="interpolated, NearMiss(v2)", save_to_file=True)
 
 
     # TASK 06: TimeSeries Visualization & Classification
