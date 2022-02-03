@@ -324,8 +324,14 @@ class TrainingSet:
         avg_df = pd.DataFrame(avg_dict)
         avg_df.drop("SepsisLabel", inplace=True)
 
-        if not fix_missing_values:
-            return avg_df
+        if not fix_missing_values and not use_interpolation:
+            self.average_df_no_fixed = avg_df
+            self.__save_data_to_cache()
+            return self.average_df_no_fixed
+        elif not fix_missing_values and use_interpolation:
+            self.average_df_no_fixed_interpol = avg_df
+            self.__save_data_to_cache()
+            return self.average_df_no_fixed_interpol
         else:
             label_avgs = self.get_label_averages(use_interpolation=use_interpolation)
 
