@@ -86,13 +86,13 @@ class TrainingSet:
 
         return hashlib.md5(key_concat.encode('utf-8')).hexdigest()
 
-    def __load_data_from_cache(self, force_no_cache: bool = False) -> bool:
+    def __load_data_from_cache(self, force_no_cache: bool = False):
         # basic/patient data
         loaded_basics_from_cache = None
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_BASIC_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_BASIC_POSTFIX)
         if not force_no_cache and os.path.isfile(file_path):
             print(f"Loading TrainingSet {self.name} patient data from pickle cache")
+            print(f"Cache file path is: {file_path}")
             loaded_basics_from_cache = True
             start_time = datetime.datetime.now()
             self.data = pickle.load(open(file_path, "rb"))
@@ -109,10 +109,10 @@ class TrainingSet:
             loaded_basics_from_cache = False
 
         # avg_df data
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_AVG_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_AVG_POSTFIX)
         if not force_no_cache and os.path.isfile(file_path):
             print(f"Loading TrainingSet {self.name} average data from pickle cache")
+            print(f"Cache file path is: {file_path}")
             start_time = datetime.datetime.now()
             d = pickle.load(open(file_path, 'rb'))
             self.average_df_fixed_no_interpol = d["fixed_no_interpolation"]
@@ -123,10 +123,10 @@ class TrainingSet:
             print("Found no pickle cache for average data!")
 
         # pacmap data
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_PACMAP_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_PACMAP_POSTFIX)
         if not force_no_cache and os.path.isfile(file_path):
             print(f"Loading TrainingSet {self.name} PaCMAP data from pickle cache")
+            print(f"Cache file path is: {file_path}")
             start_time = datetime.datetime.now()
             d = pickle.load(open(file_path, 'rb'))
             self.__pacmap_2d_no_interpol = d["no_interpolation"]["2d"]
@@ -137,10 +137,10 @@ class TrainingSet:
             print("Took", end_time - start_time, "to load from pickle!")
 
         # timeseries data
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_TS_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_TS_POSTFIX)
         if not force_no_cache and os.path.isfile(file_path):
             print(f"Loading TrainingSet {self.name} interp timeseries data from pickle cache")
+            print(f"Cache file path is: {file_path}")
             start_time = datetime.datetime.now()
             d = pickle.load(open(file_path, 'rb'))
             self.__timeseries_no_interpol = d["no_interpolation"]["no_fix"]
@@ -163,15 +163,13 @@ class TrainingSet:
 
     def __save_basic_data_to_cache(self):
         # basic/patient data
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_BASIC_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_BASIC_POSTFIX)
         print("Writing TrainingSet", self.name, "patient data to pickle cache!")
         pickle.dump(self.data, open(file_path, "wb"))
 
     def __save_average_data_to_cache(self):
         # average data
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_AVG_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_AVG_POSTFIX)
         print("Writing TrainingSet", self.name, "average data to pickle cache!")
         pickle.dump({"fixed_no_interpolation": self.average_df_fixed_no_interpol,
                      "fixed_interpolation": self.average_df_fixed_interpol},
@@ -179,22 +177,28 @@ class TrainingSet:
 
     def __save_pacmap_data_to_cache(self):
         # pacmap data
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_PACMAP_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_PACMAP_POSTFIX)
         print(f"Writing TrainingSet {self.name} PaCMAP data to pickle cache!")
         pickle.dump({"no_interpolation": {"2d": self.__pacmap_2d_no_interpol, "3d": self.__pacmap_3d_no_interpol},
                      "interpolation": {"2d": self.__pacmap_2d_interpol, "3d": self.__pacmap_3d_interpol}},
                     open(file_path, 'wb'))
 
     def __save_timeseries_data_to_cache(self):
-        file_path = os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX
-                                 + f"-{self.cache_name}-{TrainingSet.CACHE_FILE_TS_POSTFIX}.pickle")
+        file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_TS_POSTFIX)
         print(f"Writing TrainingSet {self.name} Timeseries data to pickle cache!")
         pickle.dump({"no_interpolation": {"no_fix": self.__timeseries_no_interpol,
                                           "fix": self.__timeseries_no_interpol_fix},
                      "interpolation": {"no_fix": self.__timeseries_interpol_no_fix,
                                        "fix": self.__timeseries_interpol_fix}},
                     open(file_path, 'wb'))
+
+    def get_cache_file_path(self, postfix: str):
+        """
+        Get the full file path to a cache file with the given file postfix.
+        :param postfix:
+        :return:
+        """
+        return os.path.join(TrainingSet.CACHE_PATH, TrainingSet.CACHE_FILE_PREFIX+f"-{self.cache_name}-{postfix}.pickle")
 
     def get_feature(self, feature: str) -> pd.DataFrame:
         """
