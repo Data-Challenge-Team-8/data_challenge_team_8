@@ -46,7 +46,7 @@ def implement_k_means_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, ad
 
 
 def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, additional_options_title: str = None,
-                               save_to_file: bool = False):
+                               save_to_file: bool = False, filter_labels: bool = False):
     """
     only used for the actual implementation of a dbscan clustering. To remove it from main.py
     """
@@ -72,16 +72,21 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
     # print(added_sepsis_df['Unit2'].head())
     added_sepsis_df = added_sepsis_df.fillna(0)
     # Optional: Select Labels to Focus on
-    labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
-    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]              # you can select different labels here
+    if filter_labels:
+        # you can select different labels here
+        # labels_to_keep: List = ["z_Temp", "z_HR", "z_Resp", "z_pH", "z_Age", "z_Gender", "z_ICULOS", "SepsisLabel"]
+        labels_to_keep: List = ["z_HR", "z_ICULOS", "SepsisLabel"]
+    else:
+        labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
+    number_of_labels: int = len(filtered_df.columns)
     # Transform filtered_df to numpy
     z_value_np = filtered_df.to_numpy()
     z_value_np.reshape(z_value_np.shape[0], -1)
 
-    # Try DBSCAN for multiple parameter values
-    eps_range = [0.2, 0.4, 0.6, 0.8, 1]
-    min_samples = [3, 4, 5, 6, 10, 15]
+    # implement DBSCAN for multiple parameter values
+    eps_range = [0.5, 1, 2, 3, 5, 10]
+    min_samples = [2, 5, 10, 20]
     best_sh_score = 0
     best_eps_min_sample = (0, 0)
     for min_sample in min_samples:
@@ -94,8 +99,10 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
                 if additional_options_title is None:
                     title = f"DBSCAN with eps {eps}, min_samp {min_sample}, {training_set.name}"
                 else:
-                    title = f"DBSCAN with eps {eps}, min_samp {min_sample}, {training_set.name}, settings {additional_options_title}"
-                # plot
+                    title = f"DBSCAN with eps {eps}, min_samp {min_sample}, {training_set.name}, " \
+                            f"settings {additional_options_title}, feature_count {number_of_labels}"
+                    # todo: add filtered options to title?
+                # plot clusters
                 plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data_near_miss,
                                                              sh_score=temp_sh_score,
                                                              coloring=db_scan_list,
@@ -126,112 +133,116 @@ def plot_sh_scores(avg_silhouettes, cluster_range: List = None, eps_range: List 
     save_to_file_function(plot_title=title, save_to_file=save_to_file)
 
 
-def implement_k_means_on_training_set(training_set, pacmap_data, patient_ids, amount_of_clusters: int = 3):
-    """
-    only used for the actual implementation of a k-means clustering. To remove it from main.py
-    """
-    avg_df_no_interpolation = training_set.get_average_df(fix_missing_values=True, use_interpolation=False)
-    avg_np_no_interpolation = avg_df_no_interpolation.transpose().to_numpy()
-    avg_np_no_interpolation.reshape(avg_np_no_interpolation.shape[0], -1)
+# def implement_k_means_on_training_set(training_set, pacmap_data, patient_ids, amount_of_clusters: int = 3):
+#     """
+#     only used for the actual implementation of a k-means clustering. To remove it from main.py
+#     """
+#     avg_df_no_interpolation = training_set.get_average_df(fix_missing_values=True, use_interpolation=False)
+#     avg_np_no_interpolation = avg_df_no_interpolation.transpose().to_numpy()
+#     avg_np_no_interpolation.reshape(avg_np_no_interpolation.shape[0], -1)
+#
+#     avg_df_interpolated = training_set.get_average_df(fix_missing_values=True, use_interpolation=False)
+#     avg_np_interpolated = avg_df_interpolated.transpose().to_numpy()
+#     avg_np_interpolated.reshape(avg_np_interpolated.shape[0], -1)
+#
+#     # # k-Means without imputation before Pacmap
+#     k_means_list, sh_score = calculate_cluster_kmeans(avg_np_no_interpolation, n_clusters=amount_of_clusters)
+#     title = f"{amount_of_clusters} k-Means clusters ({training_set.name})"
+#
+#     plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+#                                                  patient_ids=patient_ids, training_set=training_set,
+#                                                  color_map='tab20c', save_to_file=True)
+#     # # k-Means without imputation after Pacmap -> macht nicht viel Sinn
+#     # k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=amount_of_clusters)
+#     # title = f"{amount_of_clusters} k-Means clusters ({training_set.name}) after PaCMAP"
+#     # plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
+#     #                                              patient_ids=patient_ids, training_set=training_set,
+#     #                                              color_map='tab20c', save_to_file=True)
+#     # k-means with imputation after Pacmap
+#     pacmap_data, patient_ids = calculate_pacmap(training_set, use_interpolation=True)
+#     k_means_list, sh_score = calculate_cluster_kmeans(avg_np_interpolated, n_clusters=amount_of_clusters)
+#     title = f"{amount_of_clusters} k-Means ({training_set.name}) (interpolated)"
+#     plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=sh_score,
+#                                                  coloring=k_means_list,
+#                                                  patient_ids=patient_ids, training_set=training_set,
+#                                                  color_map='tab20c', save_to_file=True)
+#
+#     # Implement silhouettes score analysis for k-means clustering
+#     print("\nSilhouettes Score Analysis: ")
+#     krange = list(range(2, 11))
+#     avg_silhouettes = []
+#     for n in krange:
+#         k_means_list, sh_score = calculate_cluster_kmeans(avg_np_interpolated, n_clusters=n)
+#         avg_silhouettes.append(sh_score)
+#     plot_sh_scores(avg_silhouettes, cluster_range=krange)
 
-    avg_df_interpolated = training_set.get_average_df(fix_missing_values=True, use_interpolation=False)
-    avg_np_interpolated = avg_df_interpolated.transpose().to_numpy()
-    avg_np_interpolated.reshape(avg_np_interpolated.shape[0], -1)
 
-    # # k-Means without imputation before Pacmap
-    k_means_list, sh_score = calculate_cluster_kmeans(avg_np_no_interpolation, n_clusters=amount_of_clusters)
-    title = f"{amount_of_clusters} k-Means clusters ({training_set.name})"
-
-    plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
-                                                 patient_ids=patient_ids, training_set=training_set,
-                                                 color_map='tab20c', save_to_file=True)
-    # # k-Means without imputation after Pacmap -> macht nicht viel Sinn
-    # k_means_list, sh_score = calculate_cluster_kmeans(pacmap_data, n_clusters=amount_of_clusters)
-    # title = f"{amount_of_clusters} k-Means clusters ({training_set.name}) after PaCMAP"
-    # plot_clustering_with_silhouette_score_sepsis(title, pacmap_data, sh_score=sh_score, coloring=k_means_list,
-    #                                              patient_ids=patient_ids, training_set=training_set,
-    #                                              color_map='tab20c', save_to_file=True)
-    # k-means with imputation after Pacmap
-    pacmap_data, patient_ids = calculate_pacmap(training_set, use_interpolation=True)
-    k_means_list, sh_score = calculate_cluster_kmeans(avg_np_interpolated, n_clusters=amount_of_clusters)
-    title = f"{amount_of_clusters} k-Means ({training_set.name}) (interpolated)"
-    plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=sh_score,
-                                                 coloring=k_means_list,
-                                                 patient_ids=patient_ids, training_set=training_set,
-                                                 color_map='tab20c', save_to_file=True)
-
-    # Implement silhouettes score analysis for k-means clustering
-    print("\nSilhouettes Score Analysis: ")
-    krange = list(range(2, 11))
-    avg_silhouettes = []
-    for n in krange:
-        k_means_list, sh_score = calculate_cluster_kmeans(avg_np_interpolated, n_clusters=n)
-        avg_silhouettes.append(sh_score)
-    plot_sh_scores(avg_silhouettes, cluster_range=krange)
-
-
-def implement_DBSCAN_on_training_set(training_set: TrainingSet, pacmap_data,
-                                     patient_ids):  # keine gute methode für gesamtes TrainingSet -> Punkte sind zu nah.
-    """
-    only used for the actual implementation of a dbscan clustering. To remove it from main.py
-    """
-    # DBSCAN auf z_values_df mit interpolation
-    test_df = training_set.get_average_df()
-    z_value_df = training_set.get_z_value_df(use_interpolation=False, fix_missing_values=False)
-    transposed_df = z_value_df.transpose()  # labels are transposed from rows to columns
-
-    sepsis_df = training_set.get_sepsis_label_df()  # no transpose needed
-
-    # so hat es nicht funktioniert:
-    # sepsis_df = sepsis_df.set_index(transposed_df.index)
-    # print(sepsis_df.head())
-    # print("sepsis_df type:", type(sepsis_df))
-    # added_sepsis_df = transposed_df.append(sepsis_df)
-
-    added_sepsis_df = transposed_df
-    added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
-    # angeblich besser mit numpy?
-    # added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].to_numpy()
-
-    # fix NaN problem
-    # print(added_sepsis_df['Unit2'].head())
-    added_sepsis_df = added_sepsis_df.fillna(0)
-
-    # Optional: Select Labels to Focus on
-    labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
-    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]              # you can select different labels here
-    filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
-
-    # Transform filtered_df to numpy
-    z_value_np = filtered_df.to_numpy()
-    z_value_np.reshape(z_value_np.shape[0], -1)
-
-    # Try DBSCAN for multiple parameter values
-    avg_silhouettes = []
-    eps_range = [0.2, 0.4, 0.6, 0.8, 1]
-    min_samples = 5  # we could also test different min_samples
-    saved_db_scan_list = []
-    saved_sh_score = 0
-    saved_eps = 0
-    for eps in eps_range:
-        print("eps:", eps)
-        db_scan_list, sh_score = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
-        plot_pacmap2D(plot_title=f"DBSCAN with eps={eps} and min_samp=5", data=z_value_np,
-                      coloring=db_scan_list,
-                      color_map="cool",
-                      save_to_file=True)
-        if sh_score > saved_sh_score:
-            saved_db_scan_list = db_scan_list
-            saved_eps = eps
-            saved_sh_score = sh_score
-        avg_silhouettes.append(sh_score)
-    # plot best DBSCAN in detail
-    plot_sh_scores(avg_silhouettes, eps_range=eps_range, title="DBSCAN silhouettes score with min_samples=5")
-    title = f"DBSCAN cluster with eps=({saved_eps})"
-    plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=saved_sh_score,
-                                                 coloring=saved_db_scan_list,
-                                                 patient_ids=patient_ids, training_set=training_set,
-                                                 color_map='tab20c', save_to_file=True)
+# def implement_DBSCAN_on_training_set(training_set: TrainingSet, pacmap_data,
+#                                      patient_ids, filter_labels: bool):  # keine gute methode für gesamtes TrainingSet -> Punkte sind zu nah.
+#     """
+#     only used for the actual implementation of a dbscan clustering. To remove it from main.py
+#     """
+#     # DBSCAN auf z_values_df mit interpolation
+#     test_df = training_set.get_average_df()
+#     z_value_df = training_set.get_z_value_df(use_interpolation=False, fix_missing_values=False)
+#     transposed_df = z_value_df.transpose()  # labels are transposed from rows to columns
+#
+#     sepsis_df = training_set.get_sepsis_label_df()  # no transpose needed
+#
+#     # so hat es nicht funktioniert:
+#     # sepsis_df = sepsis_df.set_index(transposed_df.index)
+#     # print(sepsis_df.head())
+#     # print("sepsis_df type:", type(sepsis_df))
+#     # added_sepsis_df = transposed_df.append(sepsis_df)
+#
+#     added_sepsis_df = transposed_df
+#     added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
+#     # angeblich besser mit numpy?
+#     # added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].to_numpy()
+#
+#     # fix NaN problem
+#     # print(added_sepsis_df['Unit2'].head())
+#     added_sepsis_df = added_sepsis_df.fillna(0)
+#
+#     # Optional: Select Labels to Focus on
+#     if filter_labels:
+#         # you can select different labels here
+# #        labels_to_keep: List = ["Temp", "HR", "Resp", "pH", "Age", "Gender", "ICOLUS", "SepsisLabel"]
+#         labels_to_keep: List = ["Age", "ICOLUS", "SepsisLabel"]
+#     else:
+#         labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
+#     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
+#
+#     # Transform filtered_df to numpy
+#     z_value_np = filtered_df.to_numpy()
+#     z_value_np.reshape(z_value_np.shape[0], -1)
+#
+#     # Try DBSCAN for multiple parameter values
+#     avg_silhouettes = []
+#     eps_range = [0.2, 0.4, 0.6, 0.8, 1]
+#     min_samples = 5  # we could also test different min_samples
+#     saved_db_scan_list = []
+#     saved_sh_score = 0
+#     saved_eps = 0
+#     for eps in eps_range:
+#         print("eps:", eps)
+#         db_scan_list, sh_score = calculate_cluster_dbscan(z_value_np, eps=eps, min_samples=min_samples)
+#         plot_pacmap2D(plot_title=f"DBSCAN with eps={eps} and min_samp=5", data=z_value_np,
+#                       coloring=db_scan_list,
+#                       color_map="cool",
+#                       save_to_file=True)
+#         if sh_score > saved_sh_score:
+#             saved_db_scan_list = db_scan_list
+#             saved_eps = eps
+#             saved_sh_score = sh_score
+#         avg_silhouettes.append(sh_score)
+#     # plot best DBSCAN in detail
+#     plot_sh_scores(avg_silhouettes, eps_range=eps_range, title="DBSCAN silhouettes score with min_samples=5")
+#     title = f"DBSCAN cluster with eps=({saved_eps})"
+#     plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=saved_sh_score,
+#                                                  coloring=saved_db_scan_list,
+#                                                  patient_ids=patient_ids, training_set=training_set,
+#                                                  color_map='tab20c', save_to_file=True)
 
     # # DBSCAN auf z_values_df ohne interpolation
     # eps = 0.5
@@ -389,7 +400,7 @@ def plot_clustering_with_silhouette_score_sepsis(plot_title: str, data: np.ndarr
     # Silhouette Score
     axs[1, 0].set_title("silhouette score")
     axs[1, 0].set_xlim(0, 1.0)
-    axs[1, 0].barh("score", sh_score, color=plt.get_cmap("RdYlGn").reversed()(sh_score / 1))
+    axs[1, 0].barh("score", sh_score, color=plt.get_cmap("RdYlGn")(sh_score / 1))
 
     # Sepsis per Cluster
     sepsis_list = []
@@ -413,7 +424,7 @@ def plot_clustering_with_silhouette_score_sepsis(plot_title: str, data: np.ndarr
     axs[1, 1].set_xticks(list(set(coloring)))
     for cluster in cluster_sepsis_sum.keys():
         axs[1, 1].bar(cluster, cluster_sepsis_sum[cluster],
-                      color=plt.get_cmap(color_map)(cluster / max(coloring)))
+                      color=plt.get_cmap(color_map)(cluster / max(coloring)))           # can raise a warning if "highest" cluster is 0
 
     # rel Sepsis per Cluster
     axs[0, 1].set_title("relative sepsis cases per cluster")
