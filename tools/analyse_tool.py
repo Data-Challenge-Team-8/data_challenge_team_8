@@ -47,7 +47,7 @@ class CompleteAnalysis:
         self.sepsis_patients: List = None
         self.rel_sepsis_amount: float = None
 
-        self.calculate_complete_analysis(training_set)
+        #self.calculate_complete_analysis(training_set)
 
     @classmethod
     def check_analysis_is_cached(cls, file_name: str):
@@ -263,7 +263,7 @@ class CompleteAnalysis:
         Get the amount of values across all Patient objects in this set
         :return:
         """
-        r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount()
+        r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount(training_set)
 
         return r
 

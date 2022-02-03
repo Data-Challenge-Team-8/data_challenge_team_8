@@ -10,7 +10,7 @@ import pandas as pd
 
 from objects.patient import Patient
 from IO.data_reader import DataReader
-from tools.pacmap_analysis import calculate_pacmap
+#from tools.pacmap_analysis import calculate_pacmap
 
 
 def get_set_a() -> List[str]:
@@ -199,61 +199,61 @@ class TrainingSet:
     def get_patient_form_id(self, patient_id) -> Patient:
         return self.data[patient_id]
 
-    def get_pacmap(self, dimension: int = 2, use_interpolation: bool = False):
-        """
-        Return the requested PaCMAP data for this training set. Uses precalculated results if available,
-        otherwise calculates them.
-        :param dimension:
-        :param use_interpolation:
-        :return:
-        """
-        pacmap_data = None
-        patient_ids = None
-        if not use_interpolation:
-            if dimension == 2:
-                if self.__pacmap_2d_no_interpol is not None:
-                    return self.__pacmap_2d_no_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
-                .columns.tolist()
-                else:
-                    self.__pacmap_2d_no_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
-                                                                                 use_interpolation=use_interpolation)
-                    self.__save_pacmap_data_to_cache()
-                    return self.__pacmap_2d_no_interpol, patient_ids
-            elif dimension == 3:
-                if self.__pacmap_3d_no_interpol is not None:
-                    return self.__pacmap_3d_no_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
-                .columns.tolist()
-                else:
-                    self.__pacmap_3d_no_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
-                                                                                 use_interpolation=use_interpolation)
-                    self.__save_pacmap_data_to_cache()
-                    return self.__pacmap_3d_no_interpol, patient_ids
-
-        else:  # used interpolation
-            if dimension == 2:
-                if self.__pacmap_2d_interpol is not None:
-                    return self.__pacmap_2d_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
-                .columns.tolist()
-                else:
-                    print(f"Calculating PaCMAP {dimension}D data for TrainingSet {self.name} with"
-                          f"{'out' if not use_interpolation else ''} interpolation")
-                    self.__pacmap_2d_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
-                                                                              use_interpolation=use_interpolation)
-                    self.__save_pacmap_data_to_cache()
-                    return self.__pacmap_2d_interpol, patient_ids
-
-            elif dimension == 3:
-                if self.__pacmap_3d_interpol is not None:
-                    return self.__pacmap_3d_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
-                .columns.tolist()
-                else:
-                    self.__pacmap_3d_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
-                                                                              use_interpolation=use_interpolation)
-                    self.__save_pacmap_data_to_cache()
-                    return self.__pacmap_3d_interpol, patient_ids
-
-
-        return pacmap_data, patient_ids
+    # def get_pacmap(self, dimension: int = 2, use_interpolation: bool = False):
+    #     """
+    #     Return the requested PaCMAP data for this training set. Uses precalculated results if available,
+    #     otherwise calculates them.
+    #     :param dimension:
+    #     :param use_interpolation:
+    #     :return:
+    #     """
+    #     pacmap_data = None
+    #     patient_ids = None
+    #     if not use_interpolation:
+    #         if dimension == 2:
+    #             if self.__pacmap_2d_no_interpol is not None:
+    #                 return self.__pacmap_2d_no_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+    #             .columns.tolist()
+    #             else:
+    #                 self.__pacmap_2d_no_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+    #                                                                              use_interpolation=use_interpolation)
+    #                 self.__save_pacmap_data_to_cache()
+    #                 return self.__pacmap_2d_no_interpol, patient_ids
+    #         elif dimension == 3:
+    #             if self.__pacmap_3d_no_interpol is not None:
+    #                 return self.__pacmap_3d_no_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+    #             .columns.tolist()
+    #             else:
+    #                 self.__pacmap_3d_no_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+    #                                                                              use_interpolation=use_interpolation)
+    #                 self.__save_pacmap_data_to_cache()
+    #                 return self.__pacmap_3d_no_interpol, patient_ids
+    #
+    #     else:  # used interpolation
+    #         if dimension == 2:
+    #             if self.__pacmap_2d_interpol is not None:
+    #                 return self.__pacmap_2d_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+    #             .columns.tolist()
+    #             else:
+    #                 print(f"Calculating PaCMAP {dimension}D data for TrainingSet {self.name} with"
+    #                       f"{'out' if not use_interpolation else ''} interpolation")
+    #                 self.__pacmap_2d_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+    #                                                                           use_interpolation=use_interpolation)
+    #                 self.__save_pacmap_data_to_cache()
+    #                 return self.__pacmap_2d_interpol, patient_ids
+    #
+    #         elif dimension == 3:
+    #             if self.__pacmap_3d_interpol is not None:
+    #                 return self.__pacmap_3d_interpol, self.get_average_df(fix_missing_values=True, use_interpolation=use_interpolation) \
+    #             .columns.tolist()
+    #             else:
+    #                 self.__pacmap_3d_interpol, patient_ids = calculate_pacmap(self, dimension=dimension,
+    #                                                                           use_interpolation=use_interpolation)
+    #                 self.__save_pacmap_data_to_cache()
+    #                 return self.__pacmap_3d_interpol, patient_ids
+    #
+    #
+    #     return pacmap_data, patient_ids
 
     @classmethod
     def get_training_set(cls, name: str, patients: List[str] = None):
