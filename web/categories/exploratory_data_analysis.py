@@ -91,23 +91,34 @@ class ExploratoryDataAnalysis:
                 data_series = data_series.append(patient.data[selected_label], ignore_index=True)
         elif method == "dev":
             for patient in TrainingSet.get_training_set(selected_set).data.values():
-                data_series = data_series.append(pd.Series(patient.data[selected_label].var() ** .5), ignore_index=True)
+                data_series = data_series.append(pd.Series(patient.data[selected_label].var() ** .5,
+                                                 index=[patient.ID]))
         min_value = min(data_series)
         max_value = max(data_series)
         avg_value = data_series.mean()
         variance = data_series.var()
         bins = int(max_value - min_value * 0.8)
-        sepsis_df = TrainingSet.get_training_set(selected_set).get_sepsis_label_df().astype(bool)
-        sepsis_df.insert(1, selected_label, data_series, allow_duplicates=True)
+        if method == "dev" or method == "avg":  # requires data_series to be "per-patient"
+            sepsis_df = TrainingSet.get_training_set(selected_set).get_sepsis_label_df().astype(bool)
+            sepsis_df.insert(1, selected_label, data_series, allow_duplicates=True)
+
+            sepsis_avg = sepsis_df[sepsis_df.loc[:, "SepsisLabel"]].loc[:, selected_label].mean()
+            sepsis_var = sepsis_df[sepsis_df.loc[:, "SepsisLabel"]].loc[:, selected_label].var()
 
         ax.hist(data_series.tolist(), bins=bins, label=selected_label)
-        ax.hist(sepsis_df[sepsis_df.loc[:, "SepsisLabel"]].loc[:, selected_label], bins=bins, label="Sepsis")
+        if method == "dev" or method == "avg":
+            ax.hist(sepsis_df[sepsis_df.loc[:, "SepsisLabel"]].loc[:, selected_label], bins=bins, label="Sepsis")
+            ax.vlines([sepsis_avg + sepsis_var**.5, sepsis_avg-sepsis_var**.5], ymin=ax.get_ylim()[0],
+                      ymax=ax.get_ylim()[1],
+                      label=f"std.deviation (Sepsis)", color="purple", alpha=0.5, linestyles='dashdot')
+            ax.vlines([sepsis_avg], ymin=ax.get_ylim()[0], ymax=ax.get_ylim()[1], label=f"average (Sepsis)",
+                      color='cyan', alpha=0.8, linestyles='dashdot')
 
         ax.vlines([avg_value + variance ** .5, avg_value - variance ** .5], ymin=ax.get_ylim()[0],
                   ymax=ax.get_ylim()[1],
                   label=f"std. deviation ({selected_label})", color='r', alpha=0.5, linestyles="dashed")
         ax.vlines([avg_value], ymin=ax.get_ylim()[0], ymax=ax.get_ylim()[1], label=f"average ({selected_label})",
-                  color='g', alpha=0.9, linestyles='dashdot')
+                  color='g', alpha=0.9, linestyles='dashed')
         if method == "avg":
             ax.set_title(f"Distribution of Average {selected_label} across {selected_set}")
         elif method == "all":
