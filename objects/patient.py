@@ -108,7 +108,7 @@ class Patient:
 
         self.__interp_data = pd.concat([s for s in series] +
                                        [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)
-        return self.__interp_data[limit_to_features]
+        return self.__interp_data[limit_to_features] if limit_to_features is not None else self.__interp_data
 
     def get_average_df(self, use_interpolation: bool = False):
         """
