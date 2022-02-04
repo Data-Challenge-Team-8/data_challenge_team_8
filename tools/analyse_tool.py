@@ -217,7 +217,7 @@ class CompleteAnalysis:
         :param label:
         :return:
         """
-        self.rel_NaN_for_label = (self.get_NaN_amount_for_label(label, training_set) / self.non_NaN_amount_for_label[label])
+        self.rel_NaN_for_label = (self.get_NaN_amount_for_label(label, training_set) / self.get_total_NaN_amount(training_set))
 
         return self.rel_NaN_for_label
 
