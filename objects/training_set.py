@@ -39,10 +39,10 @@ class TrainingSet:
     CACHE_FILE_PACMAP_POSTFIX = "pacmap"
 
     PRESETS = {
+        "rnd Sample A": get_rnd_sample_a,
         "Set A": get_set_a,
         "Set B": get_set_b,
         "Set A + B": lambda: get_set_a() + get_set_b(),
-        "rnd Sample A": get_rnd_sample_a,
     }
 
     __instances = {}
@@ -167,6 +167,8 @@ class TrainingSet:
     def __save_basic_data_to_cache(self):
         # basic/patient data
         file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_BASIC_POSTFIX)
+        if os.path.isfile(file_path):  # basic data should never change, so we save time here
+            return
         print("Writing TrainingSet", self.name, "patient data to pickle cache!")
         pickle.dump(self.data, open(file_path, "wb"))
 
