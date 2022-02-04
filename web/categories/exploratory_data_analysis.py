@@ -8,9 +8,10 @@ from objects.patient import Patient
 
 class ExploratoryDataAnalysis:
 
-    TOOL_SELECTION = {"avg": "Min, Max, Average",
+    TOOL_SELECTION = {"avg": "Min, Max, Average, Variance",
                       "missing": "Missing Values",
-                      "subgroup": "Subgroups"}
+                      #"subgroup": "Subgroups",
+                      }
 
     def __init__(self):
         st.markdown("## Exploratory Data Analysis")
@@ -41,18 +42,21 @@ class ExploratoryDataAnalysis:
         st.markdown(info_p1)
 
     @staticmethod
-    def plot_selected_analysis(analysis_obj, selected_label, selected_tool, selected_set, col2, col3):
+    def plot_selected_analysis(analysis_obj: CompleteAnalysis, selected_label, selected_tool, selected_set, col2, col3):
         if selected_tool == ExploratoryDataAnalysis.TOOL_SELECTION["avg"]:
             min_value = analysis_obj.min_for_label[selected_label][1]
             max_value = analysis_obj.max_for_label[selected_label][1]
             avg_value = analysis_obj.avg_for_label[selected_label]
+            variance = analysis_obj.variance_for_label[selected_label]
             fig, ax1 = plt.subplots()
-            ax1.bar(['max', 'min', 'average'], height=[float(max_value), float(min_value), avg_value], color="g")
-            ax1.set_title(f'Min, Max and average of {selected_set}, {selected_label}')
+            ax1.bar(['max', 'min', 'average', 'variance'],
+                    height=[float(max_value), float(min_value), avg_value, variance], color="g")
+            ax1.set_title(f'Min, max, average and variance of {selected_set}, {selected_label}')
             col2.pyplot(fig)
             col3.metric("Max of " + selected_set, max_value)
             col3.metric("Min of " + selected_set, min_value)
             col3.metric("Average of " + selected_set, round(avg_value, 2))
+            col3.metric(f"Variance of {selected_set}", round(variance, 2))
         elif selected_tool == ExploratoryDataAnalysis.TOOL_SELECTION["missing"]:
             missing_vals_rel = analysis_obj.rel_NaN_for_label
             fig, ax = plt.subplots()

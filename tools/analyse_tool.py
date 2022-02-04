@@ -46,6 +46,7 @@ class CompleteAnalysis:
         self.avg_data_duration: float = None
         self.sepsis_patients: List = None
         self.rel_sepsis_amount: float = None
+        self.variance_for_label: Dict[str, float] = {}
 
         # variables only calculated for total_analysis:
         self.total_patients: int = None
@@ -105,6 +106,7 @@ class CompleteAnalysis:
             self.get_min_for_label(self.selected_label, training_set)
             self.get_max_for_label(self.selected_label, training_set)
             self.get_avg_for_label(self.selected_label, training_set)
+            self.get_variance_for_label(self.selected_label, training_set)
 
             self.get_rel_NaN_amount_for_label(self.selected_label, training_set)
             self.get_plot_label_to_sepsis(self.selected_label, training_set)
@@ -277,6 +279,15 @@ class CompleteAnalysis:
         r = 1 - self.get_rel_NaN_amount(training_set)
 
         return r
+
+    def get_variance_for_label(self, label: str, training_set):
+        if label not in self.variance_for_label.keys() or self.variance_for_label[label] is None:
+            label_series = pd.Series()
+            for patient in training_set.data.values():
+                label_series = label_series.append(patient.data[label], ignore_index=True)
+            self.variance_for_label[label] = label_series.var()
+
+        return self.variance_for_label[label]
 
     def get_data_amount_for_label(self, label: str, training_set) -> float:
         """
