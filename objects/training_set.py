@@ -30,6 +30,15 @@ def get_rnd_sample_a() -> List[str]:
     return sample
 
 
+def get_rnd_sample_b() -> List[str]:
+    random.seed(1337)
+    sample = []
+    set_b = get_set_b()
+    for i in range(200):
+        sample.append(set_b[random.randint(0, len(set_b))])
+    return sample
+
+
 class TrainingSet:
     CACHE_PATH = os.path.join(".", "cache")
     CACHE_FILE_PREFIX = "trainingset_data"
@@ -41,6 +50,7 @@ class TrainingSet:
     PRESETS = {
         "rnd Sample A": get_rnd_sample_a,
         "Set A": get_set_a,
+        "rnd Sample B": get_rnd_sample_b,
         "Set B": get_set_b,
         "Set A + B": lambda: get_set_a() + get_set_b(),
     }
