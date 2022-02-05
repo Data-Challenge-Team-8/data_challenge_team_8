@@ -114,7 +114,7 @@ class LandingPage:
 
     def create_selector(self, col2):
         # selected_label = col1.selectbox('Choose a label:', self.LABELS)
-        selected_set = col2.selectbox('Choose a Set for analysis:', ("Set A", "Set B", "Set A + B"))
+        selected_set = col2.selectbox('Choose a Set for analysis:', list(TrainingSet.PRESETS.keys()))
         # selected_sepsis = col1.selectbox('Choose if sepsis positive or negative:',
         # ("positive + negative", "positive", "negative"))
         # selected_tool = selected_sepsis
