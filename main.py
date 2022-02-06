@@ -19,7 +19,7 @@ if __name__ == '__main__':
     sys.exit(stcli.main())
 
     # TASK FINAL: Implementing Balanced Set for Clustering
-   # set_a = TrainingSet.get_training_set("Set A")
+    # set_a = TrainingSet.get_training_set("Set A")
 
     # PacMap imbalanced set
     # avg_df = set_a.get_average_df(use_interpolation=True, fix_missing_values=True)
@@ -48,13 +48,13 @@ if __name__ == '__main__':
     #                            filter_labels=True)
 
 
-    # Implement TimeSeriesForest classification
+    # # Implement TimeSeriesForest classification
     # avg_df_near_miss, sepsis_label_near_miss = get_near_miss_for_training_set(training_set=set_a, version=2)
     #
     # # get balanced TrainingSet from selected patients
     # balanced_patient_ids: List = avg_df_near_miss.index.to_list()
     # balanced_set: TrainingSet = TrainingSet.get_training_set(patients=balanced_patient_ids, name="near_miss_subset")
-    #
+
     # tsf = TimeSeriesForest(data_set=balanced_set, train_fraction=0.8, feature="Resp")
     # print("Starting setup ...")
     # tsf.setup()
