@@ -3,6 +3,7 @@ import datetime
 import pandas as pd
 import numpy as np
 
+from objects.patient import Patient
 from objects.training_set import TrainingSet
 from tools.analyse_tool import CompleteAnalysis as ca, CompleteAnalysis
 from PIL import Image
