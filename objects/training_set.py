@@ -162,6 +162,8 @@ class TrainingSet:
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
 
+        return loaded_basics_from_cache
+
     def __save_data_to_cache(self):
         self.__save_basic_data_to_cache()
         if self.average_df_fixed_interpol is not None or self.average_df_fixed_no_interpol is not None or \
@@ -327,6 +329,10 @@ class TrainingSet:
             return self.average_df_fixed_no_interpol
         elif self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
             return self.average_df_fixed_interpol
+        elif self.average_df_no_fixed is not None and not fix_missing_values and not use_interpolation:
+            return self.average_df_no_fixed
+        elif self.average_df_no_fixed_interpol is not None and not fix_missing_values and use_interpolation:
+            return self.average_df_no_fixed_interpol
 
         avg_dict = {}
         for patient_id in self.data.keys():
