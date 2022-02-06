@@ -83,7 +83,6 @@ class SepsisResearch:
     CACHE_CORRELATION_POSTFIX = "frontend-correlation"
 
     def __init__(self):
-        warning()
         st.markdown("<h2 style='text-align: left; color: black;'>Histogram for Sepsis Research</h2>",
                     unsafe_allow_html=True)
         create_description()
@@ -103,6 +102,7 @@ class SepsisResearch:
         self.__plot_correlations(set=TrainingSet.get_training_set(selected_set), label=selected_label,
                                  fix_missing_values=use_fix_missing_values, use_interpolation=use_interpolation,
                                  col=col2)
+        warning()
 
     def create_selectors(self, col1):
         selected_label = col1.selectbox('Choose a label:', Patient.LABELS)

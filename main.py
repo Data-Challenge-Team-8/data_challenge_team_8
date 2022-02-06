@@ -54,12 +54,13 @@ if __name__ == '__main__':
     # # get balanced TrainingSet from selected patients
     # balanced_patient_ids: List = avg_df_near_miss.index.to_list()
     # balanced_set: TrainingSet = TrainingSet.get_training_set(patients=balanced_patient_ids, name="near_miss_subset")
-
-    # tsf = TimeSeriesForest(data_set=balanced_set, train_fraction=0.8, feature="Resp")
+    #
+    # feature = "HR"
+    # tsf = TimeSeriesForest(data_set=set_a, train_fraction=0.8, feature=feature)
     # print("Starting setup ...")
     # tsf.setup()
     # print("Starting plotting ...")
-    # plot_time_series_density(tsf.train_data[0], label="HR", set_name=balanced_set.name+" (fixed, interpolated)")
+    # plot_time_series_density(tsf.train_data[0], label=feature, set_name=set_a.name + " (fixed, interpolated)")
     # print("Start training & testing ...")
     # tsf.train()
     # tsf.display_confusion_matrix(plotting=True)

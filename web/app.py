@@ -17,7 +17,7 @@ def create_app():
 
     # specify the primary menu definition
     menu_data = [
-        {'icon': "far fa-copy",'label': "Data Loader"}, #<i class="far fa-dove" style="color: #339af0;"></i>
+        {'icon': "far fa-copy",'label': "Data Loader", 'option_active': "white"}, #<i class="far fa-dove" style="color: #339af0;"></i>
         {'icon': "far fa-chart-bar", 'label': "Exploratory Data Analysis"},
         {'icon': "far fa-address-book", 'label': "Sepsis Research"},
         {'icon': "fas fa-tachometer-alt", 'label': "Time Series Analysis"}

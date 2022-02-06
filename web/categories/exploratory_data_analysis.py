@@ -25,7 +25,6 @@ class ExploratoryDataAnalysis:
                       }
 
     def __init__(self):
-        warning()
         st.markdown("## Exploratory Data Analysis")
         self.__create_description()
 
@@ -36,6 +35,7 @@ class ExploratoryDataAnalysis:
                                                                 selected_tool=selected_tool,
                                                                 selected_set=selected_set)
         self.plot_selected_analysis(analysis_obj, selected_label, selected_tool, selected_set, col2, col3)
+        warning()
 
     def create_selector_tools(self, col1):
         selected_set = col1.radio("Choose your data", TrainingSet.PRESETS)
