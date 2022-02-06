@@ -29,16 +29,26 @@ def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_i
     # Plotten von Correlation zu SepsisLabel
     # print("Sepsis Correlation:")
     plot_sepsis_corr = sorted_sepsis_corr.drop("SepsisLabel")
-    ax1 = plot_sepsis_corr.plot.bar(x='Features')
-    plt.title(f"Correlation to SepsisLabel, fixed values={fix_missing_values}")
-    plt.xticks(rotation=-45)
+    fig, ax1 = plt.subplots()
+    color = plt.get_cmap("RdYlGn")
+    max_value = plot_sepsis_corr.max()
+    ax1.bar([i for i in range(len(plot_sepsis_corr))], [value for value in plot_sepsis_corr],
+            label=plot_sepsis_corr.index.tolist(), color=[color(abs(value)/max_value) for value in plot_sepsis_corr])
+    ax1.set_xticks([i for i in range(len(plot_sepsis_corr))])
+    ax1.set_xticklabels(plot_sepsis_corr.index.tolist())
+    ax1.set_title(f"Correlation to SepsisLabel ({training_set.name}, fix={fix_missing_values}, interpolation={use_interpolation})")
+    plt.xticks(rotation=90)
+    fig.tight_layout()
     plt.show()
 
     # # Heatmap über alle Labels
     # # print("Heatmap:")
-    ax2 = sb.heatmap(data=avg_df_corr_without_nan.to_numpy(), vmin=-1, vmax=1, linewidths=0.5,
-                     cmap='bwr', yticklabels=feature_names)
-    plt.title(f"Correlations in {training_set.name}, fixed values={fix_missing_values}")
+    fig, ax2 = plt.subplots()
+    sb.heatmap(data=avg_df_corr_without_nan.to_numpy(), vmin=-1, vmax=1, linewidths=0.5,
+               cmap='bwr', yticklabels=feature_names, xticklabels=feature_names, ax=ax2)
+    ax2.set_title(f"Correlations in {training_set.name}, fixed values={fix_missing_values}, "
+                  f"used interpolation={use_interpolation}")
+    fig.tight_layout()
     plt.show()
 
     # Pairplot von ausgewählten Labels zu Sepsis und zueinander
