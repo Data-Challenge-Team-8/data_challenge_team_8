@@ -298,7 +298,9 @@ class TrainingSet:
             if patients is None:
                 raise ValueError("Unknown Training Set name")
             else:
+                print("Constructing new set.")
                 return TrainingSet(patients=patients, name=name)
+
 
     def get_average_df(self, use_interpolation: bool = False, fix_missing_values: bool = False):
         """

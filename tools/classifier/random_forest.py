@@ -42,9 +42,6 @@ def implement_random_forest(avg_df, sepsis_df):
         print("Classification Report for NearMiss Version:", version)
         display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version=str(version))
 
-    # todo: Aufgabe Jakob: noch versuchen einen Scatter Plot zu erstellen und mit PacMap anzuzeigen, welche Patients noch im Dataset sind.
-    #  Oder das mit PacMap plotten?
-
 
 def display_confusion_matrix(clf, x_test, y_test, version: str, plotting: bool = False):
     # confusion matrix as df (old version for print)
