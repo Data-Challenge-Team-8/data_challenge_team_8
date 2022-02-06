@@ -105,7 +105,7 @@ class LandingPage:
 
     def display_load_data_upfront(self, selected_column):
         multiselect_label_list = ['0_Load all labels (long waiting time!)']
-        for label in self.LABELS:
+        for label in Patient.LABELS:
             multiselect_label_list.append(label)
         # multiselect_label_list.sort()
         st.markdown("<h2 style='text-align: left; color: black;'>Recommended to load all data upfront:</h2>",
@@ -116,7 +116,7 @@ class LandingPage:
                  " (240MB for the complete dataset).")
         selected_set_list = st.multiselect(
             'Choose which set to load before moving to analysis. This can save loading time',
-            ['Set A', 'Set B', 'Set A + B'], [])
+            TrainingSet.PRESETS, [])
         selected_label_list = st.multiselect(
             'Choose which labels to load before moving to analysis. This can save loading time',
             multiselect_label_list, [])
