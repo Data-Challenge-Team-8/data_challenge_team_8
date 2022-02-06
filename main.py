@@ -1,4 +1,6 @@
 import sys
+import pandas as pd
+
 import os
 from streamlit import cli as stcli
 from objects.training_set import TrainingSet

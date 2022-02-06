@@ -17,8 +17,6 @@ class TimeSeriesForest(TimeSeriesClassifier):
         super().__init__(data_set=data_set, train_fraction=train_fraction)
         self.selected_feature = feature
         self.model = TimeSeriesForestClassifier(random_state=1337, n_jobs=-1)
-        self.train_data = None
-        self.test_data = None
 
     def transform_data_set(self, data_set: TrainingSet, label_set: pd.DataFrame) -> tuple:
         transformed_data_set = data_set.get_timeseries_df(use_interpolation=True, fix_missing_values=True,
