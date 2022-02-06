@@ -6,6 +6,14 @@ from objects.training_set import TrainingSet
 from tools.analyse_tool import CompleteAnalysis
 from objects.patient import Patient
 
+def warning():
+    color1='#E75919'
+    color2='#EE895C'
+    color3='#FFFFFF'
+    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    st.markdown(
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        unsafe_allow_html=True)
 
 class ExploratoryDataAnalysis:
     TOOL_SELECTION = {"avg": "Min, Max, Average, Variance",
@@ -17,6 +25,7 @@ class ExploratoryDataAnalysis:
                       }
 
     def __init__(self):
+        warning()
         st.markdown("## Exploratory Data Analysis")
         self.__create_description()
 

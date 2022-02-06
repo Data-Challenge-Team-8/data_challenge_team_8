@@ -12,6 +12,15 @@ from tools.analyse_tool import CompleteAnalysis
 from objects.training_set import TrainingSet
 from objects.patient import Patient
 
+def warning():
+    color1='#E75919'
+    color2='#EE895C'
+    color3='#FFFFFF'
+    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    st.markdown(
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        unsafe_allow_html=True)
+
 
 def create_description():
     info_p1 = "This Sepsis Research Analysis focuses on displaying the relation of selected features and " \
@@ -74,6 +83,7 @@ class SepsisResearch:
     CACHE_CORRELATION_POSTFIX = "frontend-correlation"
 
     def __init__(self):
+        warning()
         st.markdown("<h2 style='text-align: left; color: black;'>Histogram for Sepsis Research</h2>",
                     unsafe_allow_html=True)
         create_description()
