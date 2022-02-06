@@ -9,6 +9,14 @@ from tools.analyse_tool import CompleteAnalysis as ca, CompleteAnalysis
 from PIL import Image
 from decimal import Decimal
 
+def warning():
+    color1='#E75919'
+    color2='#EE895C'
+    color3='#FFFFFF'
+    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    st.markdown(
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        unsafe_allow_html=True)
 
 def display_feature_graphic(selected_column):
     feature_graphic = Image.open(r'./data/feature_graphic.jpg')
@@ -91,16 +99,13 @@ class LandingPage:
               "SepsisLabel"]
 
     def __init__(self):
-        col1, col2, col3, col4 = st.columns(
-            (0.3, 2, 1.8, 0.3))  # hiermit kann man "Ränder" erstellen und test in columns machen
-        col2.markdown("<h2 style='text-align: left; color: black;'>Project Description</h2>", unsafe_allow_html=True)
-        write_info_text(col2)
-        selected_set_name = self.create_selector(col3)
+        st.markdown("<h2 style='text-align: left; color: black;'>Project Description</h2>", unsafe_allow_html=True)
+        col1, col2 = st.columns((2, 0.5))           # hiermit kann man "ränder" erstellen und test in columns machen
+        write_info_text(col1)
+        selected_set_name = self.create_selector(col2)
+        display_table(selected_set_name, col2)
 
-        display_table(selected_set_name, col3)
-
-        self.display_load_data_upfront(st)
-
+        warning()
         write_info_text_2(st)
         display_feature_graphic(st)
 
@@ -121,6 +126,9 @@ class LandingPage:
         selected_label_list = st.multiselect(
             'Choose which labels to load before moving to analysis. This can save loading time',
             multiselect_label_list, [])
+        warning()
+        selected_set_name = self.create_selector(col1)
+        display_table(selected_set_name, col1) #TODO: Reihenfolge anpassen
 
         if st.button('Load Data'):
             if selected_set_list and selected_label_list:
