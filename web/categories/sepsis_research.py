@@ -6,6 +6,15 @@ from PIL import Image
 
 from tools.analyse_tool import CompleteAnalysis
 
+def warning():
+    color1='#E75919'
+    color2='#EE895C'
+    color3='#FFFFFF'
+    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    st.markdown(
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        unsafe_allow_html=True)
+
 
 def create_description():
     info_p1 = "This Sepsis Research Analysis focuses on displaying the relation of selected features and " \
@@ -54,7 +63,6 @@ def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
     col3.metric("", no_sepsis_var)
 
 
-# TODO: Aufgabe Aline: This should be a true calculation of correlations not just the .png - (probably with a cache otherwise it takes to long
 def plot_correlations():
     #feature_graphic = Image.open(r'./data/sepsis_correlation_fixed_values.png')
     #st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
@@ -64,6 +72,7 @@ class SepsisResearch:
     LABELS = ["HR", "Resp", "Temp", "pH", "Age", "Gender", "ICOLUS"]  # Do we need further, more important Labels?
 
     def __init__(self):
+        warning()
         st.markdown("<h2 style='text-align: left; color: black;'>Histogram for Sepsis Research</h2>",
                     unsafe_allow_html=True)
         create_description()
