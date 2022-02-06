@@ -37,18 +37,20 @@ class TimeSeriesForest(TimeSeriesClassifier):
         self.label_set = self.data_set.get_sepsis_label_df().transpose() if self.label_set is None else self.label_set
         transformed_data, transformed_labels = self.transform_data_set(self.data_set, self.label_set)
         X_train, X_test, y_train, y_test = train_test_split(transformed_data, transformed_labels, random_state=1337)
-        if use_balancing == "SMOTE":
-            print(f"Applying SMOTE to \"{self.data_set.name}\" data set ...")
-            smote = SMOTE(random_state=1337)
-            X_train, y_train = smote.fit_resample(X_train, y_train)
-            X_test, y_test = smote.fit_resample(X_test, y_test)
-        elif "NEARMISS-" in use_balancing:
-            version = int(use_balancing[-1])
-            print(f"Applying Nearmiss v{version} to \"{self.data_set.name}\" data set ...")
-            nm = NearMiss(version=version)
-            X_train, y_train = nm.fit_resample(X_train, y_train)
-            X_test, y_test = nm.fit_resample(X_test, y_test)
-
+        try:
+            if use_balancing == "SMOTE":
+                print(f"Applying SMOTE to \"{self.data_set.name}\" data set ...")
+                smote = SMOTE(random_state=1337)
+                X_train, y_train = smote.fit_resample(X_train, y_train)
+                X_test, y_test = smote.fit_resample(X_test, y_test)
+            elif "NEARMISS-" in use_balancing:
+                version = int(use_balancing[-1])
+                print(f"Applying Nearmiss v{version} to \"{self.data_set.name}\" data set ...")
+                nm = NearMiss(version=version)
+                X_train, y_train = nm.fit_resample(X_train, y_train)
+                X_test, y_test = nm.fit_resample(X_test, y_test)
+        except TypeError:
+            pass
 
         self.train_data = X_train.to_numpy().reshape(len(X_train), -1), y_train
         self.test_data = X_test.to_numpy().reshape(len(X_test), -1), y_test

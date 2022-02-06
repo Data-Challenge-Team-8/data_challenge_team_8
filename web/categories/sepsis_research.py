@@ -69,13 +69,6 @@ def plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool):
     col3.metric("", no_sepsis_var)
 
 
-# TODO: Aufgabe Aline: This should be a true calculation of correlations not just the .png - (probably with a cache otherwise it takes too long
-def plot_correlations():
-    #feature_graphic = Image.open(r'./data/sepsis_correlation_fixed_values.png')
-    #st.image(feature_graphic, caption='Correlation of relevant Features to the SepsisLabel')
-    pass
-
-
 class SepsisResearch:
 
     CACHE_CORRELATION_POSTFIX = "frontend-correlation"
@@ -92,7 +85,7 @@ class SepsisResearch:
         plot_sepsis_analysis(analysis_obj, col2, selected_label, selected_tool)
 
         st.markdown(
-            "<h2 style='text-align: left; color: black;'>Correlation of relevant Features to the SepsisLabel</h2>",
+            "<h2 style='text-align: left; color: black;'>Correlation of relevant Features</h2>",
             unsafe_allow_html=True)
         col1, col2 = st.columns((1, 2))
         selected_label, selected_set, use_fix_missing_values, use_interpolation\
@@ -114,7 +107,7 @@ class SepsisResearch:
         sepsislabel_index = sepsislabel_indices[0] if len(sepsislabel_indices) > 0 else None
         sample_a_indices = [i for i in range(len(TrainingSet.PRESETS.keys())) if list(TrainingSet.PRESETS.keys())[i] == "rnd Sample A"]
         sample_a_index = sample_a_indices[0] if len(sepsislabel_indices) > 0 else None
-        selected_label = col.selectbox("Choose a Label", Patient.LABELS, index=sepsislabel_index, key="corrLabel")
+        selected_label = col.selectbox("Choose a Label", Patient.LABELS, index=sepsislabel_index, key="corrLabel")          # might be useful to only offer labels that are actually in the selected_set
         selected_set = col.selectbox("Choose a Set:", TrainingSet.PRESETS.keys(), key="corrSet", index=sample_a_index)
         use_fix_missing_values = col.checkbox("Use \"fix missing\"", key="corrFix", value=True)
         use_interpolation = col.checkbox("Use interpolation", key="corrInterpolate", value=True)
@@ -162,30 +155,36 @@ class SepsisResearch:
 
 
         # Bar plot of correlation to label
-        fig, ax1 = plt.subplots(1)
-        plot_corr_df = sorted_corr_df.drop(label)
-        ax1.bar(plot_corr_df.index, plot_corr_df)# = plot_corr_df.plot.bar(x='Features')
-        ax1.set_xlabel("Features")
-        f = 'fixed values,' if fix_missing_values else ''
-        i = 'quadratic interpolation' if use_interpolation else ''
-        ax1.set_title(f"Correlation to {label}, {f} {i}")
-        props = {"rotation": 90}
-        plt.setp(ax1.get_xticklabels(), **props)
+        try:
+            fig, ax1 = plt.subplots(1)
+            plot_corr_df = sorted_corr_df.drop(label)
+            ax1.bar(plot_corr_df.index, plot_corr_df)# = plot_corr_df.plot.bar(x='Features')
+            ax1.set_xlabel("Features")
+            f = 'fixed values,' if fix_missing_values else ''
+            i = 'quadratic interpolation' if use_interpolation else ''
+            ax1.set_title(f"Correlation to {label}, {f} {i}")
+            props = {"rotation": 90}
+            plt.setp(ax1.get_xticklabels(), **props)
 
-        # heat map of feature x feature
-        #ax2 = sb.heatmap(data=avg_df_corr_without_nan.to_numpy(), vmin=-1, vmax=1, linewidths=0.5,
-        #                 cmap='bwr', yticklabels=feature_names)
-        #ax2.set_title(f"Correlations in {set.name}, {f}"
-        #              f"{i}")
+            # heat map of feature x feature
+            #ax2 = sb.heatmap(data=avg_df_corr_without_nan.to_numpy(), vmin=-1, vmax=1, linewidths=0.5,
+            #                 cmap='bwr', yticklabels=feature_names)
+            #ax2.set_title(f"Correlations in {set.name}, {f}"
+            #              f"{i}")
 
-        # pair plot of greatest features to label
-        #important_features = sorted_corr_df.index[:3].tolist()
-        #important_features.extend(sorted_corr_df.index[-3:].tolist())
-        #selected_labels_df = avg_df.transpose().filter(important_features, axis=1)
-        #avg_df_small = selected_labels_df.iloc[:100]  # scatter plot nur 100 patients
-        #sb.set_style('darkgrid')
-        #pairplot = sb.pairplot(avg_df_small)
-        #col.pyplot(pairplot)
+            # pair plot of greatest features to label
+            #important_features = sorted_corr_df.index[:3].tolist()
+            #important_features.extend(sorted_corr_df.index[-3:].tolist())
+            #selected_labels_df = avg_df.transpose().filter(important_features, axis=1)
+            #avg_df_small = selected_labels_df.iloc[:100]  # scatter plot nur 100 patients
+            #sb.set_style('darkgrid')
+            #pairplot = sb.pairplot(avg_df_small)
+            #col.pyplot(pairplot)
 
-        col.pyplot(fig)
+            col.pyplot(fig)
+
+        except KeyError:
+            info_key_error = "The selected label was not found in the selected dataset. It was probably removed" \
+                             " within the imputation. Please select a different label or a different dataset."
+            st.markdown(info_key_error)
 

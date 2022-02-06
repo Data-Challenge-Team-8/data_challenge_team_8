@@ -13,15 +13,46 @@ from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
 from tools.pacmap_analysis import plot_pacmap2D, calculate_pacmap, calculate_pacmap_on_avg_df
 
-
 def implement_k_means_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, additional_options_title: str = None,
-                                save_to_file: bool = False):
+                                filter_labels: bool = False, save_to_file: bool = False):
     """
     Used to implement k-means on a selected df
     """
-    avg_np = avg_df.to_numpy()
+    # old version without sepsis label
+    # avg_np = avg_df.to_numpy()
+    # avg_np.reshape(avg_np.shape[0], -1)
+    pacmap_data, pacmap_patient_ids = calculate_pacmap_on_avg_df(avg_df.transpose())
+
+
+    # get sepsis labels
+    print("Starting with k-means")
+    patient_ids: List = avg_df.index.to_list()
+    sepsis_list: List = []
+    for patient_id in patient_ids:
+        if training_set.data[patient_id].sepsis_label.sum() > 0:
+            sepsis_list.append(1)
+        else:
+            sepsis_list.append(0)
+    sepsis_series = Series(sepsis_list)
+    sepsis_series.index = patient_ids
+    added_sepsis_df = avg_df
+    added_sepsis_df["SepsisLabel"] = sepsis_series
+    # fix NaN problem
+    # print(added_sepsis_df['Unit2'].head())
+    added_sepsis_df = added_sepsis_df.fillna(0)
+    # Optional: Select Labels to Focus on
+    if filter_labels:
+        # you can select different labels here
+        # labels_to_keep: List = ["Temp", "HR", "Resp", "pH", "Age", "Gender", "ICULOS", "SepsisLabel"]
+        labels_to_keep: List = ["HR", "Resp", "ICULOS"]
+    else:
+        labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
+    filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
+    print("Filtered df:", filtered_df)
+    number_of_labels: int = len(filtered_df.columns)
+    # Transform filtered_df to numpy
+    avg_np = filtered_df.to_numpy()
     avg_np.reshape(avg_np.shape[0], -1)
-    pacmap_data, patient_ids = calculate_pacmap_on_avg_df(avg_df.transpose())
 
     # Plot silhouettes score analysis for k-means clustering
     print("\nSilhouettes Score Analysis: ")
@@ -36,7 +67,7 @@ def implement_k_means_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, ad
         if additional_options_title is None:
             title = f"k_Means_clusters_{n} for {training_set.name}"
         else:
-            title = f"k_Means_clusters_{n} for {training_set.name} with settings_{additional_options_title}"
+            title = f"k_Means_clusters_{n} for {training_set.name} settings {additional_options_title}, feature_count {number_of_labels}"
         plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data, sh_score=sh_score,
                                                      coloring=k_means_list,
                                                      patient_ids=patient_ids, training_set=training_set,
@@ -56,7 +87,7 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
     z_value_df = pd.DataFrame()
     for col in avg_df.columns:
         z_value_df['z_' + col] = (avg_df[col] - avg_df[col].mean()) / avg_df[col].std()
-    # get sepsis labels only for near_miss avg_df
+    # get sepsis labels
     patient_ids: List = avg_df.index.to_list()
     sepsis_list: List = []
     for patient_id in patient_ids:
@@ -75,7 +106,7 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
     if filter_labels:
         # you can select different labels here
         # labels_to_keep: List = ["z_Temp", "z_HR", "z_Resp", "z_pH", "z_Age", "z_Gender", "z_ICULOS", "SepsisLabel"]
-        labels_to_keep: List = ["z_HR", "z_ICULOS", "SepsisLabel"]
+        labels_to_keep: List = ["z_Age", "SepsisLabel"]
     else:
         labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
@@ -101,7 +132,7 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
                 else:
                     title = f"DBSCAN with eps {eps}, min_samp {min_sample}, {training_set.name}, " \
                             f"settings {additional_options_title}, feature_count {number_of_labels}"
-                    # todo: add filtered options to title?
+                    # add filtered options (features) to title?
                 # plot clusters
                 plot_clustering_with_silhouette_score_sepsis(plot_title=title, data=pacmap_data_near_miss,
                                                              sh_score=temp_sh_score,
