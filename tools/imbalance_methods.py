@@ -12,7 +12,6 @@ def get_near_miss_for_training_set(training_set: TrainingSet, version: int = 2) 
     """This can be used to do balanced method NearMiss on complete TS."""
     avg_df = training_set.get_average_df(use_interpolation=True, fix_missing_values=True)
     sepsis_df = training_set.get_sepsis_label_df()
-    # todo: fix index for new_x (patient_ids are turned into numbers by near_miss.fit_resample())
     x_matrix = avg_df.transpose()
 
     index_numbers_list = list(range(0, len(x_matrix)))
