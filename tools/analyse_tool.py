@@ -47,6 +47,15 @@ class CompleteAnalysis:
         self.sepsis_patients: List = None
         self.rel_sepsis_amount: float = None
 
+        # variables only calculated for total_analysis:
+        self.total_patients: int = None
+        self.sepsis_patients_count: int = None
+        self.rel_nan_total = None
+        self.data_amount = None
+        self.total_nan = None
+        self.avg_data_duration_total = None
+        self.total_time_measured = None
+
         self.calculate_complete_analysis(training_set)
 
     @classmethod
@@ -57,16 +66,22 @@ class CompleteAnalysis:
     def get_analysis(cls, selected_label: str, selected_tool: str, selected_set: str):
         file_name = construct_cache_file_name(selected_label=selected_label, selected_set=selected_set)
         if CompleteAnalysis.check_analysis_is_cached(file_name) and USE_CACHE:
+            then = datetime.datetime.now()
             print("\nLoading Analysis for", selected_label, selected_set, "from cache:", file_name,
-                  " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+                  " At time: ", str(then).replace(" ", "_").replace(":", "-"))
+            duration = datetime.datetime.now() - then
+            print(f"Loading of Analysis took time: {duration}")
             return CompleteAnalysis.load_analysis_from_cache(file_name), file_name
         else:
+            then = datetime.datetime.now()
             print("\nStarting new Analysis for", selected_label, selected_set, "with cache name:", file_name,
-                  " At time: ", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
+                  " At time: ", str(then).replace(" ", "_").replace(":", "-"))
             loaded_training_set: TrainingSet = TrainingSet.get_training_set(name=selected_set)  # if analysis not cached TS must be loaded
             new_analysis = CompleteAnalysis(selected_label=selected_label, selected_tool=selected_tool,
-                             selected_set=selected_set,
-                             training_set=loaded_training_set)  # Construct this new Analysis, directly calculate all and save to cache
+                                            selected_set=selected_set,
+                                            training_set=loaded_training_set)  # Construct this new Analysis, directly calculate all and save to cache
+            duration = datetime.datetime.now() - then
+            print(f"Analysis took time: {duration}")
             return new_analysis, file_name  # get this analysis_dict from cache
 
     @classmethod
@@ -75,25 +90,33 @@ class CompleteAnalysis:
         return pickle_data  # returns a dict
 
     def calculate_complete_analysis(self, training_set):
-        self.get_min_for_label(self.selected_label, training_set)
-        self.get_max_for_label(self.selected_label, training_set)
-        self.get_avg_for_label(self.selected_label, training_set)
+        if self.selected_label == "fake_label":             # only for calculation of complete set statistics
+            if self.total_patients is None:
+                self.total_patients: int = len(training_set.data.keys())
+            self.sepsis_patients_count: int = len(self.get_sepsis_patients(training_set))
+            self.get_rel_sepsis_amount(training_set)
+            self.data_amount = self.get_data_amount(training_set)
+            self.total_nan = self.get_total_NaN_amount(training_set)
+            self.rel_nan_total = self.get_rel_NaN_amount(training_set)
+            self.avg_data_duration_total = self.get_avg_data_duration(training_set)
 
-        self.get_rel_NaN_amount_for_label(self.selected_label, training_set)
-        # non missing vals - already calculated in avg_label
-        # self.get_non_NaN_amount_for_label(self.selected_label)
+            self.save_analysis_obj_to_cache()
+        else:
+            self.get_min_for_label(self.selected_label, training_set)
+            self.get_max_for_label(self.selected_label, training_set)
+            self.get_avg_for_label(self.selected_label, training_set)
 
-        self.get_plot_label_to_sepsis(self.selected_label, training_set)
+            self.get_rel_NaN_amount_for_label(self.selected_label, training_set)
+            self.get_plot_label_to_sepsis(self.selected_label, training_set)
 
-        self.get_min_data_duration(training_set)
-        self.get_max_data_duration(training_set)
-        self.get_avg_data_duration(training_set)
+            self.get_min_data_duration(training_set)
+            self.get_max_data_duration(training_set)
+            self.get_avg_data_duration(training_set)
 
-        self.get_rel_sepsis_amount(training_set)
+            self.get_rel_sepsis_amount(training_set)
 
-        self.save_analysis_obj_to_cache()
-        # self.save_analysis_to_cache()  # saves selected features to dict
-        # self.save_analysis_to_JSON()  # Tool for JSON export
+            self.save_analysis_obj_to_cache()
+
 
     def get_min_for_label(self, label: str, training_set) -> Tuple[str, float]:
         """
@@ -179,11 +202,14 @@ class CompleteAnalysis:
         Get the amount of NaN values across all Patient objects in this set
         :return:
         """
-        count = 0
-        for label in Patient.LABELS:
-            count += self.get_NaN_amount_for_label(label, training_set)
+        if self.total_nan is not None:
+            return self.total_nan
+        else:
+            count = 0
+            for label in Patient.LABELS:                    # sollten das nicht weniger sein wenn das training_set interpolated wurde?
+                count += self.get_NaN_amount_for_label(label, training_set)
 
-        return count
+            return count
 
     def get_rel_NaN_amount_for_label(self, label: str, training_set) -> float:
         """
@@ -200,7 +226,9 @@ class CompleteAnalysis:
         Get the relative amount of NaN values across all Patient objects in this set
         :return:
         """
-        r = self.get_total_NaN_amount(training_set) / self.get_data_amount(training_set)
+        temp_total_nan = self.get_total_NaN_amount(training_set)
+        temp_data_amount = self.get_data_amount(training_set)
+        r = temp_total_nan / temp_data_amount
 
         return r
 
@@ -258,14 +286,20 @@ class CompleteAnalysis:
         """
         return self.get_NaN_amount_for_label(label, training_set) / self.get_non_NaN_amount_for_label(label, training_set)
 
-    def get_data_amount(self, training_set) -> int:
+    def get_data_amount(self, training_set: TrainingSet) -> int:
         """
         Get the amount of values across all Patient objects in this set
         :return:
         """
-        r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount()
-
-        return r
+        # r = self.get_total_NaN_amount(training_set) + self.get_non_NaN_amount(training_set)  # die rechnung stimmt natürlich aber das ist super ineffizient
+        if self.data_amount is not None:
+            return self.data_amount
+        else:
+            data_counter: int = 0
+            for patient in training_set.data.values():
+                patient_data_amount = patient.data.size
+                data_counter += patient_data_amount
+            return data_counter
 
     def get_min_data_duration(self, training_set) -> Tuple[str, int]:
         """
@@ -325,6 +359,7 @@ class CompleteAnalysis:
                 avg_sum += len(patient.data)
 
             self.avg_data_duration = avg_sum / avg_count
+            self.total_time_measured = self.avg_data_duration * avg_count
 
         return self.avg_data_duration
 

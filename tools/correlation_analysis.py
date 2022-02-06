@@ -10,23 +10,19 @@ from objects.patient import Patient
 from objects.training_set import TrainingSet
 from IO.data_reader import FIGURE_OUTPUT_FOLDER
 
+
 def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_interpolation=True):
     avg_df = training_set.get_average_df(fix_missing_values=fix_missing_values, use_interpolation=use_interpolation)
     sepsis_df = training_set.get_sepsis_label_df()  # no transpose needed
     transposed_df = avg_df.transpose()
     added_sepsis_df = transposed_df
     added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
-    added_sepsis_df = added_sepsis_df.fillna(0)                             # fix NaN problem
-
-    # Optional: Select Labels to Focus on
-    labels_to_keep: List = added_sepsis_df.columns.to_list()                # use this option if all labels wanted
-    # labels_to_keep: List = ["Temp", "ICULOS", "SepsisLabel"]
-    filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
+    added_sepsis_df = added_sepsis_df.fillna(0)  # fix NaN problem
 
     avg_df_corr = added_sepsis_df.corr()                        # todo: gucken ob man das im frontend performant hinbekommt
     # feature_names = np.argsort(avg_df_corr.columns)         # feature_names: [ 6  4  7  0  8  9  3  1  5  2 10]
     feature_names = avg_df_corr.columns
-    avg_df_corr_without_nan = avg_df_corr.fillna(0)       # Aus irgend einem grund ist EtCO2 NaN
+    avg_df_corr_without_nan = avg_df_corr.fillna(0)  # Aus irgend einem grund ist EtCO2 NaN
     sepsis_corr = avg_df_corr_without_nan["SepsisLabel"]
     sorted_sepsis_corr = sepsis_corr.sort_values(ascending=False)
 
@@ -49,7 +45,7 @@ def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_i
     important_features = sorted_sepsis_corr.index[:3].tolist()
     important_features.extend(sorted_sepsis_corr.index[-3:].tolist())
     selected_labels_df = avg_df.transpose().filter(important_features, axis=1)
-    avg_df_small = selected_labels_df.iloc[:100]                                     # scatter plot nur 100 patients
+    avg_df_small = selected_labels_df.iloc[:100]  # scatter plot nur 100 patients
     sb.set_style('darkgrid')
     pairplot = sb.pairplot(avg_df_small)
     plt.show()
@@ -62,7 +58,6 @@ def training_set_to_data(training_set: TrainingSet, use_interpolation: bool = Fa
     avg_np.reshape(avg_np.shape[0], -1)  # does this have an effect?
 
     return avg_np
-
 
 # def plot_correlation(plot_title: str, data: np.ndarray, patient_ids: List[str], training_set: TrainingSet, save_to_file: bool = False):
 #     """
