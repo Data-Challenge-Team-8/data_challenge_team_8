@@ -4,6 +4,16 @@ from matplotlib import pyplot as plt
 from tools.analyse_tool import CompleteAnalysis
 
 
+def warning():
+    color1='#E75919'
+    color2='#EE895C'
+    color3='#FFFFFF'
+    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    st.markdown(
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        unsafe_allow_html=True)
+
+
 def create_description():
     info_p1 = "The goal of Explorative Data Analysis is to gain an overview of data for which " \
               "there is little previous knowledge. These tool enables you to filter through the labels " \
@@ -43,6 +53,7 @@ class ExploratoryDataAnalysis:
               "SepsisLabel"]
 
     def __init__(self):
+        warning()
         st.markdown("<h2 style='text-align: left; color: black;'>Exploratory Data Analysis</h2>",
                     unsafe_allow_html=True)
         create_description()

@@ -1,12 +1,19 @@
 import streamlit as st
 import datetime
 import pandas as pd
-import numpy as np
 
 from objects.training_set import TrainingSet
 from tools.analyse_tool import CompleteAnalysis as ca, CompleteAnalysis
 from PIL import Image
-from decimal import Decimal
+
+def warning():
+    color1='#E75919'
+    color2='#EE895C'
+    color3='#FFFFFF'
+    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    st.markdown(
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        unsafe_allow_html=True)
 
 
 def display_feature_graphic(col1):
@@ -14,7 +21,7 @@ def display_feature_graphic(col1):
     st.image(feature_graphic, caption='Descriptions for each feature from the underlying PhysioNet paper')
 
 
-def display_table(selected_set_name: str, col2):
+def display_table(selected_set_name: str, col1):
     info_p3 = 'The following table offers an overview of general descriptive statistics about the datasets:'
     st.markdown(info_p3)
     temp_ca, cache_file_name = CompleteAnalysis.get_analysis(selected_label="fake_label", selected_tool='fake_tool',
@@ -40,7 +47,7 @@ def display_table(selected_set_name: str, col2):
     df_general_info[selected_set_name] = df_general_info[selected_set_name].str.replace('.0', ' ', regex = False)
 
     df_general_info = df_general_info.style.format(na_rep='MISSING')
-    col2.dataframe(df_general_info)
+    col1.dataframe(df_general_info)
 
     #Lösung 2(funktioniert so nicht aber wäre schöner mit Trennzeichen implementierbar)
     #df_general_info[selected_set_name]=df_general_info[selected_set_name].astype(float).round(2)
@@ -88,37 +95,17 @@ class LandingPage:
               "SepsisLabel"]
 
     def __init__(self):
-        col1, col2, col3, col4 = st.columns((0.3, 2, 1.8, 0.3))           # hiermit kann man "ränder" erstellen und test in columns machen
-        col2.markdown("<h2 style='text-align: left; color: black;'>Project Description</h2>", unsafe_allow_html=True)
-        write_info_text(col2)
-        selected_set_name = self.create_selector(col3)
-        display_table(selected_set_name, col3)
+        col1, col2 = st.columns((2, 0.5))           # hiermit kann man "ränder" erstellen und test in columns machen
+        col1.markdown("<h2 style='text-align: left; color: black;'>Project Description</h2>", unsafe_allow_html=True)
+        write_info_text(col1)
 
-        write_info_text_2(col2)                 # todo: vlt sollten die ganzen nachfolgenden Elemente auf der Seite auch innerhalb von columns angeordnet sein. Sieht besser aus
-        display_feature_graphic(col2)
-        self.display_load_data_upfront(col2)        # todo: vlt sollte dieses "Cache laden" ganz oben sein, und auch anders heißen?
+        write_info_text_2(col1)
+        display_feature_graphic(col1)
 
-    def display_load_data_upfront(self,col2):
-        multiselect_label_list = ['0_Load all labels (long waiting time!)']
-        for label in self.LABELS:
-            multiselect_label_list.append(label)
-        # multiselect_label_list.sort()
-        st.markdown("<h2 style='text-align: left; color: black;'>Recommended to load the data upfront:</h2>",
-                    unsafe_allow_html=True)
-        st.write("It can be useful to load the analysis data into a cache before first using this dashboard."
-                 " Loading of a complete dataset alone can take up to 45 minutes (>1 minute per label)."
-                 " Approximately 5MB are needed to safe the analysis of one label"
-                 " (240MB for the complete dataset).")
-        selected_set_list = st.multiselect(
-            'Choose which set to load before moving to analysis. This can save loading time',
-            ['Set A', 'Set B', 'Set A + B'], [])
-        selected_label_list = st.multiselect(
-            'Choose which labels to load before moving to analysis. This can save loading time',
-            multiselect_label_list, [])
+        warning()
+        selected_set_name = self.create_selector(col1)
+        display_table(selected_set_name, col1) #TODO: Reihenfolge anpassen
 
-        if st.button('Load Data'):
-            if selected_set_list and selected_label_list:
-                start_loading(selected_set_list, selected_label_list)
 
     def create_selector(self, col2):
         # selected_label = col1.selectbox('Choose a label:', self.LABELS)
