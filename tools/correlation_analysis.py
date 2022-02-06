@@ -19,7 +19,7 @@ def get_and_plot_sepsis_correlation(training_set, fix_missing_values=True, use_i
     added_sepsis_df["SepsisLabel"] = sepsis_df.iloc[0:].values
     added_sepsis_df = added_sepsis_df.fillna(0)  # fix NaN problem
 
-    avg_df_corr = added_sepsis_df.corr()                        # todo: gucken ob man das im frontend performant hinbekommt
+    avg_df_corr = added_sepsis_df.corr()
     # feature_names = np.argsort(avg_df_corr.columns)         # feature_names: [ 6  4  7  0  8  9  3  1  5  2 10]
     feature_names = avg_df_corr.columns
     avg_df_corr_without_nan = avg_df_corr.fillna(0)  # Aus irgend einem grund ist EtCO2 NaN

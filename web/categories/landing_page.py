@@ -132,8 +132,8 @@ class LandingPage:
             'Choose which labels to load before moving to analysis. This can save loading time',
             multiselect_label_list, [])
         warning()
-        selected_set_name = self.create_selector(col1)
-        display_table(selected_set_name, col1)  # TODO: Reihenfolge anpassen
+        selected_set_name = self.create_selector(selected_column)
+        display_table(selected_set_name, selected_column)
 
         if st.button('Load Data'):
             if selected_set_list and selected_label_list:
