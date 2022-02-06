@@ -30,6 +30,15 @@ def get_rnd_sample_a() -> List[str]:
     return sample
 
 
+def get_rnd_sample_b() -> List[str]:
+    random.seed(1337)
+    sample = []
+    set_b = get_set_b()
+    for i in range(200):
+        sample.append(set_b[random.randint(0, len(set_b))])
+    return sample
+
+
 class TrainingSet:
     CACHE_PATH = os.path.join(".", "cache")
     CACHE_FILE_PREFIX = "trainingset_data"
@@ -39,10 +48,11 @@ class TrainingSet:
     CACHE_FILE_PACMAP_POSTFIX = "pacmap"
 
     PRESETS = {
+        "rnd Sample A": get_rnd_sample_a,
         "Set A": get_set_a,
+        "rnd Sample B": get_rnd_sample_b,
         "Set B": get_set_b,
         "Set A + B": lambda: get_set_a() + get_set_b(),
-        "rnd Sample A": get_rnd_sample_a,
     }
 
     __instances = {}
@@ -152,6 +162,8 @@ class TrainingSet:
             end_time = datetime.datetime.now()
             print("Took", end_time - start_time, "to load from pickle!")
 
+        return loaded_basics_from_cache
+
     def __save_data_to_cache(self):
         self.__save_basic_data_to_cache()
         if self.average_df_fixed_interpol is not None or self.average_df_fixed_no_interpol is not None or \
@@ -167,6 +179,8 @@ class TrainingSet:
     def __save_basic_data_to_cache(self):
         # basic/patient data
         file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_BASIC_POSTFIX)
+        if os.path.isfile(file_path):  # basic data should never change, so we save time here
+            return
         print("Writing TrainingSet", self.name, "patient data to pickle cache!")
         pickle.dump(self.data, open(file_path, "wb"))
 
@@ -317,6 +331,10 @@ class TrainingSet:
             return self.average_df_fixed_no_interpol
         elif self.average_df_fixed_interpol is not None and fix_missing_values and use_interpolation:
             return self.average_df_fixed_interpol
+        elif self.average_df_no_fixed is not None and not fix_missing_values and not use_interpolation:
+            return self.average_df_no_fixed
+        elif self.average_df_no_fixed_interpol is not None and not fix_missing_values and use_interpolation:
+            return self.average_df_no_fixed_interpol
 
         avg_dict = {}
         for patient_id in self.data.keys():

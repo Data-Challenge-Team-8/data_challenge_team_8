@@ -10,17 +10,21 @@ from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import NearMiss
 
 from classifier.decisiontree.random_forest import RandomForest
+from objects.training_set import TrainingSet
 
 
-def implement_random_forest(avg_df, sepsis_df):
+def implement_random_forest(set: TrainingSet, use_interpolation: bool = True, fix_missing_values: bool = True):
     """
     Used for the actual implementation of decision tree classification.
     """
+    avg_df = set.get_average_df(use_interpolation=use_interpolation, fix_missing_values=fix_missing_values)
+    sepsis_df = set.get_sepsis_label_df()
     clf = RandomForest()
     x_train, x_test, y_train, y_test = train_test_split(avg_df.transpose(), sepsis_df, test_size=0.2, random_state=1337)
     clf.train(x_data=x_train, y_data=y_train)
     print("Classification Report for complete (imbalanced) dataset:")
-    display_confusion_matrix(clf, x_test, y_test, plotting=True, version="complete dataset")
+    display_confusion_matrix(clf, x_test, y_test, plotting=True, version="complete dataset", set=set)
+    display_roc_auc_curve(clf,x_test, y_test, version="complete dataset", plotting=True, set=set)
 
     # Oversampling: SMOTE
     smote = SMOTE(random_state=1337)
@@ -29,7 +33,8 @@ def implement_random_forest(avg_df, sepsis_df):
                                                                         random_state=1337)
     clf.train(x_train_smote, y_train_smote)
     print("Classification Report for SMOTE oversampling")
-    display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="SMOTE oversampling")
+    display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="SMOTE oversampling", set=set)
+    display_roc_auc_curve(clf, new_x_test, new_y_test, version="SMOTE oversampling", plotting=True, set=set)
 
     # Undersampling: NearMiss
     versions: List = [1, 2, 3]
@@ -40,7 +45,8 @@ def implement_random_forest(avg_df, sepsis_df):
                                                                             random_state=1337)
         clf.train(x_data=new_x_train, y_data=new_y_train)
         print("Classification Report for NearMiss Version:", version)
-        display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version=str(version))
+        display_confusion_matrix(clf, new_x_test, new_y_test, plotting=True, version="NearMiss"+str(version), set=set)
+        display_roc_auc_curve(clf, new_x_test, new_y_test, version="NearMiss"+str(version), plotting=True, set=set)
 
 
 def display_confusion_matrix(clf, x_test, y_test, version: str, plotting: bool = False):
@@ -52,10 +58,19 @@ def display_confusion_matrix(clf, x_test, y_test, version: str, plotting: bool =
     print(report)
     # confusion matrix plot
     if plotting:
-        cm: ndarray = clf.predict(x_test, y_test)
+        cm: ndarray = clf.test(x_test, y_test)
+        fig, ax = plt.subplots()
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No Sepsis", "Sepsis"])
-        disp.plot()
-        # funktioniert leider nicht mit title
-        # temp_text_obj = Text(x=100, y=50, text=f"Confusion Matrix for version: {version}")
-        # disp.ax_.title = temp_text_obj
+        disp.plot(ax=ax)
+        ax.set_title(f"RandomForest {version} {set.name}")
+        plt.show()
+
+
+def display_roc_auc_curve(clf, x_test, y_test, version: str, set: TrainingSet, plotting: bool = False):
+    auc = clf.get_roc_auc_score(x_test, y_test)
+    fig, ax = plt.subplots()
+    disp = clf.plot_roc_curve(x_test, y_test, title=f"RF {version}")
+    if plotting:
+        disp.plot(ax=ax)
+        ax.set_title(f"RandomForest {version} ({set.name} AUC: {round(auc, 4)})")
         plt.show()

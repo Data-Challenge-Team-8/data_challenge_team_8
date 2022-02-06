@@ -57,7 +57,7 @@ def plot_data_with_and_without_interpolation(plot_title: str, x_label: str, y_la
         if not os.path.exists(FIGURE_OUTPUT_FOLDER):
             os.mkdir(FIGURE_OUTPUT_FOLDER)
 
-        f = os.path.join(FIGURE_OUTPUT_FOLDER, plot_title.replace(" ", "_") + ".png")
+        f = os.path.join(FIGURE_OUTPUT_FOLDER, plot_title.replace(" ", "_") + f"_{interp_method}.png")
         print(f"Saving figure \"{plot_title}\" to file {f}")
         plt.savefig(f)
 
