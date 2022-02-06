@@ -23,10 +23,10 @@ def warning():
 class TimeSeriesAnalysis:
 
     def __init__(self):
-        warning()
         st.markdown("<h2 style='text-align: left; color: black;'>Time Series Visualization per Patient</h2>",
                     unsafe_allow_html=True)
         self.available_patients: List[str] = None
+
 
         # Client selects the dataset he wants to analyse
         option_set = st.selectbox(
@@ -60,6 +60,8 @@ class TimeSeriesAnalysis:
             st.area_chart(getattr(patient, "sepsis_label"))
         else:
             st.write('Submit to load.')
+            warning()
+
 
 
 

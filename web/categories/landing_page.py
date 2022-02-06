@@ -9,18 +9,21 @@ from tools.analyse_tool import CompleteAnalysis as ca, CompleteAnalysis
 from PIL import Image
 from decimal import Decimal
 
+
 def warning():
-    color1='#E75919'
-    color2='#EE895C'
-    color3='#FFFFFF'
-    text ='Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
+    color1 = '#E75919'
+    color2 = '#EE895C'
+    color3 = '#FFFFFF'
+    text = 'Before starting the analysis, we strongly recommend to load the desired dataset in advance. You can do this in the "Data Loader" tab.'
     st.markdown(
-        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:24px;border-radius:2%;">{text}</p>',
+        f'<p style="text-align:center;background-image: linear-gradient(to right,{color1}, {color2});color:{color3};font-size:22px;border-radius:2%;">{text}</p>',
         unsafe_allow_html=True)
+
 
 def display_feature_graphic(selected_column):
     feature_graphic = Image.open(r'./data/feature_graphic.jpg')
-    selected_column.image(feature_graphic, caption='Descriptions for each feature from the underlying PhysioNet paper', width=800)
+    selected_column.image(feature_graphic, caption='Descriptions for each feature from the underlying PhysioNet paper',
+                          width=800)
 
 
 def display_table(selected_set_name: str, selected_column):
@@ -99,15 +102,17 @@ class LandingPage:
               "SepsisLabel"]
 
     def __init__(self):
-        st.markdown("<h2 style='text-align: left; color: black;'>Project Description</h2>", unsafe_allow_html=True)
-        col1, col2 = st.columns((2, 0.5))           # hiermit kann man "ränder" erstellen und test in columns machen
+        col1, col2 = st.columns((0.8, 0.5))  # hiermit kann man "ränder" erstellen und test in columns machen
+        col1.markdown("<h2 style='text-align: left; color: black;'>Project Description</h2>", unsafe_allow_html=True)
+
         write_info_text(col1)
         selected_set_name = self.create_selector(col2)
         display_table(selected_set_name, col2)
 
-        warning()
+        st.markdown("<h2 style='text-align: left; color: black;'>Dataset Features</h2>", unsafe_allow_html=True)
         write_info_text_2(st)
         display_feature_graphic(st)
+        warning()
 
     def display_load_data_upfront(self, selected_column):
         multiselect_label_list = ['0_Load all labels (long waiting time!)']
@@ -128,7 +133,7 @@ class LandingPage:
             multiselect_label_list, [])
         warning()
         selected_set_name = self.create_selector(col1)
-        display_table(selected_set_name, col1) #TODO: Reihenfolge anpassen
+        display_table(selected_set_name, col1)  # TODO: Reihenfolge anpassen
 
         if st.button('Load Data'):
             if selected_set_list and selected_label_list:

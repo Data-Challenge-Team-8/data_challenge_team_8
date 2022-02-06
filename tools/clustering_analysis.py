@@ -106,7 +106,7 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
     if filter_labels:
         # you can select different labels here
         # labels_to_keep: List = ["z_Temp", "z_HR", "z_Resp", "z_pH", "z_Age", "z_Gender", "z_ICULOS", "SepsisLabel"]
-        labels_to_keep: List = ["z_Age", "SepsisLabel"]
+        labels_to_keep: List = ["z_HR", "z_Resp", "z_ICULOS"]
     else:
         labels_to_keep: List = added_sepsis_df.columns.to_list()  # use this option if all labels wanted
     filtered_df = added_sepsis_df[added_sepsis_df.columns.intersection(labels_to_keep)]
@@ -116,8 +116,8 @@ def implement_DBSCAN_on_avg_df(training_set: TrainingSet, avg_df: DataFrame, add
     z_value_np.reshape(z_value_np.shape[0], -1)
 
     # implement DBSCAN for multiple parameter values
-    eps_range = [0.5, 1, 2, 3, 5, 10]
-    min_samples = [2, 5, 10, 20]
+    eps_range = [0.25, 0.5, 0.75, 1]
+    min_samples = [2, 5, 10, 20, 100]
     best_sh_score = 0
     best_eps_min_sample = (0, 0)
     for min_sample in min_samples:

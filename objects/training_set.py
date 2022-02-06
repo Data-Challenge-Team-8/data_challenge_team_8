@@ -120,18 +120,21 @@ class TrainingSet:
 
         # avg_df data
         file_path = self.get_cache_file_path(TrainingSet.CACHE_FILE_AVG_POSTFIX)
-        if not force_no_cache and os.path.isfile(file_path):
-            print(f"Loading TrainingSet {self.name} average data from pickle cache")
-            print(f"Cache file path is: {file_path}")
-            start_time = datetime.datetime.now()
-            d = pickle.load(open(file_path, 'rb'))
-            self.average_df_fixed_no_interpol = d["fixed_no_interpolation"]
-            self.average_df_fixed_interpol = d["fixed_interpolation"]
-            self.average_df_no_fixed = d["no_fixed"]
-            self.average_df_no_fixed_interpol = d["no_fixed_interpolation"]
-            end_time = datetime.datetime.now()
-            print("Took", end_time - start_time, "to load from pickle!")
-        else:
+        try:
+            if not force_no_cache and os.path.isfile(file_path):
+                print(f"Loading TrainingSet {self.name} average data from pickle cache")
+                print(f"Cache file path is: {file_path}")
+                start_time = datetime.datetime.now()
+                d = pickle.load(open(file_path, 'rb'))
+                self.average_df_fixed_no_interpol = d["fixed_no_interpolation"]
+                self.average_df_fixed_interpol = d["fixed_interpolation"]
+                self.average_df_no_fixed = d["no_fixed"]
+                self.average_df_no_fixed_interpol = d["no_fixed_interpolation"]
+                end_time = datetime.datetime.now()
+                print("Took", end_time - start_time, "to load from pickle!")
+            else:
+                print("Found no pickle cache for average data!")
+        except KeyError:
             print("Found no pickle cache for average data!")
 
         # pacmap data
