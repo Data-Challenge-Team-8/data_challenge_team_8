@@ -1,5 +1,7 @@
 import streamlit as st
 
+from web.categories.landing_page import start_loading
+
 
 class DataLoader:
     LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH", "PaCO2", "SaO2",
@@ -36,3 +38,4 @@ class DataLoader:
         if st.button('Load Data'):
             if selected_set_list and selected_label_list:
                 start_loading(selected_set_list, selected_label_list)
+                st.write("The selected set was successfully loaded.")

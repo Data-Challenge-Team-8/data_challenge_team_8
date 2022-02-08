@@ -78,7 +78,7 @@ def write_info_text_2(selected_column):
     selected_column.markdown(info_p4)
 
 
-def start_loading(selected_set_list, selected_label_list, selected_column):
+def start_loading(selected_set_list, selected_label_list, selected_column: str = None):
     total_start_time = datetime.datetime.now()
     print("Loading started at time:", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
     for unique_set in selected_set_list:
