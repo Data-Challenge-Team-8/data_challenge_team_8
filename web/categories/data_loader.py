@@ -18,7 +18,8 @@ class DataLoader:
 
 
     def display_load_data_upfront(self, col2):
-        multiselect_label_list = ['0_Load all labels (long waiting time!)']
+        # multiselect_label_list = ['0_Load all labels (long waiting time!)']
+        multiselect_label_list = []
         for label in self.LABELS:
             multiselect_label_list.append(label)
         # multiselect_label_list.sort()
