@@ -82,8 +82,10 @@ def start_loading(selected_set_list, selected_label_list, selected_column: str =
     total_start_time = datetime.datetime.now()
     print("Loading started at time:", str(datetime.datetime.now()).replace(" ", "_").replace(":", "-"))
     for unique_set in selected_set_list:
-        if 'Load all labels' in selected_label_list:
-            selected_label_list = selected_label_list.remove('Load all labels')
+        if '0_Load all labels (long waiting time!)' in selected_label_list:
+            pass
+            # selected_label_list = Patient.LABELS
+            # selected_label_list = selected_label_list.remove('0_Load all labels (long waiting time!)')
         for label in selected_label_list:
             start_time = datetime.datetime.now()
             ca.get_analysis(selected_label=label, selected_set=unique_set, selected_tool='none')
