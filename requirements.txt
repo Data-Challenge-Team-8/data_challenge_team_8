@@ -3,5 +3,9 @@ streamlit>=1.1.0
 matplotlib>=3.4.3
 Pillow~=8.0.1
 jsonpickle~=2.0.0
-pacmap~=0.5.3
 scikit-learn~=1.0.1
+numpy~=1.20.3
+seaborn~=0.11.2
+imblearn~=0.0
+sktime
+hydralit_components

@@ -1,5 +1,8 @@
+from typing import List
+
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 class NotUniqueIDError(Exception):
@@ -18,10 +21,10 @@ class Patient:
               "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
               "PTT", "WBC", "Fibrinogen", "Platelets", "Age", "Gender", "Unit1", "Unit2", "HospAdmTime", "ICULOS",
               "SepsisLabel"]
-    DATA_LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "FiO2", "pH", "PaCO2", "SaO2",
-                   "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine", "Bilirubin_direct", "Glucose",
-                   "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total", "TroponinI", "Hct", "Hgb",
-                   "PTT", "WBC", "Fibrinogen", "Platelets"]
+    DATA_LABELS = ["HR", "O2Sat", "Temp", "SBP", "MAP", "DBP", "Resp", "EtCO2", "BaseExcess", "HCO3", "FiO2", "pH",
+                   "PaCO2", "SaO2", "AST", "BUN", "Alkalinephos", "Calcium", "Chloride", "Creatinine",
+                   "Bilirubin_direct", "Glucose", "Lactate", "Magnesium", "Phosphate", "Potassium", "Bilirubin_total",
+                   "TroponinI", "Hct", "Hgb", "PTT", "WBC", "Fibrinogen", "Platelets"]
     FEMALE = 0
     MALE = 1
 
@@ -59,6 +62,18 @@ class Patient:
     def __str__(self):
         return "Patient #"+self.ID
 
+    def plot_features_time_series(self, selected_features: List[str]):
+        fig, axs = plt.subplots(len(selected_features))
+
+        for index, feature in enumerate(selected_features):
+            temp_feature_time_series = self.get_interp_data(limit_to_features=[feature])
+            axs[index].set_title(f"Time series data ({feature}, {self.__patient_ID})")
+            axs[index].plot(temp_feature_time_series)
+
+        fig.tight_layout()
+        plt.show()
+
+
     @property
     def ID(self) -> str:
         """
@@ -71,16 +86,18 @@ class Patient:
     def data(self) -> pd.DataFrame:
         return self.__data
 
-    def get_interp_data(self, interp_method: str = None, order: int = None):
+    def get_interp_data(self, interp_method: str = None, order: int = None, limit_to_features: List[str] = None):
         if interp_method is None and self.__interp_data is not None:
-            return self.__interp_data
+            if limit_to_features is None:
+                return self.__interp_data
+            else:
+                return self.__interp_data[limit_to_features]
 
         if interp_method is None and self.__interp_data is None:
             interp_method = Patient.INTERPOLATION_METHOD
 
         series = []
         for label in Patient.DATA_LABELS:
-
             if self.data[label].isna().sum() / len(self.data[label]) < Patient.NAN_DISMISSAL_THRESHOLD:
                 series_interp = self.data[label].interpolate(method=interp_method, axis="index", order=order,
                                                              limit=int(Patient.CONSECUTIVE_NAN_INTERPOLATION_LIMIT
@@ -91,7 +108,7 @@ class Patient:
 
         self.__interp_data = pd.concat([s for s in series] +
                                        [self.data[s] for s in set(Patient.LABELS)-set(Patient.DATA_LABELS)], axis=1)
-        return self.__interp_data
+        return self.__interp_data[limit_to_features] if limit_to_features is not None else self.__interp_data
 
     def get_average_df(self, use_interpolation: bool = False):
         """
@@ -101,8 +118,7 @@ class Patient:
         """
         avgs = {}
         for label in self.LABELS:
-            avgs[label] = self.get_average(label, use_interpolation)
-
+            avgs[label] = self.get_average(label, use_interpolation)            # man könnte auch hier schon sepsis_label entfernen
         return pd.Series(avgs)
 
     def get_average(self, label: str, use_interpolation: bool = False) -> float:
