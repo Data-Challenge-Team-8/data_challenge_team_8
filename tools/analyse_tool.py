@@ -91,7 +91,7 @@ class CompleteAnalysis:
         return pickle_data  # returns a dict
 
     def calculate_complete_analysis(self, training_set):
-        if self.selected_label == "fake_label":             # only for calculation of complete set statistics
+        if self.selected_label == "fake_label" or self.selected_label == "0_Load all labels (long waiting time!)":             # only for calculation of complete set statistics
             if self.total_patients is None:
                 self.total_patients: int = len(training_set.data.keys())
             self.sepsis_patients_count: int = len(self.get_sepsis_patients(training_set))
