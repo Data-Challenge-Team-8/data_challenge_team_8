@@ -60,6 +60,7 @@ class TrainingSet:
     def __init__(self, patients: List[str], name: str):
         TrainingSet.__instances[name] = self
 
+        self.__check_folder_structure()
         self.name = name
         self.data: Dict[str, Patient] = {key: None for key in patients}
         self.cache_name = self.__construct_cache_file_name()
@@ -88,6 +89,13 @@ class TrainingSet:
 
     def __len__(self):
         return len(self.data.keys())
+
+    def __check_folder_structure(self):
+        if os.path.exists(TrainingSet.CACHE_PATH) and os.path.isdir(TrainingSet.CACHE_PATH):
+            return
+        else:
+            print(f"Cache folder was not found! Creating one at {TrainingSet.CACHE_PATH} ...")
+            os.mkdir(TrainingSet.CACHE_PATH)
 
     def __construct_cache_file_name(self) -> str:
         key_concat = ""
